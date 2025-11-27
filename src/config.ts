@@ -1,0 +1,5 @@
+export const apiUrl = "http://localhost/managerbp/public";
+export const uploadsUrl = "https://api.bookpannu.com/uploads";
+export const siteUrl = "https://localhost/webBP/";
+export const CSC_API_KEY =
+  "bmhxTnNOcUhKOVlRSGNUeEdud2N0Vk9Wc09KVlRLMVBPdG5BeHNOOA==";
