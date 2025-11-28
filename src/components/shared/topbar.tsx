@@ -71,12 +71,14 @@ const TopBar = () => {
             ))}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <Logout className="flex items-center">
-              <LogoutIcon size="16" className="mr-2" variant="Bold" />
-              <span>Log out</span>
-            </Logout>
-          </DropdownMenuItem>
+ <DropdownMenuItem>
+  <Logout className="flex items-center">
+    <LogoutIcon size="16" className="mr-2" variant="Bold" />
+    <span>Log out</span>
+  </Logout>
+</DropdownMenuItem>
+
+
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

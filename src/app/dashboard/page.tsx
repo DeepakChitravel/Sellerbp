@@ -17,12 +17,11 @@ import { siteUrl, uploadsUrl } from "@/config";
 import LinkCard from "@/components/cards/link-card";
 import Image from "next/image";
 
-const Home = async ({
-  searchParams: { daysAgo },
-}: {
-  searchParams: { daysAgo: string };
-}) => {
+const Home = async () => {
   const user = await currentUser();
+
+  // Default daysAgo (remove query param)
+  const daysAgo = "7";
 
   const revenueData = await getRevenue(daysAgo);
   const overviewData = await getOverview();
@@ -80,19 +79,29 @@ const Home = async ({
         <div className="4xl:w-[30%]">
           <div className="grid gap-3" style={{ wordBreak: "break-all" }}>
             <CopyLink text="Site Link" link={siteUrl + "/" + user.siteSlug} />
+
             <LinkCard
               title={`${overviewData.newAppointments} New Appointments Received!`}
               icon={<Calendar />}
               link="/appointments"
             />
+
             <LinkCard
               title="Explore Advanced Reports!"
               icon={<Chart />}
               link="/reports"
             />
+
             <LinkCard
               title="Start your online store at ztorespot.com"
-              icon={<Image src={uploadsUrl + "/static/ztorespot.png"} alt="" />}
+              icon={
+                <Image
+                  src={uploadsUrl + "/static/ztorespot.png"}
+                  alt=""
+                  width={50}
+                  height={50}
+                />
+              }
               link="https://ztorespot.com"
               className="!bg-purple-500 text-white"
             />

@@ -30,62 +30,62 @@ import {
 const SIDEBAR_LINKS = [
   {
     label: "Dashboard",
-    href: "/",
+    href: "/dashboard/",
     icon: <Home />,
   },
   {
     label: "Appointments",
-    href: "/appointments",
+    href: "/dashboard/appointments",
     icon: <CalendarTick />,
   },
   {
     label: "Customers",
-    href: "/customers",
+    href: "/dashboard/customers",
     icon: <Profile2User />,
   },
   {
     label: "Calendar",
-    href: "/calendar",
+    href: "/dashboard/calendar",
     icon: <Calendar />,
   },
   {
     label: "Reports",
-    href: "/reports",
+    href: "/dashboard/reports",
     icon: <Chart />,
   },
   {
     label: "Categories",
-    href: "/categories",
+    href: "/dashboard/categories",
     icon: <Grid2 />,
   },
   {
     label: "Services",
-    href: "/services",
+    href: "/dashboard/services",
     icon: <TaskSquare />,
   },
   {
     label: "Coupons",
-    href: "/coupons",
+    href: "/dashboard/coupons",
     icon: <DiscountShape />,
   },
   {
     label: "Plugins",
-    href: "/plugins",
+    href: "/dashboard/plugins",
     icon: <Flash />,
   },
   {
     label: "Employees",
-    href: "/employees",
+    href: "/dashboard/employees",
     icon: <Profile2User />,
   },
   {
     label: "Settings",
-    href: "/settings",
+    href: "/dashboard/settings",
     icon: <Setting2 />,
   },
   {
     label: "Website Setup",
-    href: "/website-setup",
+    href: "/dashboard/website-setup",
     icon: <MonitorMobbile />,
   },
 ];

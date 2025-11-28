@@ -1,17 +1,17 @@
 import LeftSidebar from "@/components/shared/left-sidebar";
 import TopBar from "@/components/shared/topbar";
-// import { currentUser } from "@/lib/api/users";
-// import { redirect } from "next/navigation";
+import { currentUser } from "@/lib/api/users";
+import { redirect } from "next/navigation";
+import { ReactNode } from "react";
 
-export default async function Layout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+interface LayoutProps {
+  children: ReactNode;
+}
 
-  // 🚫 LOGIN CHECK DISABLED (TEMPORARY)
-  // const user = await currentUser();
-  // if (!user) redirect("/login");
+export default async function Layout({ children }: LayoutProps) {
+  // Protect Dashboard
+  const user = await currentUser();
+  if (!user) redirect("/login");
 
   return (
     <div>

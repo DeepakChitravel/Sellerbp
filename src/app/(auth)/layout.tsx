@@ -1,12 +1,19 @@
 import { currentUser } from "@/lib/api/users";
 import { redirect } from "next/navigation";
 
-export default async function Layout({
+export default async function AuthLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  (await currentUser()) && redirect("/");
+}) {
+  const user = await currentUser();
 
-  return children;
+  // If user exists → block access to /login and /register pages
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  console.log("AUTH LAYOUT EXECUTED");
+
+  return <>{children}</>;
 }

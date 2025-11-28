@@ -60,6 +60,7 @@ export const loginUser = async (options: loginUserData) => {
       headers: {
         "Content-Type": "application/json",
       },
+      withCredentials: true,  // ⭐ REQUIRED ⭐
     });
     return response.data;
   } catch (error: any) {

@@ -6,24 +6,40 @@ import { cookies } from "next/headers";
 
 const route = "/users";
 
-// Get current user data
+
+
 export const currentUser = async () => {
   const token = cookies().get("token")?.value;
-  const url = `${apiUrl + route}/user-with-token`;
 
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
+  // ⭐ DEBUG HERE
+  console.log("SERVER TOKEN:", token);
+
+  if (!token) return null;
 
   try {
-    const response = await axios.get(url, options);
-    return response.data;
-  } catch (error: any) {
-    return false;
+    const res = await fetch(`${apiUrl}/users/user-with-token.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ token }),
+    });
+
+    const text = await res.text();
+
+    try {
+      const data = JSON.parse(text);
+      if (!data.success) return null;
+      return data.data || data.user || null;
+    } catch {
+      console.log("SERVER RESPONSE (NOT JSON):", text);
+      return null;
+    }
+
+  } catch (err) {
+    return null;
   }
 };
+
 
 // Update a user data
 export const updateUser = async (data: updateUserData) => {
