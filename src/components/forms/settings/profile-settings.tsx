@@ -67,26 +67,27 @@ const ProfileSettings = ({ user }: Props) => {
     },
   };
 
-  const handleSave = async () => {
-    setIsLoading(true);
+const handleSave = async () => {
+  setIsLoading(true);
 
-    try {
-      const data = {
-        name,
-        email,
-        phone,
-        country,
-        image,
-      };
+  try {
+    const response = await updateUser({
+      name,
+      email,
+      phone,
+      country,
+      image, // keep this even if null
+    });
 
-      const response = await updateUser(data);
+    handleToast(response);
+  } catch (error: any) {
+    toast.error(error.message);
+  }
 
-      handleToast(response);
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-    setIsLoading(false);
-  };
+  setIsLoading(false);
+};
+
+
 
   return (
     <>

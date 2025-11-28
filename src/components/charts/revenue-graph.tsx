@@ -136,10 +136,7 @@ export default function RevenueGraph({
   chartData: RevenueGraphProps[];
 }) {
   const pathname = usePathname();
-  const { replace } = useRouter();
 
-  const searchParams = useSearchParams();
-  const params = new URLSearchParams(searchParams);
 
   const [timeRange, setTimeRange] = React.useState("90");
 
@@ -149,10 +146,7 @@ const filteredData = safeData.filter((item) => {
   return item;
 });
 
-  React.useEffect(() => {
-    params.set("daysAgo", timeRange);
-    replace(`${pathname}?${params.toString()}`);
-  }, [timeRange]);
+
 
   return (
     <Card className="shadow-none border-none rounded-xl">

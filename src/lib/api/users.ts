@@ -44,21 +44,36 @@ export const currentUser = async () => {
 // Update a user data
 export const updateUser = async (data: updateUserData) => {
   const token = cookies().get("token")?.value;
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const url = `${apiUrl + route}`;
 
   try {
-    const response = await axios.put(url, data, options);
-    return { success: true, message: response.data.message };
+    const response = await axios.put(
+      `${apiUrl}/seller/auth/update.php`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",   // ⭐ IMPORTANT ⭐
+        },
+      }
+    );
+
+    console.log("UPDATE RESPONSE:", response.data);
+
+    return {
+      success: response.data.success,
+      message: response.data.message || "Profile updated.",
+    };
   } catch (error: any) {
-    return { success: false, message: error.response.data.message };
+    console.log("UPDATE ERROR:", error?.response?.data);
+
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Update failed.",
+    };
   }
 };
+
+
 
 // Change password
 export const changePassword = async (data: changePasswordData) => {
