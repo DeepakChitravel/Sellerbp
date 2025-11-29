@@ -13,7 +13,7 @@ const SettingsTax = async () => {
         </p>
       </div>
 
-      <TaxSettings settingsData={user.siteSettings[0]} />
+<TaxSettings settingsData={user?.siteSettings?.[0] ?? null} />
     </div>
   );
 };

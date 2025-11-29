@@ -84,7 +84,7 @@ const HeaderSettings = ({ data }: Props) => {
         <div>
           <Label className="mb-3 block">Nav Links</Label>
           <div className="grid gap-3">
-            {navLinks.map((item, index) => (
+            {navLinks?.map((item, index) => (
               <div
                 key={index}
                 className="sm:flex items-center justify-between gap-3"

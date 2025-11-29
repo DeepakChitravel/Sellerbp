@@ -14,7 +14,7 @@ const SettingsAvailableDays = async () => {
         </p>
       </div>
 
-      <AvailableDays settingsData={user.siteSettings[0]} />
+      <AvailableDays settingsData={user.siteSettings?.[0] ?? null} />
     </div>
   );
 };

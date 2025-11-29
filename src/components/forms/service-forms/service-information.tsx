@@ -77,9 +77,10 @@ const ServiceInformation = ({
       type: "number",
       value: amount.value,
       setValue: amount.setValue,
-      placeholder: getSymbolFromCurrency(
-        userData?.siteSettings[0].currency as string
-      ),
+placeholder: getSymbolFromCurrency(
+  userData?.siteSettings?.[0]?.currency ?? "USD"
+),
+
       label: "Amount",
       containerClassName: "md:col-span-6",
       required: true,
@@ -88,9 +89,10 @@ const ServiceInformation = ({
       type: "number",
       value: previousAmount.value,
       setValue: previousAmount.setValue,
-      placeholder: getSymbolFromCurrency(
-        userData?.siteSettings[0].currency as string
-      ),
+ placeholder: getSymbolFromCurrency(
+  userData?.siteSettings?.[0]?.currency ?? "USD"
+),
+
       label: "Previous Amount",
       containerClassName: "md:col-span-6",
     },

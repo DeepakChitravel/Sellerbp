@@ -13,7 +13,7 @@ const SettingsSEO = async () => {
         </p>
       </div>
 
-      <SeoSettings settingsData={user.siteSettings[0]} />
+<SeoSettings settingsData={user?.siteSettings?.[0] ?? null} />
     </div>
   );
 };

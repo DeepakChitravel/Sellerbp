@@ -162,7 +162,7 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
               }}
             />
 
-            {userData?.siteSettings[0].gstNumber && (
+            {userData?.siteSettings?.[0]?.gstNumber && (
               <ServiceGst
                 gstPercentage={{
                   value: gstPercentage,

@@ -78,22 +78,22 @@ const SETTINGS_LINKS = [
 const WEBSITE_SETUP_LINKS = [
   {
     label: "Templates",
-    href: "/website-setup",
+    href: "/dashboard/website-setup",
     icon: <Element />,
   },
   {
     label: "Homepage Settings",
-    href: "/website-setup/homepage",
+    href: "/dashboard/website-setup/homepage",
     icon: <Grid7 />,
   },
   {
     label: "Header Settings",
-    href: "/website-setup/header",
+    href: "/dashboard/website-setup/header",
     icon: <Menu />,
   },
   {
     label: "Pages",
-    href: "/website-setup/pages",
+    href: "/dashboard/website-setup/pages",
     icon: <Document />,
   },
 ];

@@ -23,7 +23,7 @@ const Coupons = async ({
       <div className="flex items-center justify-between gap-5 mb-5">
         <h1 className="text-2xl font-bold">Coupons</h1>
 
-        <Link href="/coupons/add">
+        <Link href="/dashboard/coupons/add">
           <Button variant="success">
             <span className="mobile_l:block hidden">Add Coupon</span>
             <span className="mobile_l:hidden block">

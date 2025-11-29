@@ -44,7 +44,7 @@ const SettingsAvailableAreas = async () => {
         </div>
 
         <div className="grid gap-6">
-          {availableAreas.records.map((area: availableArea, index: number) => (
+          {availableAreas.records?.map((area: availableArea, index: number) => (
             <AvailableAreaCard
               key={index}
               data={area}

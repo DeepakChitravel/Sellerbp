@@ -29,49 +29,34 @@ interface Props {
 function AvailableDays({ settingsData }: Props) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const [sunday, setSunday] = useState<boolean>(settingsData.sunday);
-  const [sundayStarts, setSundayStarts] = useState<string>(
-    settingsData.sundayStarts
-  );
-  const [sundayEnds, setSundayEnds] = useState<string>(settingsData.sundayEnds);
-  const [monday, setMonday] = useState<boolean>(settingsData.monday);
-  const [mondayStarts, setMondayStarts] = useState<string>(
-    settingsData.mondayStarts
-  );
-  const [mondayEnds, setMondayEnds] = useState<string>(settingsData.mondayEnds);
-  const [tuesday, setTuesday] = useState<boolean>(settingsData.tuesday);
-  const [tuesdayStarts, setTuesdayStarts] = useState<string>(
-    settingsData.tuesdayStarts
-  );
-  const [tuesdayEnds, setTuesdayEnds] = useState<string>(
-    settingsData.tuesdayEnds
-  );
-  const [wednesday, setWednesday] = useState<boolean>(settingsData.wednesday);
-  const [wednesdayStarts, setWednesdayStarts] = useState<string>(
-    settingsData.wednesdayStarts
-  );
-  const [wednesdayEnds, setWednesdayEnds] = useState<string>(
-    settingsData.wednesdayEnds
-  );
-  const [thursday, setThursday] = useState<boolean>(settingsData.thursday);
-  const [thursdayStarts, setThursdayStarts] = useState<string>(
-    settingsData.thursdayStarts
-  );
-  const [thursdayEnds, setThursdayEnds] = useState<string>(
-    settingsData.thursdayEnds
-  );
-  const [friday, setFriday] = useState<boolean>(settingsData.friday);
-  const [fridayStarts, setFridayStarts] = useState<string>(
-    settingsData.fridayStarts
-  );
-  const [fridayEnds, setFridayEnds] = useState<string>(settingsData.fridayEnds);
-  const [saturday, setSaturday] = useState<boolean>(settingsData.saturday);
-  const [saturdayStarts, setSaturdayStarts] = useState<string>(
-    settingsData.saturdayStarts
-  );
-  const [saturdayEnds, setSaturdayEnds] = useState<string>(
-    settingsData.saturdayEnds
-  );
+const [sunday, setSunday] = useState<boolean>(settingsData?.sunday ?? false);
+const [sundayStarts, setSundayStarts] = useState<string>(settingsData?.sundayStarts ?? "");
+const [sundayEnds, setSundayEnds] = useState<string>(settingsData?.sundayEnds ?? "");
+
+const [monday, setMonday] = useState<boolean>(settingsData?.monday ?? false);
+const [mondayStarts, setMondayStarts] = useState<string>(settingsData?.mondayStarts ?? "");
+const [mondayEnds, setMondayEnds] = useState<string>(settingsData?.mondayEnds ?? "");
+
+const [tuesday, setTuesday] = useState<boolean>(settingsData?.tuesday ?? false);
+const [tuesdayStarts, setTuesdayStarts] = useState<string>(settingsData?.tuesdayStarts ?? "");
+const [tuesdayEnds, setTuesdayEnds] = useState<string>(settingsData?.tuesdayEnds ?? "");
+
+const [wednesday, setWednesday] = useState<boolean>(settingsData?.wednesday ?? false);
+const [wednesdayStarts, setWednesdayStarts] = useState<string>(settingsData?.wednesdayStarts ?? "");
+const [wednesdayEnds, setWednesdayEnds] = useState<string>(settingsData?.wednesdayEnds ?? "");
+
+const [thursday, setThursday] = useState<boolean>(settingsData?.thursday ?? false);
+const [thursdayStarts, setThursdayStarts] = useState<string>(settingsData?.thursdayStarts ?? "");
+const [thursdayEnds, setThursdayEnds] = useState<string>(settingsData?.thursdayEnds ?? "");
+
+const [friday, setFriday] = useState<boolean>(settingsData?.friday ?? false);
+const [fridayStarts, setFridayStarts] = useState<string>(settingsData?.fridayStarts ?? "");
+const [fridayEnds, setFridayEnds] = useState<string>(settingsData?.fridayEnds ?? "");
+
+const [saturday, setSaturday] = useState<boolean>(settingsData?.saturday ?? false);
+const [saturdayStarts, setSaturdayStarts] = useState<string>(settingsData?.saturdayStarts ?? "");
+const [saturdayEnds, setSaturdayEnds] = useState<string>(settingsData?.saturdayEnds ?? "");
+
 
   const inputFields: Form = {
     sunday: {

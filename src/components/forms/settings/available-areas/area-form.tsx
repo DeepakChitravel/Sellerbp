@@ -73,7 +73,7 @@ const AreaForm = ({ isEdit, data }: AvailableAreaFormProps) => {
       setValue: setCharges,
       label: "Charges",
       placeholder: getSymbolFromCurrency(
-        userData?.siteSettings[0].currency as string
+        userData?.siteSettings?.[0].currency as string
       ),
       required: true,
       options: cities,

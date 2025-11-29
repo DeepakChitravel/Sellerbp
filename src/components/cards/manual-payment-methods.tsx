@@ -27,7 +27,7 @@ const ManualPaymentMethods = ({ data }: Props) => {
   return (
     <div>
       <div className="grid gap-6">
-        {manualPaymentMethodData.map((item, index) => (
+        {manualPaymentMethodData?.map((item, index) => (
           <ManualPaymentMethodCard
             key={index}
             data={item}

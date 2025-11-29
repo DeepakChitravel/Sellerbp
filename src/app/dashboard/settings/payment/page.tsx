@@ -17,7 +17,7 @@ const SettingsPayment = async () => {
           </p>
         </div>
 
-        <PaymentProviders settingsData={user.siteSettings[0]} />
+        <PaymentProviders settingsData={user?.siteSettings?.[0] ?? null} />
       </div>
 
       {/* Manual Payment Methods */}

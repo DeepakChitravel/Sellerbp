@@ -54,7 +54,7 @@ function Action({ id, pageId }: { id: number; pageId: string }) {
       <DropdownMenuContent align="end" className="w-[200px]">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuGroup>
-          <Link href={`/website-setup/pages/${pageId}`}>
+          <Link href={`/dashboard/website-setup/pages/${pageId}`}>
             <DropdownMenuItem className="text-blue-600">
               <Edit variant="Bold" className="mr-2 h-4 w-4" />
               Edit

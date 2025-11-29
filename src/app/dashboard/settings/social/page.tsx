@@ -13,7 +13,7 @@ const SettingsSocial = async () => {
         </p>
       </div>
 
-      <SocialSettings settingsData={user.siteSettings[0]} />
+      <SocialSettings settingsData={user?.siteSettings?.[0] ?? null} />
     </div>
   );
 };
