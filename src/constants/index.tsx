@@ -29,71 +29,71 @@ import {
 
 const SIDEBAR_LINKS = [
   { label: "Dashboard", href: "/dashboard", icon: <Home /> },
-  { label: "Appointments", href: "/dashboard/appointments", icon: <CalendarTick /> },
-  { label: "Customers", href: "/dashboard/customers", icon: <Profile2User /> },
-  { label: "Calendar", href: "/dashboard/calendar", icon: <Calendar /> },
-  { label: "Reports", href: "/dashboard/reports", icon: <Chart /> },
-  { label: "Categories", href: "/dashboard/categories", icon: <Grid2 /> },
-  { label: "Services", href: "/dashboard/services", icon: <TaskSquare /> },
-  { label: "Coupons", href: "/dashboard/coupons", icon: <DiscountShape /> },
-  { label: "Plugins", href: "/dashboard/plugins", icon: <Flash /> },
-  { label: "Employees", href: "/dashboard/employees", icon: <Profile2User /> },
-  { label: "Settings", href: "/dashboard/settings", icon: <Setting2 /> },
-  { label: "Website Setup", href: "/dashboard/website-setup", icon: <MonitorMobbile /> },
+  { label: "Appointments", href: "/appointments", icon: <CalendarTick /> },
+  { label: "Customers", href: "/customers", icon: <Profile2User /> },
+  { label: "Calendar", href: "/calendar", icon: <Calendar /> },
+  { label: "Reports", href: "/reports", icon: <Chart /> },
+  { label: "Categories", href: "/categories", icon: <Grid2 /> },
+  { label: "Services", href: "/services", icon: <TaskSquare /> },
+  { label: "Coupons", href: "/coupons", icon: <DiscountShape /> },
+  { label: "Plugins", href: "/plugins", icon: <Flash /> },
+  { label: "Employees", href: "/employees", icon: <Profile2User /> },
+  { label: "Settings", href: "/settings", icon: <Setting2 /> },
+  { label: "Website Setup", href: "/website-setup", icon: <MonitorMobbile /> },
 ];
 
 const MY_ACCOUNT_DROPDOWN_OPTIONS = [
   {
     label: "Profile",
     icon: <User />,
-    href: "/dashboard/settings/profile",
+    href: "/settings/profile",
   },
   {
     label: "Site Settings",
     icon: <Setting />,
-    href: "/dashboard/settings",
+    href: "/settings",
   },
   {
     label: "Billing & Invoices",
     icon: <Card />,
-    href: "/dashboard",
+    href: "/",
   },
 ];
 
 
 const SETTINGS_LINKS = [
-  { label: "Profile Settings", href: "/dashboard/settings/profile", icon: <User /> },
-  { label: "Change Password", href: "/dashboard/settings/change-password", icon: <Lock /> },
-  { label: "Basic Settings", href: "/dashboard/settings", icon: <Setting2 /> },
-  { label: "SEO Settings", href: "/dashboard/settings/seo", icon: <GlobalSearch /> },
-  { label: "Tax Settings", href: "/dashboard/settings/tax", icon: <PercentageSquare /> },
-  { label: "Social Settings", href: "/dashboard/settings/social", icon: <Facebook /> },
-  { label: "Payment Settings", href: "/dashboard/settings/payment", icon: <Moneys /> },
-  { label: "QR Code", href: "/dashboard/settings/qr-code", icon: <ScanBarcode /> },
-  { label: "Available Areas", href: "/dashboard/settings/available-areas", icon: <Location /> },
-  { label: "Available Days", href: "/dashboard/settings/available-days", icon: <Clock /> },
+  { label: "Profile Settings", href: "/settings/profile", icon: <User /> },
+  { label: "Change Password", href: "/settings/change-password", icon: <Lock /> },
+  { label: "Basic Settings", href: "/settings", icon: <Setting2 /> },
+  { label: "SEO Settings", href: "/settings/seo", icon: <GlobalSearch /> },
+  { label: "Tax Settings", href: "/settings/tax", icon: <PercentageSquare /> },
+  { label: "Social Settings", href: "/settings/social", icon: <Facebook /> },
+  { label: "Payment Settings", href: "/settings/payment", icon: <Moneys /> },
+  { label: "QR Code", href: "/settings/qr-code", icon: <ScanBarcode /> },
+  { label: "Available Areas", href: "/settings/available-areas", icon: <Location /> },
+  { label: "Available Days", href: "/settings/available-days", icon: <Clock /> },
 ];
 
 
 const WEBSITE_SETUP_LINKS = [
   {
     label: "Templates",
-    href: "/dashboard/website-setup",
+    href: "/website-setup",
     icon: <Element />,
   },
   {
     label: "Homepage Settings",
-    href: "/dashboard/website-setup/homepage",
+    href: "/website-setup/homepage",
     icon: <Grid7 />,
   },
   {
     label: "Header Settings",
-    href: "/dashboard/website-setup/header",
+    href: "/website-setup/header",
     icon: <Menu />,
   },
   {
     label: "Pages",
-    href: "/dashboard/website-setup/pages",
+    href: "/website-setup/pages",
     icon: <Document />,
   },
 ];

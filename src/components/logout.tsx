@@ -1,32 +1,36 @@
 "use client";
 
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
-interface Props {
-  children: React.ReactNode;
-  className?: string;
-}
+export default function Logout({ children, className }: any) {
+  const router = useRouter();
 
-const Logout = ({ children, className }: Props) => {
   const handleLogout = async () => {
     try {
+      // 1. Call backend logout
       await axios.get(
         "http://localhost/managerbp/public/seller/auth/logout.php",
         { withCredentials: true }
       );
 
-      // Force full reload so Next.js re-checks cookies
-      window.location.replace("/login");
-    } catch (err) {
-      console.error("Logout error:", err);
+      // 2. Remove cookie on client side also
+      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+      // 3. Refresh server-side state so currentUser() re-runs
+      router.refresh();
+
+      // 4. Redirect instantly
+      router.replace("/login");
+
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   };
 
   return (
-    <div onClick={handleLogout} className={className}>
+    <button onClick={handleLogout} className={className}>
       {children}
-    </div>
+    </button>
   );
-};
-
-export default Logout;
+}

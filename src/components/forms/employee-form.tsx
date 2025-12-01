@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import EmployeeDetails from "./employee-forms/employee-details";
 import Sticky from "../sticky";
 import { Button } from "../ui/button";
@@ -9,28 +10,46 @@ import { useRouter } from "next/navigation";
 import { EmployeeFormProps } from "@/types";
 import { addEmployee, updateEmployee } from "@/lib/api/employees";
 import EmployeeImage from "./employee-forms/category-image";
+import useCurrentUser from "@/hooks/useCurrentUser";
 
-const EmployeeForm = ({
-  employeeId,
-  employeeData,
-  isEdit,
-}: EmployeeFormProps) => {
+const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) => {
   const router = useRouter();
+  const { userData } = useCurrentUser();
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [name, setName] = useState<string>(employeeData?.name);
-  const [position, setPosition] = useState<string>(employeeData?.position);
-  const [email, setEmail] = useState<string>(employeeData?.email);
-  const [phone, setPhone] = useState<string>(employeeData?.phone);
-  const [address, setAddress] = useState<string>(employeeData?.address);
-  const [image, setImage] = useState<string>(employeeData?.image);
+  // state
+  const [name, setName] = useState("");
+  const [position, setPosition] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [image, setImage] = useState(null);
+
+  // 👉 THE IMPORTANT FIX
+  useEffect(() => {
+    if (employeeData) {
+      setName(employeeData.name || "");
+      setPosition(employeeData.position || "");
+      setEmail(employeeData.email || "");
+      setPhone(employeeData.phone || "");
+      setAddress(employeeData.address || "");
+      setImage(employeeData.image || null);
+    }
+  }, [employeeData]);
 
   const handleSave = async () => {
+    if (!userData?.id) {
+      toast.error("User not logged in");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const data = {
+        user_id: userData.id,
+        employee_id: isEdit ? employeeData.employee_id : crypto.randomUUID(),
         name,
         position,
         email,
@@ -39,17 +58,19 @@ const EmployeeForm = ({
         image,
       };
 
-      const response = !isEdit
-        ? await addEmployee(data)
-        : await updateEmployee(employeeId, data);
+      const response = isEdit
+        ? await updateEmployee(employeeData.employee_id, data)
+        : await addEmployee(data);
 
       handleToast(response);
-      !isEdit &&
-        response.success &&
-        router.push(`/employees?${Math.floor(Math.random() * 100)}`);
+
+      if (response.success) {
+        router.push(`/employees?refresh=${Date.now()}`);
+      }
     } catch (error: any) {
       toast.error(error.message);
     }
+
     setIsLoading(false);
   };
 
@@ -58,38 +79,16 @@ const EmployeeForm = ({
       <div className="grid grid-cols-12 gap-5">
         <div className="lg:col-span-7 col-span-12 grid gap-5">
           <EmployeeDetails
-            name={{
-              value: name,
-              setValue: setName,
-            }}
-            position={{
-              value: position,
-              setValue: setPosition,
-            }}
-            email={{
-              value: email,
-              setValue: setEmail,
-            }}
-            phone={{
-              value: phone,
-              setValue: setPhone,
-            }}
-            address={{
-              value: address,
-              setValue: setAddress,
-            }}
+            name={{ value: name, setValue: setName }}
+            position={{ value: position, setValue: setPosition }}
+            email={{ value: email, setValue: setEmail }}
+            phone={{ value: phone, setValue: setPhone }}
+            address={{ value: address, setValue: setAddress }}
           />
         </div>
 
         <div className="lg:col-span-5 col-span-12">
-          <div className="grid gap-5">
-            <EmployeeImage
-              images={{
-                value: image,
-                setValue: setImage,
-              }}
-            />
-          </div>
+          <EmployeeImage images={{ value: image, setValue: setImage }} />
         </div>
       </div>
 

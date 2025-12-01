@@ -6,20 +6,20 @@ export type Option = {
 
 export interface InputField {
   type:
-    | "text"
-    | "url"
-    | "number"
-    | "email"
-    | "password"
-    | "select"
-    | "textarea"
-    | "phone"
-    | "checkbox"
-    | "time"
-    | "calendar"
-    | "file"
-    | "switch"
-    | "editor";
+  | "text"
+  | "url"
+  | "number"
+  | "email"
+  | "password"
+  | "select"
+  | "textarea"
+  | "phone"
+  | "checkbox"
+  | "time"
+  | "calendar"
+  | "file"
+  | "switch"
+  | "editor";
   value: string | boolean;
   placeholder?: string;
   options?: { label: string; value: string; selected?: boolean }[];
@@ -216,18 +216,17 @@ export type Customer = {
 
 export type Employee = {
   id: number;
-  userId: number;
-  employeeId: string;
+  user_id: number;
+  employee_id: string;
   name: string;
   position: string;
-  image: string;
+  image: string | null;
   phone: string;
   email: string;
   address: string;
-  jobCompleted: number;
-  earnings: number;
-  createdAt: Date;
+  created_at: string;
 };
+
 
 export type User = {
   id: number;
@@ -465,12 +464,16 @@ export type employeeParams = {
 };
 
 export type employeeData = {
+  user_id: number;
+  employee_id?: string;
   name: string;
-  email: string;
+  position?: string;
+  email?: string;
   phone: string;
-  address: string;
-  image: string;
+  address?: string;
+  image?: string;
 };
+
 
 export type siteSettingsData = {
   logo?: string;

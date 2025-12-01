@@ -14,14 +14,8 @@ import { useRouter } from "next/navigation";
 const LoginForm = () => {
   const router = useRouter();
 
-  const [isPhone, setIsPhone] = useState(true);
   const [user, setUser] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-
-  const handleUserChange = (value: string) => {
-    setUser(value);
-    setIsPhone(true); // Only phone login
-  };
 
   const handleLogin = async () => {
     try {
@@ -30,7 +24,6 @@ const LoginForm = () => {
         return;
       }
 
-      // remove +91 or any country code
       const cleanPhone = user.replace(/^\+91/, "").trim();
 
       const userData = {
@@ -40,22 +33,48 @@ const LoginForm = () => {
 
       const response = await loginUser(userData);
 
+      console.log("LOGIN RESPONSE ===>", response); // ⭐ Correct logging
+
       if (!response.success) {
         toast.error(response.message);
         return;
       }
 
-      // Save token
+      // ⭐ Save token
       if (response.token) {
-        setCookie("token", response.token);
+        setCookie("token", response.token, {
+          path: "/",
+          sameSite: "lax",
+        });
       }
 
-      // Redirect to /site_slug
+      // ⭐⭐ Save USER ID — but correct key depends on API response!
+      if (response.user?.id) {
+        setCookie("user_id", response.user.id, {
+          path: "/",
+          sameSite: "lax",
+        });
+      } else if (response.data?.user?.id) {
+        setCookie("user_id", response.data.user.id, {
+          path: "/",
+          sameSite: "lax",
+        });
+      } else if (response.data?.id) {
+        setCookie("user_id", response.data.id, {
+          path: "/",
+          sameSite: "lax",
+        });
+      } else {
+        console.error("❌ USER ID NOT FOUND IN LOGIN RESPONSE");
+      }
+
+      // Redirect
       if (response.data?.site_slug) {
         router.push(`/${response.data.site_slug}`);
       } else {
         router.push("/");
       }
+
     } catch (error: any) {
       toast.error(error.message || "Login failed");
     }
@@ -68,7 +87,7 @@ const LoginForm = () => {
         <PhoneInput
           placeholder="Phone Number"
           value={user}
-          onChange={handleUserChange}
+          onChange={(value) => setUser(value)}
           className="h-12 px-4 [&_input]:!text-base"
           autoFocus={true}
         />

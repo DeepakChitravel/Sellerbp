@@ -5,107 +5,130 @@ import { employeeData, employeeParams } from "@/types";
 import axios from "axios";
 import { cookies } from "next/headers";
 
-const route = "/employees";
-
-// Get all employees
+/* ---------------------------------------------------------
+   GET ALL EMPLOYEES
+--------------------------------------------------------- */
 export const getAllEmployees = async (params: employeeParams) => {
   const token = cookies().get("token")?.value;
-  const url = `${apiUrl + route}`;
+  const user_id = cookies().get("user_id")?.value;
 
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    params: {
-      limit: params.limit ? params.limit : 10,
-      page: params.page && params.page >= 1 ? params.page : 1,
-      q: params.q,
-    },
-  };
+  console.log("SERVER USER_ID COOKIE =>", user_id);
+
+  if (!user_id) {
+    return { totalPages: 1, totalRecords: 0, records: [] };
+  }
+
+  const url = `${apiUrl}/seller/employees/get.php`;
 
   try {
-    const response = await axios.get(url, options);
-    return response.data;
-  } catch (error: any) {
-    return false;
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        user_id,
+        limit: params.limit ?? 10,
+        page: params.page ?? 1,
+        q: params.q ?? "",
+      },
+    });
+
+    return response.data; // MUST contain totalPages, totalRecords, records[]
+  } catch (error) {
+    return { totalPages: 1, totalRecords: 0, records: [] };
   }
 };
 
-// Get single employee
-export const getEmployee = async (employeeId: string) => {
-  const token = cookies().get("token")?.value;
-  const url = `${apiUrl + route}/${employeeId}`;
-
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  try {
-    const response = await axios.get(url, options);
-    return response.data;
-  } catch (error: any) {
-    return false;
-  }
-};
-
-// Add a employee
+/* ---------------------------------------------------------
+   ADD EMPLOYEE
+--------------------------------------------------------- */
 export const addEmployee = async (data: employeeData) => {
   const token = cookies().get("token")?.value;
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const url = `${apiUrl + route}`;
+  const url = `${apiUrl}/seller/employees/add.php`;
 
   try {
-    const response = await axios.post(url, data, options);
-    return { success: true, message: response.data.message };
-  } catch (error: any) {
-    return { success: false, message: error.response.data.message };
-  }
-};
+    const response = await axios.post(url, data, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-// Update a employee
-export const updateEmployee = async (
-  employeeId: string,
-  data: employeeData
-) => {
-  const token = cookies().get("token")?.value;
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const url = `${apiUrl + route}/${employeeId}`;
-
-  try {
-    const response = await axios.put(url, data, options);
-    return { success: true, message: response.data.message };
-  } catch (error: any) {
-    return { success: false, message: error.response.data.message };
-  }
-};
-
-// Delete a employee
-export const deleteEmployee = async (id: number) => {
-  const token = cookies().get("token")?.value;
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const url = `${apiUrl + route}/${id}`;
-
-  try {
-    const response = await axios.delete(url, options);
     return response.data;
   } catch (error: any) {
-    throw error.response.data;
+    return (
+      error.response?.data || {
+        success: false,
+        message: "Server unreachable",
+      }
+    );
+  }
+};
+
+/* ---------------------------------------------------------
+   GET SINGLE EMPLOYEE (EDIT PAGE)
+--------------------------------------------------------- */
+export const getEmployee = async (employeeId: string) => {
+  const token = cookies().get("token")?.value;
+
+  const url = `${apiUrl}/seller/employees/single.php?id=${employeeId}`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.data?.success) return false;
+
+    return response.data; // must contain data: { ... }
+  } catch {
+    return false;
+  }
+};
+
+
+/* ---------------------------------------------------------
+   DELETE EMPLOYEE
+--------------------------------------------------------- */
+export const deleteEmployee = async (id: number) => {
+  const token = cookies().get("token")?.value;
+  const url = `${apiUrl}/seller/employees/delete.php?id=${id}`;
+
+  try {
+    const response = await axios.delete(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw error.response?.data || { success: false, message: "Delete failed" };
+  }
+};
+
+/* ---------------------------------------------------------
+   UPDATE EMPLOYEE
+--------------------------------------------------------- */
+export const updateEmployee = async (employeeId: string, data: any) => {
+  const token = cookies().get("token")?.value;
+  const url = `${apiUrl}/seller/employees/update.php?id=${employeeId}`;
+
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data; // { success: true/false, message: "" }
+  } catch (error: any) {
+    return (
+      error.response?.data || {
+        success: false,
+        message: "Server unreachable",
+      }
+    );
   }
 };
