@@ -102,11 +102,6 @@ function Action({ id, employeeId }: { id: number; employeeId: string }) {
 
 export const columns: ColumnDef<Employee>[] = [
   {
-    accessorKey: "id",
-    header: "#",
-  },
-
-  {
     header: "Employee",
     cell: ({ row }) => {
       const data = row.original;
@@ -123,7 +118,7 @@ export const columns: ColumnDef<Employee>[] = [
           <div>
             <span className="block font-medium text-sm">{data.name}</span>
             <span className="text-xs text-black/50">
-              <span className="text-green-500"> {data.position} - </span>
+              <span className="text-green-500">{data.position} - </span>
               {data.address}
             </span>
           </div>
@@ -151,18 +146,10 @@ export const columns: ColumnDef<Employee>[] = [
   },
 
   {
-    header: "Job Completed",
-    cell: ({ row }) => {
-      const data = row.original;
-      return data.jobCompleted && abbreviateNumber(data.jobCompleted);
-    },
-  },
-
-  {
     header: "Earnings",
     cell: ({ row }) => {
       const data = row.original;
-      return "$" + data.earnings && formatNumber(data.earnings);
+      return formatNumber(data.earnings);
     },
   },
 
@@ -170,14 +157,19 @@ export const columns: ColumnDef<Employee>[] = [
     header: "Joined Date",
     cell: ({ row }) => {
       const data = row.original;
-
       if (!data.joining_date) return "-";
-
       return new Date(data.joining_date).toLocaleDateString("en-GB");
-      // output → 31/12/2025
     },
   },
 
+  {
+    header: "Job Resigned",
+    cell: ({ row }) => {
+      const data = row.original;
+      // Update this field based on your DB field name
+      return data.jobResigned ? "Yes" : "No";
+    },
+  },
 
   {
     header: "Action",
