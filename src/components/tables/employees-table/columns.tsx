@@ -170,9 +170,14 @@ export const columns: ColumnDef<Employee>[] = [
     header: "Joined Date",
     cell: ({ row }) => {
       const data = row.original;
-      return formatDate(new Date(data.createdAt));
+
+      if (!data.joining_date) return "-";
+
+      return new Date(data.joining_date).toLocaleDateString("en-GB");
+      // output → 31/12/2025
     },
   },
+
 
   {
     header: "Action",

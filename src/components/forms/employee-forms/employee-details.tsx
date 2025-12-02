@@ -11,6 +11,7 @@ const EmployeeDetails = ({
   phone,
   email,
   address,
+  joining_date,   // ⭐ make sure this is here
 }: FormValueProps) => {
   const inputFields: Form = {
     name: {
@@ -54,6 +55,16 @@ const EmployeeDetails = ({
       setValue: address.setValue,
       placeholder: "Enter Address",
       label: "Address",
+      required: true,
+      containerClassName: "col-span-12 md:col-span-6",
+    },
+
+    // ⭐ Joining Date field added
+    joining_date: {
+      type: "date",
+      value: joining_date.value,
+      setValue: joining_date.setValue,
+      label: "Joining Date",
       required: true,
       containerClassName: "col-span-12 md:col-span-6",
     },
