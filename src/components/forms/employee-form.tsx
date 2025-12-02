@@ -26,7 +26,10 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
   const [address, setAddress] = useState("");
   const [image, setImage] = useState(null);
 
-  // 👉 THE IMPORTANT FIX
+  // ⭐ ADD THIS STATE
+  const [joining_date, setJoiningDate] = useState("");
+
+  // load edit data
   useEffect(() => {
     if (employeeData) {
       setName(employeeData.name || "");
@@ -35,6 +38,9 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
       setPhone(employeeData.phone || "");
       setAddress(employeeData.address || "");
       setImage(employeeData.image || null);
+
+      // ⭐ LOAD JOINING DATE
+      setJoiningDate(employeeData.joining_date || "");
     }
   }, [employeeData]);
 
@@ -56,6 +62,7 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
         phone,
         address,
         image,
+        joining_date, // ⭐ SEND IT TO API
       };
 
       const response = isEdit
@@ -84,6 +91,9 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
             email={{ value: email, setValue: setEmail }}
             phone={{ value: phone, setValue: setPhone }}
             address={{ value: address, setValue: setAddress }}
+
+            // ⭐ FIX: NOW PASS JOINING DATE
+            joining_date={{ value: joining_date, setValue: setJoiningDate }}
           />
         </div>
 

@@ -14,6 +14,7 @@ export interface InputField {
   | "select"
   | "textarea"
   | "phone"
+   | "date"   
   | "checkbox"
   | "time"
   | "calendar"
@@ -214,6 +215,7 @@ export type Customer = {
   user: User;
 };
 
+
 export type Employee = {
   id: number;
   user_id: number;
@@ -224,8 +226,10 @@ export type Employee = {
   phone: string;
   email: string;
   address: string;
+  joining_date?: string;   // ✅ NEW
   created_at: string;
 };
+
 
 
 export type User = {
