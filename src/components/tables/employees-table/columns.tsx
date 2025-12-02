@@ -177,15 +177,6 @@ export const columns: ColumnDef<Employee>[] = [
 
 
   {
-    header: "Job Resigned",
-    cell: ({ row }) => {
-      const data = row.original;
-      // Update this field based on your DB field name
-      return data.jobResigned ? "Yes" : "No";
-    },
-  },
-
-  {
     header: "Action",
     cell: ({ row }) => {
       const data = row.original;
