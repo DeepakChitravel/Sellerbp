@@ -31,7 +31,7 @@ const Pages = async ({
         <div className="flex items-center justify-between gap-5">
           <PagesFilter />
 
-          <Link href="/dashboard/website-setup/pages/add">
+          <Link href="/website-setup/pages/add">
             <Button variant="success">
               <span className="mobile_l:block hidden">Add Page</span>
               <span className="mobile_l:hidden block">

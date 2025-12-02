@@ -17,13 +17,14 @@ const Employees = async ({
     page,
     q,
   });
+console.log("EMPLOYEES DATA ===> ", data);
 
   return (
     <>
       <div className="flex items-center justify-between gap-5 mb-5">
         <h1 className="text-2xl font-bold">Employees</h1>
 
-        <Link href="/dashboard/employees/add">
+        <Link href="/employees/add">
           <Button variant="success">
             <span className="mobile_l:block hidden">Add Employee</span>
             <span className="mobile_l:hidden block">
@@ -34,8 +35,9 @@ const Employees = async ({
       </div>
 
       <div className="space-y-5">
-        <EmployeesFilter data={data.records} />
-        <DataTable columns={columns} data={data} />
+       <EmployeesFilter data={data.records} />
+<DataTable columns={columns} data={data} />
+
       </div>
     </>
   );

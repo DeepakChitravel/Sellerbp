@@ -10,7 +10,7 @@ const route = "/website-pages";
 // Get all pages
 export const getAllPages = async (params: pagesParams) => {
   const token = cookies().get("token")?.value;
-  const url = `${apiUrl + route}`;
+  const url = `${apiUrl + route}/index.php`;
 
   const options = {
     headers: {

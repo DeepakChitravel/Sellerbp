@@ -23,7 +23,7 @@ const Categories = async ({
       <div className="flex items-center justify-between gap-5 mb-5">
         <h1 className="text-2xl font-bold">Categories</h1>
 
-        <Link href="/dashboard/categories/add">
+        <Link href="/categories/add">
           <Button variant="success">
             <span className="mobile_l:block hidden">Add Category</span>
             <span className="mobile_l:hidden block">

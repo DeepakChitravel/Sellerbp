@@ -1,17 +1,16 @@
+export const dynamic = "force-dynamic";
+
 import LeftSidebar from "@/components/shared/left-sidebar";
 import TopBar from "@/components/shared/topbar";
 import { currentUser } from "@/lib/api/users";
 import { redirect } from "next/navigation";
-import { ReactNode } from "react";
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-export default async function Layout({ children }: LayoutProps) {
-  // Protect Dashboard
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
-  if (!user) redirect("/login");
+
+  if (!user) {
+    redirect("/login");
+  }
 
   return (
     <div>
@@ -19,7 +18,7 @@ export default async function Layout({ children }: LayoutProps) {
         <LeftSidebar />
       </aside>
 
-      <div className="bg-[#f8f8f9] min-h-screen overflow-y-auto overflow-x-hidden w-[calc(100%_-_70px)] 2xl:w-[calc(100%_-_270px)] ms-auto mainWrapper">
+      <div className="bg-[#f8f8f9] min-h-screen overflow-y-auto w-[calc(100%_-_70px)] 2xl:w-[calc(100%_-_270px)] ms-auto mainWrapper">
         <TopBar />
         <main className="2xl:px-8 px-5 py-8">
           {children}

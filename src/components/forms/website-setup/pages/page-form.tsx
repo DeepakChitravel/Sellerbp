@@ -59,10 +59,13 @@ const PageForm = ({ isEdit, data }: PageFormProps) => {
 
     try {
       const formData = {
+        user_id: userData?.id,                     // required by DB
+        page_id: crypto.randomUUID(),             // required unique ID
         name,
         slug,
         content,
       };
+
 
       const response = !isEdit
         ? await addPage(formData)

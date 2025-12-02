@@ -40,13 +40,13 @@ import Link from "next/link";
 import { uploadsUrl } from "@/config";
 
 function Action({ id, employeeId }: { id: number; employeeId: string }) {
-  const { refresh } = useRouter();
+  const router = useRouter();
 
   const handleDelete = async () => {
     try {
       const response = await deleteEmployee(id);
       toast.success(response.message);
-      refresh();
+      router.refresh();
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -59,6 +59,7 @@ function Action({ id, employeeId }: { id: number; employeeId: string }) {
           <More />
         </Button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="end" className="w-[200px]">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuGroup>
@@ -71,19 +72,20 @@ function Action({ id, employeeId }: { id: number; employeeId: string }) {
 
           <AlertDialog>
             <AlertDialogTrigger className="w-full">
-              <button className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 text-red-600 w-full">
+              <button className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground text-red-600 w-full">
                 <Trash variant="Bold" className="mr-2 h-4 w-4" />
                 Delete
               </button>
             </AlertDialogTrigger>
+
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently remove
-                  your coupon from our servers.
+                  This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete}>
@@ -103,6 +105,7 @@ export const columns: ColumnDef<Employee>[] = [
     accessorKey: "id",
     header: "#",
   },
+
   {
     header: "Employee",
     cell: ({ row }) => {
@@ -128,6 +131,7 @@ export const columns: ColumnDef<Employee>[] = [
       );
     },
   },
+
   {
     header: "Mobile Number",
     cell: ({ row }) => {
@@ -137,6 +141,7 @@ export const columns: ColumnDef<Employee>[] = [
       );
     },
   },
+
   {
     header: "Email Address",
     cell: ({ row }) => {
@@ -144,6 +149,7 @@ export const columns: ColumnDef<Employee>[] = [
       return <Link href={`mailto:${data.email}`}>{data.email}</Link>;
     },
   },
+
   {
     header: "Job Completed",
     cell: ({ row }) => {
@@ -151,6 +157,7 @@ export const columns: ColumnDef<Employee>[] = [
       return data.jobCompleted && abbreviateNumber(data.jobCompleted);
     },
   },
+
   {
     header: "Earnings",
     cell: ({ row }) => {
@@ -158,6 +165,7 @@ export const columns: ColumnDef<Employee>[] = [
       return "$" + data.earnings && formatNumber(data.earnings);
     },
   },
+
   {
     header: "Joined Date",
     cell: ({ row }) => {
@@ -165,11 +173,12 @@ export const columns: ColumnDef<Employee>[] = [
       return formatDate(new Date(data.createdAt));
     },
   },
+
   {
     header: "Action",
     cell: ({ row }) => {
       const data = row.original;
-      return <Action id={data.id} employeeId={data.employeeId} />;
+      return <Action id={data.id} employeeId={data.employee_id} />;
     },
   },
 ];
