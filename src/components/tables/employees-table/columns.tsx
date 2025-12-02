@@ -123,7 +123,7 @@ export const columns: ColumnDef<Employee>[] = [
           <div>
             <span className="block font-medium text-sm">{data.name}</span>
             <span className="text-xs text-black/50">
-              <span className="text-green-500">🔰 {data.position} - </span>
+              <span className="text-green-500"> {data.position} - </span>
               {data.address}
             </span>
           </div>
