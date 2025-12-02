@@ -110,8 +110,10 @@ export const columns: ColumnDef<Employee>[] = [
           <Avatar>
             <AvatarImage
               className="object-cover"
-              src={uploadsUrl + "/" + data.image}
+              src={data.image ? `${uploadsUrl}/${data.image}` : "/default-user.png"}
             />
+
+
             <AvatarFallback>{getInitials(data.name)}</AvatarFallback>
           </Avatar>
 
@@ -145,22 +147,34 @@ export const columns: ColumnDef<Employee>[] = [
     },
   },
 
-  {
-    header: "Earnings",
-    cell: ({ row }) => {
-      const data = row.original;
-      return formatNumber(data.earnings);
-    },
+{
+  header: "Earnings",
+  cell: ({ row }) => {
+    const data = row.original;
+
+    if (!data.earnings || isNaN(Number(data.earnings))) {
+      return <span className="block text-center">-</span>;
+    }
+
+    return formatNumber(data.earnings);
   },
+},
+
+
 
   {
     header: "Joined Date",
     cell: ({ row }) => {
       const data = row.original;
-      if (!data.joining_date) return "-";
+
+      if (!data.joining_date || data.joining_date === "0000-00-00") {
+        return "-";
+      }
+
       return new Date(data.joining_date).toLocaleDateString("en-GB");
     },
   },
+
 
   {
     header: "Job Resigned",

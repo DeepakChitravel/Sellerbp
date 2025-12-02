@@ -5,27 +5,24 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "api.bookpannu.com",
-        port: "",
         pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "source.unsplash.com",
-        port: "",
         pathname: "/**",
       },
-      // 🔥 Add localhost for local development
+
+      // ⭐ Correct PHP folder (NOW WITH /public)
       {
         protocol: "http",
         hostname: "localhost",
-        port: "3000",
-        pathname: "/**",
+        pathname: "/managerbp/public/uploads/employees/**",
       },
       {
         protocol: "http",
         hostname: "127.0.0.1",
-        port: "3000",
-        pathname: "/**",
+        pathname: "/managerbp/public/uploads/employees/**",
       },
     ],
   },
