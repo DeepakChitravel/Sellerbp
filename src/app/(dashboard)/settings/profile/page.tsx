@@ -1,0 +1,21 @@
+import ProfileSettings from "@/components/forms/settings/profile-settings";
+import { currentUser } from "@/lib/api/users";
+
+const SettingsProfile = async () => {
+  const user = await currentUser();
+
+  return (
+    <div>
+      <div className="mb-9 space-y-1.5">
+        <h3 className="font-medium">Profile Settings</h3>
+        <p className="text-black/50 text-sm font-medium">
+          Update and customize your profile.
+        </p>
+      </div>
+
+      <ProfileSettings user={user} />
+    </div>
+  );
+};
+
+export default SettingsProfile;
