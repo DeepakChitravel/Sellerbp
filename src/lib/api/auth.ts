@@ -53,7 +53,7 @@ export const registerUser = async (options: registerUserData) => {
 // Login
 export const loginUser = async (options: loginUserData) => {
   const url = `${apiUrl}${route}/login.php`;
-  console.log("Sending to backend:", options);
+  // console.log("Sending to backend:", options);
 
   try {
     const response = await axios.post(url, options, {

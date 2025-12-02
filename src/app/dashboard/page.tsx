@@ -78,7 +78,7 @@ const Home = async () => {
 
         <div className="4xl:w-[30%]">
           <div className="grid gap-3" style={{ wordBreak: "break-all" }}>
-            <CopyLink text="Site Link" link={siteUrl + "/" + user.siteSlug} />
+            <CopyLink text="Site Link" link={siteUrl + "/" + user?.siteSlug} />
 
             <LinkCard
               title={`${overviewData.newAppointments} New Appointments Received!`}
