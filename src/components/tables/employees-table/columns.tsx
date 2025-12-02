@@ -151,6 +151,14 @@ export const columns: ColumnDef<Employee>[] = [
   },
 
   {
+    header: "Job Completed",
+    cell: ({ row }) => {
+      const data = row.original;
+      return data.jobCompleted && abbreviateNumber(data.jobCompleted);
+    },
+  },
+
+  {
     header: "Earnings",
     cell: ({ row }) => {
       const data = row.original;
@@ -170,14 +178,6 @@ export const columns: ColumnDef<Employee>[] = [
     },
   },
 
-
-  {
-    header: "Job Completed",
-    cell: ({ row }) => {
-      const data = row.original;
-      return data.jobCompleted && abbreviateNumber(data.jobCompleted);
-    },
-  },
 
   {
     header: "Action",
