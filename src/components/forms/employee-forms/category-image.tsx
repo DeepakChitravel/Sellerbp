@@ -5,9 +5,10 @@ import { X } from "lucide-react";
 
 interface Props {
   images: { value: string; setValue: (v: string) => void };
+  userId: string; // required
 }
 
-const EmployeeImage = ({ images }: Props) => {
+const EmployeeImage = ({ images, userId }: Props) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleUpload = async (e: any) => {
@@ -19,8 +20,9 @@ const EmployeeImage = ({ images }: Props) => {
     const formData = new FormData();
     formData.append("file", file);
 
+    // ✅ MUST SEND user_id
     const res = await fetch(
-      "http://localhost/managerbp/public/seller/employees/upload.php",
+      `http://localhost/managerbp/public/seller/employees/upload.php?user_id=${userId}`,
       {
         method: "POST",
         body: formData,
@@ -31,37 +33,22 @@ const EmployeeImage = ({ images }: Props) => {
     setIsUploading(false);
 
     if (result.success) {
-      images.setValue(result.filename);
+      images.setValue(result.filename); // relative path only
     }
   };
 
   return (
     <div className="bg-white rounded-xl p-5">
       <h3 className="font-medium text-lg">Employee Image</h3>
-      <p className="text-sm text-black/50 mb-4">Upload employee profile picture.</p>
 
-      {/* Upload Box */}
       {!images.value && (
-        <label className="block border border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleUpload}
-            className="hidden"
-          />
-
-          <div className="text-gray-500">
-            <p className="font-medium">Click to upload</p>
-            <p className="text-xs mt-1">Supports: PNG, JPG, WEBP</p>
-          </div>
-
-          {isUploading && (
-            <p className="text-blue-500 mt-2 text-sm">Uploading...</p>
-          )}
+        <label className="block border border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer">
+          <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+          <p className="text-gray-500">Click to upload</p>
+          {isUploading && <p className="text-blue-500 mt-2 text-sm">Uploading...</p>}
         </label>
       )}
 
-      {/* Image Preview */}
       {images.value && (
         <div className="relative w-[160px] mt-4">
           <button
@@ -72,7 +59,7 @@ const EmployeeImage = ({ images }: Props) => {
           </button>
 
           <Image
-            src={`http://localhost/managerbp/public/uploads/employees/${images.value}`}
+            src={`http://localhost/managerbp/public/uploads/sellers/${images.value}`}
             width={160}
             height={160}
             className="rounded-lg object-cover border"

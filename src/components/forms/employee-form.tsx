@@ -18,18 +18,17 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // state
   const [name, setName] = useState("");
   const [position, setPosition] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [image, setImage] = useState(null);
-
-  // ⭐ ADD THIS STATE
+  const [image, setImage] = useState<string | null>(null);
   const [joining_date, setJoiningDate] = useState("");
 
-  // load edit data
+  // ⭐ GET CORRECT SELLER ID
+  const realUserId = userData?.user_id ?? userData?.id;
+
   useEffect(() => {
     if (employeeData) {
       setName(employeeData.name || "");
@@ -38,15 +37,13 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
       setPhone(employeeData.phone || "");
       setAddress(employeeData.address || "");
       setImage(employeeData.image || null);
-
-      // ⭐ LOAD JOINING DATE
       setJoiningDate(employeeData.joining_date || "");
     }
   }, [employeeData]);
 
   const handleSave = async () => {
-    if (!userData?.id) {
-      toast.error("User not logged in");
+    if (!realUserId) {
+      toast.error("User ID missing");
       return;
     }
 
@@ -54,7 +51,7 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
 
     try {
       const data = {
-        user_id: userData.id,
+        user_id: realUserId,   // ⭐ Always use user_id
         employee_id: isEdit ? employeeData.employee_id : crypto.randomUUID(),
         name,
         position,
@@ -62,7 +59,7 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
         phone,
         address,
         image,
-        joining_date, // ⭐ SEND IT TO API
+        joining_date,
       };
 
       const response = isEdit
@@ -91,14 +88,15 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
             email={{ value: email, setValue: setEmail }}
             phone={{ value: phone, setValue: setPhone }}
             address={{ value: address, setValue: setAddress }}
-
-            // ⭐ FIX: NOW PASS JOINING DATE
             joining_date={{ value: joining_date, setValue: setJoiningDate }}
           />
         </div>
 
         <div className="lg:col-span-5 col-span-12">
-          <EmployeeImage images={{ value: image, setValue: setImage }} />
+          <EmployeeImage
+            images={{ value: image, setValue: setImage }}
+            userId={realUserId}   // ⭐ Always sends correct seller ID
+          />
         </div>
       </div>
 

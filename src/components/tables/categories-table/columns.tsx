@@ -1,6 +1,5 @@
 "use client";
 
-import { uploadsUrl } from "@/config";
 import { formatDate } from "@/lib/utils";
 import { Category } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
@@ -23,7 +22,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
+ DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -34,14 +33,14 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-function Action({ id, categoryId }: { id: number; categoryId: string }) {
+function Action({ categoryId }: { categoryId: string }) {
   const router = useRouter();
 
   const handleDelete = async () => {
     try {
-      const response = await deleteCategory(id);
+      const response = await deleteCategory(categoryId);
       toast.success(response.message);
-      router.refresh(); // ✔ Refresh table
+      router.refresh();
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -82,8 +81,7 @@ function Action({ id, categoryId }: { id: number; categoryId: string }) {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete this
-                  category.
+                  This action will permanently delete the category.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -112,7 +110,7 @@ export const columns: ColumnDef<Category>[] = [
       const data = row.original;
       return (
         <Image
-          src={`${uploadsUrl}/${data.image}`}
+          src={data.image}
           alt={data.name}
           width={50}
           height={50}
@@ -133,14 +131,16 @@ export const columns: ColumnDef<Category>[] = [
     header: "Created At",
     cell: ({ row }) => {
       const data = row.original;
-      return formatDate(new Date(data.created_at)); // ✔ FIXED
+      return formatDate(new Date(data.created_at));
     },
   },
   {
     header: "Action",
     cell: ({ row }) => {
       const data = row.original;
-      return <Action id={data.id} categoryId={data.category_id} />; // ✔ FIXED
+
+      // ⭐ CORRECT VALUE — MUST USE categoryId, NOT category_id
+      return <Action categoryId={data.categoryId} />;
     },
   },
 ];

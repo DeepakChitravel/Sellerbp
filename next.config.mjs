@@ -2,28 +2,33 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "api.bookpannu.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "source.unsplash.com",
-        pathname: "/**",
-      },
-
-      // ⭐ Correct PHP folder (NOW WITH /public)
+      // EMPLOYEES
       {
         protocol: "http",
         hostname: "localhost",
         pathname: "/managerbp/public/uploads/employees/**",
       },
+
+      // CATEGORIES
       {
         protocol: "http",
-        hostname: "127.0.0.1",
-        pathname: "/managerbp/public/uploads/employees/**",
+        hostname: "localhost",
+        pathname: "/managerbp/public/uploads/categories/**",
       },
+
+      // ⭐ SELLERS — REQUIRED (your image lives inside here)
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/managerbp/public/uploads/sellers/**",
+      },
+
+      // STATIC (logo, placeholders, etc.)
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/managerbp/public/uploads/static/**",
+      }
     ],
   },
 };

@@ -108,10 +108,16 @@ export const columns: ColumnDef<Employee>[] = [
       return (
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarImage
-              className="object-cover"
-              src={data.image ? `${uploadsUrl}/${data.image}` : "/default-user.png"}
-            />
+<AvatarImage
+  className="object-cover"
+  src={
+    data.image
+      ? `http://localhost/managerbp/public/uploads/sellers/${data.image}`
+      : "/default-user.png"
+  }
+/>
+
+
 
 
             <AvatarFallback>{getInitials(data.name)}</AvatarFallback>
