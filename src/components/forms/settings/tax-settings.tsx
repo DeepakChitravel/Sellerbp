@@ -1,100 +1,205 @@
+// components/settings/TaxSettings.tsx - FIXED DATA LOADING
 "use client";
 import FormInputs from "@/components/form-inputs";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { GST_TYPES } from "@/constants";
-import { updateSiteSettings } from "@/lib/api/site-settings";
+import { GST_TYPES, GST_PERCENTAGES } from "@/constants";
+import { getTaxSettings, updateTaxSettings } from "@/lib/api/tax-settings";
 import { handleToast, validateGSTIN } from "@/lib/utils";
-import { InputField, siteSettings } from "@/types";
-import React, { useState } from "react";
+import { InputField } from "@/types";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+interface TaxSettingsData {
+  gstNumber?: string | null;
+  gstType?: string | null;
+  taxPercent?: number | null;
+}
+
 interface Props {
-  settingsData: siteSettings;
+  initialData?: TaxSettingsData;
 }
 
 interface Form {
   [key: string]: InputField;
 }
 
-const TaxSettings = ({ settingsData }: Props) => {
+const TaxSettings = ({ initialData }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isGSTDisplayed, setIsGSTDisplayed] = useState<boolean>(
-    settingsData?.gstNumber ? true : false
-  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [isGSTDisplayed, setIsGSTDisplayed] = useState<boolean>(false);
+  const [settings, setSettings] = useState<TaxSettingsData>({
+    gstNumber: "",
+    gstType: GST_TYPES[0]?.value || "",
+    taxPercent: null
+  });
 
-  const [gstNumber, setGstNumber] = useState<string>(settingsData?.gstNumber);
-  const [gstType, setGstType] = useState<string>(
-    settingsData?.gstType ? settingsData?.gstType : GST_TYPES[0].value
-  );
+  // Load settings on component mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getTaxSettings();
+      
+      if (response?.success && response.data) {
+        const data = response.data;
+        
+        // ✅ ALWAYS set the form data from DB (even if empty)
+        setSettings({
+          gstNumber: data.gst_number || "",
+          gstType: data.gst_type || GST_TYPES[0]?.value || "",
+          taxPercent: data.tax_percent !== null ? data.tax_percent : null
+        });
+        
+        // ✅ SIMPLE LOGIC: Switch should be ON if ANY field has value in DB
+        const hasAnyValue = 
+          (data.gst_number && data.gst_number.trim() !== "") ||
+          (data.gst_type && data.gst_type.trim() !== "") ||
+          data.tax_percent !== null;
+        
+        console.log("🔍 Load Settings - DB Data:", data);
+        console.log("🔍 Load Settings - Has Any Value:", hasAnyValue);
+        
+        setIsGSTDisplayed(hasAnyValue);
+      }
+    } catch (error) {
+      console.error("Failed to load tax settings:", error);
+    }
+    setIsLoading(false);
+  };
 
   const inputFields: Form = {
     gstType: {
       type: "select",
-      value: gstType,
-      setValue: setGstType,
+      value: settings.gstType || "",
+      setValue: (value) => setSettings(prev => ({ ...prev, gstType: value })),
       label: "GST Type",
       options: GST_TYPES,
+      required: true,
       containerClassName: "md:col-span-6",
     },
     gstNumber: {
       type: "text",
-      value: gstNumber,
-      setValue: setGstNumber,
+      value: settings.gstNumber || "",
+      setValue: (value) => setSettings(prev => ({ ...prev, gstNumber: value })),
       label: "GST Number",
       placeholder: "Enter GST number",
+      required: true,
+      containerClassName: "md:col-span-6",
+    },
+    taxPercent: {
+      type: "select",
+      value: settings.taxPercent?.toString() || "",
+      setValue: (value) => setSettings(prev => ({ 
+        ...prev, 
+        taxPercent: value !== "" ? parseFloat(value) : null 
+      })),
+      label: "Tax Percentage",
+      placeholder: "Select tax percentage",
+      options: GST_PERCENTAGES,
+      required: true,
       containerClassName: "md:col-span-6",
     },
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
-
-    if (!validateGSTIN(gstNumber)) {
-      toast.error("Invalid GST number");
-      setIsLoading(false);
+    // ✅ VALIDATION
+    if (!settings.gstNumber?.trim()) {
+      toast.error("GST Number is required");
+      return;
+    }
+    if (!settings.gstType?.trim()) {
+      toast.error("GST Type is required");
+      return;
+    }
+    if (settings.taxPercent === null || settings.taxPercent === undefined) {
+      toast.error("Tax Percentage is required");
+      return;
+    }
+    if (settings.gstNumber && !validateGSTIN(settings.gstNumber)) {
+      toast.error("Invalid GST number format");
       return;
     }
 
+    setIsSaving(true);
     try {
-      const data = {
-        gstNumber,
-        gstType,
-      };
+      const response = await updateTaxSettings({
+        gstNumber: settings.gstNumber.trim(),
+        gstType: settings.gstType.trim(),
+        taxPercent: settings.taxPercent
+      });
 
-      const response = await updateSiteSettings(data);
-
-      handleToast(response);
+      if (response.success) {
+        toast.success("Tax settings saved");
+        // ✅ Switch should ALWAYS be ON after saving
+        setIsGSTDisplayed(true);
+        // Reload to confirm
+        await loadSettings();
+      } else {
+        toast.error(response.message || "Failed to save");
+      }
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to save settings");
     }
-    setIsLoading(false);
+    setIsSaving(false);
   };
 
   const handleSwitch = async () => {
-    setIsGSTDisplayed((prev) => !prev);
-
-    let response;
-    if (isGSTDisplayed) {
-      response = await updateSiteSettings({
-        gstNumber: null,
-        gstType: null,
-      });
-      handleToast(response);
+    const newState = !isGSTDisplayed;
+    
+    if (newState === false) {
+      // Turning OFF - Clear data from DB
+      try {
+        const response = await updateTaxSettings({
+          gstNumber: null,
+          gstType: null,
+          taxPercent: null
+        });
+        
+        if (response.success) {
+          setSettings({
+            gstNumber: "",
+            gstType: GST_TYPES[0]?.value || "",
+            taxPercent: null
+          });
+          setIsGSTDisplayed(false);
+          toast.success("Tax settings cleared");
+        }
+      } catch (error) {
+        toast.error("Failed to clear tax settings");
+      }
     } else {
-      response = await updateSiteSettings({
-        gstNumber,
-        gstType,
-      });
+      // Turning ON - Just show form, don't touch DB
+      setIsGSTDisplayed(true);
     }
   };
 
+  const isSaveDisabled = 
+    isSaving || 
+    !settings.gstNumber?.trim() || 
+    !settings.gstType?.trim() || 
+    settings.taxPercent === null;
+
+  if (isLoading) {
+    return <div className="p-4 text-center">Loading tax settings...</div>;
+  }
+
   return (
-    <>
-      <div className="flex justify-end absolute right-0 top-1">
+    <div className="bg-white rounded-xl p-5 relative">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h3 className="font-medium text-lg">Tax Settings</h3>
+          <p className="text-black/50 text-sm mt-1">
+            Configure GST and tax percentage for your business
+          </p>
+        </div>
+        
         <Switch
-          onClick={handleSwitch}
-          defaultChecked={settingsData?.gstNumber ? true : false}
+          checked={isGSTDisplayed}
+          onCheckedChange={handleSwitch}
         />
       </div>
 
@@ -105,15 +210,15 @@ const TaxSettings = ({ settingsData }: Props) => {
           <div className="flex items-center justify-end mt-6">
             <Button
               onClick={handleSave}
-              disabled={isLoading}
-              isLoading={isLoading}
+              disabled={isSaveDisabled}
+              isLoading={isSaving}
             >
-              Save Changes
+              Save Tax Settings
             </Button>
           </div>
         </>
       )}
-    </>
+    </div>
   );
 };
 
