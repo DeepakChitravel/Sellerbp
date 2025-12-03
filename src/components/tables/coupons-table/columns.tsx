@@ -38,7 +38,7 @@ function Action({ id, couponId }: { id: number; couponId: string }) {
 
   const handleDelete = async () => {
     try {
-      const response = await deleteCoupon(id);
+const response = await deleteCoupon(couponId);
       toast.success(response.message);
       refresh();
     } catch (error: any) {
@@ -112,7 +112,7 @@ export const columns: ColumnDef<Coupon>[] = [
     cell: ({ row }) => {
       const data = row.original;
 
-      const currency = data.user.siteSettings[0].currency;
+      const currency = data?.user?.siteSettings?.[0]?.currency || "USD";
       const symbol = getSymbolFromCurrency(currency);
 
       let content;
@@ -155,13 +155,15 @@ export const columns: ColumnDef<Coupon>[] = [
       );
     },
   },
-  {
-    header: "Created At",
-    cell: ({ row }) => {
-      const data = row.original;
-      return formatDate(new Date(data.createdAt));
-    },
+{
+  header: "Created At",
+  cell: ({ row }) => {
+    const data = row.original;
+
+    return formatDate(new Date(data.createdAt)).replace(/\,\s*\d+.*$/, "");
   },
+},
+
   {
     header: "Action",
     cell: ({ row }) => {

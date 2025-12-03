@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { handleToast } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { CouponFormProps } from "@/types";
-import { addCoupon, updateCoupon } from "@/lib/api/coupons";
+import { addCoupon } from "@/lib/api/coupons-client";  // client API
+import { updateCoupon } from "@/lib/api/coupons";       // server API is okay for update
 import UsageLimit from "./coupon-forms/usage-limit";
 import BookingAmount from "./coupon-forms/booking-amount";
 import CouponDate from "./coupon-forms/date";
@@ -34,16 +35,17 @@ const CouponForm = ({ couponId, couponData, isEdit }: CouponFormProps) => {
     setIsLoading(true);
 
     try {
-      const data = {
-        name,
-        code,
-        discountType,
-        discount,
-        startDate,
-        endDate,
-        usageLimit,
-        minBookingAmount,
-      };
+const data = {
+  name,
+  code,
+  discountType,
+  discount,
+  startDate: startDate ? new Date(startDate).toISOString() : null,
+  endDate: endDate ? new Date(endDate).toISOString() : null,
+  usageLimit,
+  minBookingAmount,
+};
+
 
       const response = !isEdit
         ? await addCoupon(data)

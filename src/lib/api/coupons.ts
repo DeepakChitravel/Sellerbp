@@ -1,4 +1,4 @@
-// coupons.ts - COMPLETE FIXED VERSION
+// coupons.ts - FINAL FIXED VERSION
 "use server";
 
 import { apiUrl } from "@/config";
@@ -6,62 +6,46 @@ import { couponData, couponsParams } from "@/types";
 import axios from "axios";
 import { cookies } from "next/headers";
 
-// Helper function: Convert camelCase to snake_case
+/* ------------------------------------------
+   HELPERS: camelCase ↔ snake_case
+------------------------------------------ */
 const camelToSnake = (obj: any): any => {
-  if (typeof obj !== 'object' || obj === null) return obj;
+  if (typeof obj !== "object" || obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(camelToSnake);
 
-  if (Array.isArray(obj)) {
-    return obj.map(camelToSnake);
-  }
-
-  const snakeObj: any = {};
+  const newObj: any = {};
   for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-      snakeObj[snakeKey] = camelToSnake(obj[key]);
-    }
+    newObj[key.replace(/([A-Z])/g, "_$1").toLowerCase()] = camelToSnake(obj[key]);
   }
-  return snakeObj;
+  return newObj;
 };
 
-// Helper function: Convert snake_case to camelCase
 const snakeToCamel = (obj: any): any => {
-  if (typeof obj !== 'object' || obj === null) return obj;
+  if (typeof obj !== "object" || obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(snakeToCamel);
 
-  if (Array.isArray(obj)) {
-    return obj.map(snakeToCamel);
-  }
-
-  const camelObj: any = {};
+  const newObj: any = {};
   for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-      camelObj[camelKey] = snakeToCamel(obj[key]);
-    }
+    newObj[key.replace(/_([a-z])/g, (_, l) => l.toUpperCase())] =
+      snakeToCamel(obj[key]);
   }
-  return camelObj;
+  return newObj;
 };
 
-/* ---------------------------------------------------------
+/* ------------------------------------------
    GET ALL COUPONS
---------------------------------------------------------- */
+------------------------------------------ */
 export const getAllCoupons = async (params: couponsParams) => {
   const token = cookies().get("token")?.value;
   const user_id = cookies().get("user_id")?.value;
 
-  console.log("SERVER USER_ID COOKIE =>", user_id);
-
-  if (!user_id) {
-    return { totalPages: 1, totalRecords: 0, records: [] };
-  }
+  if (!user_id) return { totalPages: 1, totalRecords: 0, records: [] };
 
   const url = `${apiUrl}/seller/coupons/get.php`;
 
   try {
     const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
       params: {
         user_id,
         limit: params.limit ?? 10,
@@ -70,7 +54,6 @@ export const getAllCoupons = async (params: couponsParams) => {
       },
     });
 
-    // Convert snake_case to camelCase for frontend
     if (response.data.success && response.data.records) {
       response.data.records = snakeToCamel(response.data.records);
     }
@@ -82,44 +65,42 @@ export const getAllCoupons = async (params: couponsParams) => {
   }
 };
 
-/* ---------------------------------------------------------
+/* ------------------------------------------
    ADD COUPON
---------------------------------------------------------- */
+------------------------------------------ */
 export const addCoupon = async (data: couponData) => {
-  const token = cookies().get("token")?.value;
-  const url = `${apiUrl}/seller/coupons/create.php`;
+  const token = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("token="))
+    ?.split("=")[1];
 
-  // Convert camelCase to snake_case for backend
-  const formattedData = camelToSnake(data);
+  const user_id = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("user_id="))
+    ?.split("=")[1];
 
-  console.log("Adding coupon - Frontend data:", data);
-  console.log("Adding coupon - Backend data:", formattedData);
+  const url = `${apiUrl}/seller/coupons/create.php?user_id=${user_id}`;
 
-  try {
-    const response = await axios.post(url, formattedData, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const formatted = camelToSnake(data);
 
-    return response.data;
-  } catch (error: any) {
-    console.error("Add coupon error:", error.response?.data || error);
-    return (
-      error.response?.data || {
-        success: false,
-        message: "Server unreachable",
-      }
-    );
-  }
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(formatted),
+  });
+
+  return res.json();
 };
 
-/* ---------------------------------------------------------
+/* ------------------------------------------
    GET SINGLE COUPON (EDIT PAGE)
---------------------------------------------------------- */
+------------------------------------------ */
 export const getCoupon = async (couponId: string) => {
   const token = cookies().get("token")?.value;
+
   const url = `${apiUrl}/seller/coupons/single.php?coupon_id=${couponId}`;
 
   try {
@@ -127,73 +108,64 @@ export const getCoupon = async (couponId: string) => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!response.data?.success) {
-      console.log("Coupon not found or error:", response.data);
-      return false;
-    }
+    if (!response.data?.success) return false;
 
-    // Convert snake_case to camelCase for frontend
-    if (response.data.data) {
-      response.data.data = snakeToCamel(response.data.data);
-    }
+    // Convert fields
+    let camel = snakeToCamel(response.data.data);
 
-    return response.data;
+    camel.startDate = camel.startDate ? new Date(camel.startDate) : null;
+    camel.endDate = camel.endDate ? new Date(camel.endDate) : null;
+
+    camel.discount = Number(camel.discount);
+    camel.usageLimit = camel.usageLimit ? Number(camel.usageLimit) : null;
+    camel.minBookingAmount = camel.minBookingAmount
+      ? Number(camel.minBookingAmount)
+      : null;
+
+    return camel; // IMPORTANT FIX
   } catch (error) {
     console.error("Get single coupon error:", error);
     return false;
   }
 };
 
-/* ---------------------------------------------------------
+/* ------------------------------------------
    DELETE COUPON
---------------------------------------------------------- */
-export const deleteCoupon = async (id: number) => {
+------------------------------------------ */
+export const deleteCoupon = async (couponId: string) => {
   const token = cookies().get("token")?.value;
-  const url = `${apiUrl}/seller/coupons/delete.php?id=${id}`;
+  const user_id = cookies().get("user_id")?.value;
 
-  try {
-    const response = await axios.delete(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const url = `${apiUrl}/seller/coupons/delete.php?coupon_id=${couponId}&user_id=${user_id}`;
 
-    return response.data;
-  } catch (error: any) {
-    console.error("Delete coupon error:", error.response?.data || error);
-    throw error.response?.data || { success: false, message: "Delete failed" };
-  }
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return res.json();
 };
 
-/* ---------------------------------------------------------
-   UPDATE COUPON
---------------------------------------------------------- */
+/* ------------------------------------------
+   UPDATE COUPON  (FINAL FIXED VERSION)
+------------------------------------------ */
 export const updateCoupon = async (couponId: string, data: any) => {
   const token = cookies().get("token")?.value;
-  const url = `${apiUrl}/seller/coupons/update.php?id=${couponId}`;
+  const user_id = cookies().get("user_id")?.value;
 
-  // Convert camelCase to snake_case for backend
+  const url = `${apiUrl}/seller/coupons/update.php?coupon_id=${couponId}&user_id=${user_id}`;
+
   const formattedData = camelToSnake(data);
 
-  console.log("Updating coupon", couponId, "- Frontend data:", data);
-  console.log("Updating coupon", couponId, "- Backend data:", formattedData);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(formattedData),
+  });
 
-  try {
-    const response = await axios.post(url, formattedData, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    return response.data;
-  } catch (error: any) {
-    console.error("Update coupon error:", error.response?.data || error);
-    return (
-      error.response?.data || {
-        success: false,
-        message: "Server unreachable",
-      }
-    );
-  }
+  return response.json();
 };
+

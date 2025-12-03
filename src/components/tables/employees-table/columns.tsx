@@ -160,8 +160,6 @@ export const columns: ColumnDef<Employee>[] = [
   },
 },
 
-
-
   {
     header: "Joined Date",
     cell: ({ row }) => {
