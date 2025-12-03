@@ -1,29 +1,60 @@
 "use client";
 import FormInputs from "@/components/form-inputs";
 import { Button } from "@/components/ui/button";
-import { updateSiteSettings } from "@/lib/api/site-settings";
-import { handleToast } from "@/lib/utils";
-import { InputField, siteSettings } from "@/types";
-import React, { useState } from "react";
+import { getSocialSettings, updateSocialSettings } from "@/lib/api/social-settings";
+import { InputField } from "@/types";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-interface Props {
-  settingsData: siteSettings;
+interface SocialSettingsData {
+  facebook?: string;
+  twitter?: string;
+  instagram?: string;
+  linkedin?: string;
+  youtube?: string;
+  pinterest?: string;
 }
 
 interface Form {
   [key: string]: InputField;
 }
 
-const SeoSettings = ({ settingsData }: Props) => {
+const SocialSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
-  const [facebook, setFacebook] = useState<string>(settingsData?.facebook);
-  const [twitter, setTwitter] = useState<string>(settingsData?.twitter);
-  const [instagram, setInstagram] = useState<string>(settingsData?.instagram);
-  const [linkedin, setLinkedin] = useState<string>(settingsData?.linkedin);
-  const [youtube, setYoutube] = useState<string>(settingsData?.youtube);
-  const [pinterest, setPinterest] = useState<string>(settingsData?.pinterest);
+  const [facebook, setFacebook] = useState<string>("");
+  const [twitter, setTwitter] = useState<string>("");
+  const [instagram, setInstagram] = useState<string>("");
+  const [linkedin, setLinkedin] = useState<string>("");
+  const [youtube, setYoutube] = useState<string>("");
+  const [pinterest, setPinterest] = useState<string>("");
+
+  // Fetch settings on component mount
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setIsFetching(true);
+    try {
+      const response = await getSocialSettings();
+      
+      if (response.success && response.data) {
+        const data = response.data;
+        setFacebook(data.facebook || "");
+        setTwitter(data.twitter || "");
+        setInstagram(data.instagram || "");
+        setLinkedin(data.linkedin || "");
+        setYoutube(data.youtube || "");
+        setPinterest(data.pinterest || "");
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const inputFields: Form = {
     facebook: {
@@ -80,23 +111,37 @@ const SeoSettings = ({ settingsData }: Props) => {
     setIsLoading(true);
 
     try {
-      const data = {
-        facebook,
-        twitter,
-        instagram,
-        linkedin,
-        youtube,
-        pinterest,
+      const data: SocialSettingsData = {
+        facebook: facebook || "",
+        twitter: twitter || "",
+        instagram: instagram || "",
+        linkedin: linkedin || "",
+        youtube: youtube || "",
+        pinterest: pinterest || "",
       };
 
-      const response = await updateSiteSettings(data);
+      const response = await updateSocialSettings(data);
 
-      handleToast(response);
+      if (response?.success) {
+        toast.success(response.message || "Social settings updated successfully!");
+      } else {
+        toast.error(response?.message || "Failed to update settings");
+      }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Save error:", error);
+      toast.error(error.message || "An error occurred while saving");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
+
+  if (isFetching) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -111,4 +156,4 @@ const SeoSettings = ({ settingsData }: Props) => {
   );
 };
 
-export default SeoSettings;
+export default SocialSettings;

@@ -31,8 +31,8 @@ const AreaForm = ({ isEdit, data }: AvailableAreaFormProps) => {
 
   useEffect(() => {
     async function getCities() {
-      const country = userData?.siteSettings[0].country;
-      const state = userData?.siteSettings[0].state;
+      const country = userData?.siteSettings?.[0]?.country;
+      const state = userData?.siteSettings?.[0]?.state;
 
       let cities = await citiesByStateAndCountry(
         country as string,
