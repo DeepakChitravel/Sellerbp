@@ -42,36 +42,35 @@ export const currentUser = async () => {
 
 
 // Update a user data
-export const updateUser = async (data: updateUserData) => {
+export const updateUser = async (data: any) => {
   const token = cookies().get("token")?.value;
 
   try {
-    const response = await axios.put(
-      `${apiUrl}/seller/auth/update.php`,
+    const response = await axios.post(
+      `${apiUrl}/seller/users/update-profile.php`,
       data,
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",   // ⭐ IMPORTANT ⭐
+          "Content-Type": "application/json",
         },
       }
     );
 
-    console.log("UPDATE RESPONSE:", response.data);
-
     return {
       success: response.data.success,
-      message: response.data.message || "Profile updated.",
+      message: response.data.message,
     };
-  } catch (error: any) {
-    console.log("UPDATE ERROR:", error?.response?.data);
 
+  } catch (error: any) {
     return {
       success: false,
       message: error?.response?.data?.message || "Update failed.",
     };
   }
 };
+
+
 
 
 

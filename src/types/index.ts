@@ -598,12 +598,14 @@ export type updateAppointmentData = {
 };
 
 export type updateUserData = {
+  user_id: number;
   name: string;
   email: string;
   phone: string;
   country: string;
   image: string;
 };
+
 
 export type changePasswordData = {
   currentPassword: string;

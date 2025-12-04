@@ -7,6 +7,7 @@ import { handleToast } from "@/lib/utils";
 import { InputField, User } from "@/types";
 import React, { useState } from "react";
 import { toast } from "sonner";
+import ProfileImage from "@/components/forms/settings/profile-image";
 
 interface Props {
   user: User;
@@ -23,7 +24,7 @@ const ProfileSettings = ({ user }: Props) => {
   const [email, setEmail] = useState<string>(user?.email);
   const [phone, setPhone] = useState<string>(user?.phone);
   const [country, setCountry] = useState<string>(user?.country);
-  const [image, setImage] = useState<string>(user?.image);
+  const [image, setImage] = useState<any>(user?.image);
 
   const inputFields: Form = {
     name: {
@@ -58,40 +59,57 @@ const ProfileSettings = ({ user }: Props) => {
       options: COUNTRIES,
       containerClassName: "md:col-span-6",
     },
-    image: {
-      type: "file",
-      value: image,
-      setValue: setImage,
-      label: "Your Photo",
-      containerClassName: "md:col-span-6",
-    },
   };
 
-const handleSave = async () => {
-  setIsLoading(true);
+  const handleSave = async () => {
+    setIsLoading(true);
 
-  try {
-    const response = await updateUser({
-      name,
-      email,
-      phone,
-      country,
-      image, // keep this even if null
-    });
+    let uploadedImage = image;
 
-    handleToast(response);
-  } catch (error: any) {
-    toast.error(error.message);
-  }
+    if (image instanceof File) {
+      const formData = new FormData();
+      formData.append("file", image);
 
-  setIsLoading(false);
-};
+      const uploadRes = await fetch(
+        `http://localhost/managerbp/public/seller/users/upload-profile.php?user_id=${user.user_id}`,
+        { method: "POST", body: formData }
+      );
+
+      const result = await uploadRes.json();
+      if (result.success) {
+        uploadedImage = result.filename;
+      }
+    }
+
+    try {
+      const response = await updateUser({
+        user_id: user.user_id,
+        name,
+        email,
+        phone,
+        country,
+        image: uploadedImage,
+      });
 
 
+      handleToast(response);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+
+    setIsLoading(false);
+  };
+console.log("PROFILE USER:", user);
 
   return (
     <>
       <FormInputs inputFields={inputFields} />
+      <ProfileImage
+        value={image}
+        setValue={setImage}
+        userId={user.user_id}
+      />
+
 
       <div className="flex items-center justify-end mt-6">
         <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
