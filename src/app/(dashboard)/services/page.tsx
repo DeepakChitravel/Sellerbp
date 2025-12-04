@@ -23,7 +23,7 @@ const Services = async ({
       <div className="flex items-center justify-between gap-5 mb-5">
         <h1 className="text-2xl font-bold">Services</h1>
 
-        <Link href="/dashboard/services/add">
+        <Link href="/services/add">
           <Button variant="success">
             <span className="mobile_l:block hidden">Add Service</span>
             <span className="mobile_l:hidden block">

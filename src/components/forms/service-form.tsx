@@ -52,18 +52,20 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
     serviceData?.metaDescription
   );
 
-  const [image, setImage] = useState<string>(
-    serviceData?.image && serviceData?.image.replace(uploadsUrl, "")
-  );
+const [image, setImage] = useState<string>(serviceData?.image || "");
 
-  useEffect(() => {
-    let additionalImagesArray: string[] = [];
+useEffect(() => {
+  // When adding a new service → no additionalImages available
+  if (!serviceData?.additionalImages || !Array.isArray(serviceData.additionalImages)) {
+    setAdditionalImages([]);
+    return;
+  }
 
-    serviceData?.additionalImages.map((image) => {
-      additionalImagesArray.push(image.image);
-    });
-    setAdditionalImages(additionalImagesArray);
-  }, [serviceData]);
+  // When editing → images exist
+  const arr = serviceData.additionalImages.map((img) => img.image);
+  setAdditionalImages(arr);
+}, [serviceData]);
+
 
   const handleSave = async () => {
     setIsLoading(true);

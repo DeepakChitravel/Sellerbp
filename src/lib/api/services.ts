@@ -10,99 +10,94 @@ const route = "/services";
 // Get all services
 export const getAllServices = async (params: servicesParams) => {
   const token = cookies().get("token")?.value;
-  const url = `${apiUrl + route}`;
+  const user_id = cookies().get("user_id")?.value;
 
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    params: {
-      limit: params.limit ? params.limit : 10,
-      page: params.page && params.page >= 1 ? params.page : 1,
-      q: params.q,
-    },
-  };
+  const url = `${apiUrl}/seller/services/get.php`;
 
   try {
-    const response = await axios.get(url, options);
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: {
+        user_id,
+        limit: params.limit ?? 10,
+        page: params.page ?? 1,
+        q: params.q ?? "",
+      },
+    });
+
     return response.data;
   } catch (error: any) {
     return false;
   }
 };
+
 
 // Get single service
 export const getService = async (serviceId: string) => {
   const token = cookies().get("token")?.value;
-  const url = `${apiUrl + route}/${serviceId}`;
 
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
+  const url = `${apiUrl}/seller/services/single.php?service_id=${serviceId}`;
 
   try {
-    const response = await axios.get(url, options);
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     return response.data;
   } catch (error: any) {
     return false;
   }
 };
 
+
 // Add a service
 export const addService = async (data: serviceData) => {
   const token = cookies().get("token")?.value;
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
+  const user_id = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl + route}`;
+  const url = `${apiUrl}/seller/services/create.php?user_id=${user_id}`;
 
   try {
-    const response = await axios.post(url, data, options);
-    return { success: true, message: response.data.message };
+    const response = await axios.post(url, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return { success: response.data.success, message: response.data.message };
   } catch (error: any) {
-    return { success: false, message: error.response.data.message };
+    return { success: false, message: error?.response?.data?.message || "Failed" };
   }
 };
+
 
 // Update a service
 export const updateService = async (serviceId: string, data: serviceData) => {
   const token = cookies().get("token")?.value;
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
+  const user_id = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl + route}/${serviceId}`;
+  const url = `${apiUrl}/seller/services/update.php?service_id=${serviceId}&user_id=${user_id}`;
 
   try {
-    const response = await axios.put(url, data, options);
-    return { success: true, message: response.data.message };
+    const response = await axios.post(url, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return { success: response.data.success, message: response.data.message };
   } catch (error: any) {
-    return { success: false, message: error.response.data.message };
+    return { success: false, message: error?.response?.data?.message || "Failed" };
   }
 };
+
+
 
 // Delete a service
-export const deleteService = async (id: number) => {
-  const token = cookies().get("token")?.value;
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const url = `${apiUrl + route}/${id}`;
+export const deleteService = async (serviceId: string) => {
+  const url = `${apiUrl}/seller/services/delete.php?service_id=${serviceId}`;
 
   try {
-    const response = await axios.delete(url, options);
+    const response = await axios.delete(url);
     return response.data;
   } catch (error: any) {
-    throw error.response.data;
+    return false;
   }
 };
+
+

@@ -4,10 +4,16 @@ import { notFound } from "next/navigation";
 
 const Service = async ({ params: { id } }: { params: { id: string } }) => {
   let service = null;
-  if (id !== "add") service = await getService(id);
 
-  // Validate the service
-  if (service === false) return notFound();
+  // Only fetch when editing
+  if (id !== "add") {
+    service = await getService(id);
+
+    if (!service || service.success === false) {
+      return notFound();
+    }
+  }
+
   return (
     <>
       <h1 className="text-2xl font-bold mb-5">
@@ -16,8 +22,8 @@ const Service = async ({ params: { id } }: { params: { id: string } }) => {
 
       <ServiceForm
         serviceId={id}
-        serviceData={service}
-        isEdit={service && true}
+        serviceData={id === "add" ? null : service.data}   // 🔥 handle add/edit correctly
+        isEdit={id !== "add"}
       />
     </>
   );

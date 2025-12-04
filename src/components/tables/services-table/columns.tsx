@@ -39,7 +39,7 @@ function Action({ id, serviceId }: { id: number; serviceId: string }) {
 
   const handleDelete = async () => {
     try {
-      const response = await deleteService(id);
+      const response = await deleteService(serviceId);
       toast.success(response.message);
       refresh();
     } catch (error: any) {
@@ -106,7 +106,7 @@ export const columns: ColumnDef<Service>[] = [
       const data = row.original;
       return (
         <Image
-          src={`${uploadsUrl}/${data.image}`}
+          src={data.image?.startsWith("http") ? data.image : `${uploadsUrl}/${data.image}`}
           alt={data.name}
           width={50}
           height={50}
@@ -132,7 +132,7 @@ export const columns: ColumnDef<Service>[] = [
     cell: ({ row }) => {
       const data = row.original;
 
-      const currency = data.user.siteSettings[0].currency;
+      const currency = data?.user?.siteSettings?.[0]?.currency || "INR";
       const symbol = getSymbolFromCurrency(currency);
 
       return (
@@ -161,7 +161,7 @@ export const columns: ColumnDef<Service>[] = [
     cell: ({ row }) => {
       const data = row.original;
 
-      return <Action id={data.id} serviceId={data.serviceId} />;
+      return <Action id={data.id} serviceId={data.service_id} />;
     },
   },
 ];
