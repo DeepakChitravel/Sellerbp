@@ -463,7 +463,7 @@ function AvailableDays({ user_id }: Props) {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <Calendar className="w-5 h-5 text-gray-700" />
-          <h3 className="font-semibold text-lg text-gray-800">Business Hours</h3>
+          <h3 className="font-semibold text-lg text-gray-800">Available Days</h3>
         </div>
         <p className="text-gray-600 text-sm">
           Set your weekly operating hours. Disabled days will not store time data.
