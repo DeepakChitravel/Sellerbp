@@ -3,17 +3,77 @@
 import { useEffect, useState } from "react";
 import { getPlans } from "@/lib/api/plans";
 
+interface Plan {
+  id: number;
+  name: string;
+  amount: number;
+  previous_amount: number;
+  duration: number;
+  description: string;
+  feature_lists: string[];
+  is_trial: boolean;
+}
+
 export default function UpgradePage() {
-  const [plans, setPlans] = useState([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [filteredPlans, setFilteredPlans] = useState<Plan[]>([]);
   const [duration, setDuration] = useState("yearly");
+  const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  getPlans().then((res: any) => {
-    console.log("PLANS RES:", res);
-    if (res.success) setPlans(res.data);
-  });
-}, []);
+  useEffect(() => {
+    getPlans().then((res: any) => {
+      console.log("PLANS RES:", res);
+      if (res.success) {
+        setPlans(res.data);
+        filterPlansByDuration(res.data, "yearly");
+      }
+      setLoading(false);
+    });
+  }, []);
 
+  const getPlanType = (durationDays: number) => {
+    const isMonthly = (durationDays % 30 === 0) && (durationDays % 365 !== 0);
+    const isYearly = (durationDays % 365 === 0);
+
+    if (isMonthly) return "monthly";
+    if (isYearly) return "yearly";
+    return "other";
+  };
+
+  const filterPlansByDuration = (allPlans: Plan[], selectedDuration: string) => {
+    const filtered = allPlans.filter((plan: Plan) => {
+      const planType = getPlanType(plan.duration);
+      return planType === selectedDuration;
+    });
+    setFilteredPlans(filtered);
+  };
+
+  const handleDurationChange = (selectedDuration: string) => {
+    setDuration(selectedDuration);
+    filterPlansByDuration(plans, selectedDuration);
+  };
+
+  const formatDuration = (days: number) => {
+    if (days % 365 === 0) {
+      const years = days / 365;
+      return years === 1 ? "1 Year" : `${years} Years`;
+    } else if (days % 30 === 0) {
+      const months = days / 30;
+      return months === 1 ? "1 Month" : `${months} Months`;
+    }
+    return `${days} Days`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-5 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading plans...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-5">
@@ -28,84 +88,151 @@ useEffect(() => {
       <div className="flex justify-center mb-8">
         <div className="bg-white border rounded-full p-1 flex gap-2 shadow-sm">
           <button
-            onClick={() => setDuration("monthly")}
-            className={`px-5 py-2 rounded-full text-sm transition ${
-              duration === "monthly"
+            onClick={() => handleDurationChange("monthly")}
+            className={`px-5 py-2 rounded-full text-sm transition ${duration === "monthly"
                 ? "bg-blue-600 text-white"
                 : "text-gray-600"
-            }`}
+              }`}
           >
-            Monthly
+            Monthly Plans
           </button>
 
           <button
-            onClick={() => setDuration("yearly")}
-            className={`px-5 py-2 rounded-full text-sm transition ${
-              duration === "yearly"
+            onClick={() => handleDurationChange("yearly")}
+            className={`px-5 py-2 rounded-full text-sm transition ${duration === "yearly"
                 ? "bg-blue-600 text-white"
                 : "text-gray-600"
-            }`}
+              }`}
           >
-            Yearly
+            Yearly Plans
           </button>
         </div>
       </div>
 
+      {/* No Plans Message */}
+      {filteredPlans.length === 0 && (
+        <div className="max-w-2xl mx-auto text-center py-12">
+          <div className="bg-white rounded-2xl p-8 shadow-lg">
+            <div className="text-5xl mb-4">📭</div>
+            <h3 className="text-xl font-semibold mb-2">
+              No {duration} plans available
+            </h3>
+            <p className="text-gray-600">
+              We don't have any {duration} subscription plans at the moment.
+              Please check back later or contact support.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Pricing Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
-        {plans.map((p: any, i: number) => {
-const features = Array.isArray(p.feature_lists) ? p.feature_lists : [];
+        {filteredPlans.map((p: Plan, i: number) => {
+          const features = Array.isArray(p.feature_lists) ? p.feature_lists : [];
+          const planType = getPlanType(p.duration);
+          const formattedDuration = formatDuration(p.duration);
+
+          // Check if we should show the discount badge
+          const shouldShowDiscount = p.previous_amount &&
+            p.previous_amount > 0 &&
+            p.previous_amount > p.amount;
 
           return (
             <div
               key={i}
-              className={`relative p-6 rounded-2xl shadow-lg border backdrop-blur-xl transition hover:scale-[1.02] hover:shadow-xl ${
-                p.is_trial ? "bg-blue-600 text-white" : "bg-white"
-              }`}
+              className={`relative p-8 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${p.is_trial
+                  ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white border-blue-500"
+                  : planType === 'monthly'
+                    ? "bg-white border-blue-100"
+                    : "bg-white border-green-100"
+                }`}
             >
+              {/* Recommended Badge - TOP CENTER */}
               {p.is_trial && (
-                <span className="absolute top-3 right-3 bg-white/30 px-3 py-1 text-xs rounded-full">
-                  Recommended
-                </span>
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-white text-blue-700 px-4 py-1.5 text-xs font-semibold rounded-full shadow-lg">
+                    Recommended
+                  </span>
+                </div>
               )}
 
-              <h2 className="text-xl font-semibold mb-1">{p.name}</h2>
-
-              <div className="mt-5 mb-3">
-                <div className="text-gray-400 line-through text-sm">
-                  ₹{p.previous_amount}
+              {/* Plan Header - Align badge to left */}
+              <div className="text-left mb-6">
+                {/* Plan Type Badge - Left aligned */}
+                <div className="mb-4 flex justify-start">
+                  <span className={`inline-block px-4 py-1.5 text-xs font-semibold rounded-full ${planType === 'monthly'
+                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                      : 'bg-green-100 text-green-800 border border-green-200'
+                    }`}>
+                    {planType === 'monthly' ? 'Monthly' : 'Yearly'}
+                  </span>
                 </div>
 
-                <div className="text-4xl font-bold">
-                  ₹
-                  {duration === "yearly"
-                    ? p.amount
-                    : Math.round(p.amount / 12)}
-                </div>
+                <h2 className="text-2xl font-bold mb-2">{p.name}</h2>
 
-                <div className="text-sm mt-1 opacity-80">
-                  {duration === "yearly" ? "per year" : "per month"} ·{" "}
-                  {p.duration} days
-                </div>
-              </div>
-
-              <div className="mt-6 mb-6 text-sm space-y-2 h-64 overflow-y-auto pr-2">
-                {features.map((f: any, idx: number) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <span>•</span>
-                    <span>{f}</span>
+                {/* Price Section - Left aligned */}
+                <div className="text-left mb-4">
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className={`text-4xl font-bold ${p.is_trial ? 'text-white' : 'text-gray-900'}`}>
+                      ₹{p.amount}
+                    </span>
+                    <span className={`text-lg ${p.is_trial ? 'text-blue-100' : 'text-gray-600'}`}>
+                      /{formattedDuration}
+                    </span>
                   </div>
-                ))}
+
+                  {/* Original Price & Save Badge - ONLY show if there's a valid discount */}
+                  {shouldShowDiscount && (
+                    <div className={`text-sm mb-2 ${p.is_trial ? 'text-blue-200' : 'text-gray-500'}`}>
+                      <span className="line-through mr-2">₹{p.previous_amount}</span>
+                      <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                        Save {Math.round((1 - p.amount / p.previous_amount) * 100)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Description */}
+                {p.description && (
+                  <p className={`text-sm ${p.is_trial ? 'text-blue-100' : 'text-gray-600'} mb-4`}>
+                    {p.description}
+                  </p>
+                )}
               </div>
 
+              {/* Features List */}
+              <div className="border-t pt-6 mb-8">
+                <h4 className={`text-sm font-semibold mb-4 uppercase tracking-wider ${p.is_trial ? 'text-white' : 'text-gray-700'}`}>
+                  What's included:
+                </h4>
+                <div className="space-y-3">
+                  {features.map((f: string, idx: number) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${p.is_trial ? 'bg-blue-500' : planType === 'monthly' ? 'bg-blue-100' : 'bg-green-100'
+                        }`}>
+                        <span className={`text-xs ${p.is_trial ? 'text-white' : planType === 'monthly' ? 'text-blue-600' : 'text-green-600'
+                          }`}>
+                          ✓
+                        </span>
+                      </div>
+                      <span className={`text-sm ${p.is_trial ? 'text-blue-100' : 'text-gray-600'}`}>
+                        {f}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA Button */}
               <button
-                className={`w-full mt-3 py-2 rounded-lg font-medium transition ${
-                  p.is_trial
-                    ? "bg-white text-blue-700 hover:bg-gray-200"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
+                className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-md hover:shadow-lg ${p.is_trial
+                    ? "bg-white text-blue-700 hover:bg-gray-50"
+                    : planType === 'monthly'
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-green-600 text-white hover:bg-green-700"
+                  }`}
               >
-                Choose Plan
+                Choose {planType === 'monthly' ? 'Monthly' : 'Yearly'} Plan
               </button>
             </div>
           );
