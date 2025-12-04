@@ -6,13 +6,13 @@ const SettingsAvailableDays = async () => {
 
   return (
     <div>
-      <div className="mb-9 space-y-1.5">
+      {/* <div className="mb-9 space-y-1.5">
         <h3 className="font-medium">Available Days</h3>
         <p className="text-black/50 text-sm font-medium">
           Choose the days when customers can book appointments. Please note
           it&apos;s a 24hrs time (Railway timing)
         </p>
-      </div>
+      </div> */}
 
       <AvailableDays settingsData={user.siteSettings?.[0] ?? null} />
     </div>

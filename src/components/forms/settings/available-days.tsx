@@ -32,7 +32,7 @@ interface BusinessHoursData {
 function AvailableDays({ user_id }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const [businessHours, setBusinessHours] = useState<BusinessHoursData>({
     sunday: { enabled: false, startTime: "09:00", endTime: "17:00" },
     monday: { enabled: true, startTime: "09:00", endTime: "17:00" },
@@ -70,15 +70,15 @@ function AvailableDays({ user_id }: Props) {
   // Convert 24-hour time to 12-hour with AM/PM
   const formatTimeToAMPM = (time24: string): string => {
     if (!time24 || time24 === '') return "";
-    
+
     try {
       const [hours, minutes] = time24.split(':').map(Number);
       if (isNaN(hours) || isNaN(minutes)) return time24;
-      
+
       const period = hours >= 12 ? 'PM' : 'AM';
       let hours12 = hours % 12;
       if (hours12 === 0) hours12 = 12;
-      
+
       return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
     } catch (error) {
       return time24;
@@ -103,27 +103,27 @@ function AvailableDays({ user_id }: Props) {
   // Smart auto-formatting function for AM/PM input
   const formatTimeInput = (input: string): string | null => {
     if (!input) return null;
-    
+
     // Remove all non-alphanumeric characters except colon
     let cleanInput = input.replace(/[^a-zA-Z0-9:]/g, '').toUpperCase();
-    
+
     // Extract numbers
     const numbers = cleanInput.replace(/[^0-9]/g, '');
-    
+
     if (numbers.length === 0) return null;
-    
+
     // Extract AM/PM
     const hasAM = cleanInput.includes('AM') || cleanInput.includes('A');
     const hasPM = cleanInput.includes('PM') || cleanInput.includes('P');
-    
+
     let period = '';
     if (hasAM) period = 'AM';
     else if (hasPM) period = 'PM';
-    
+
     // Parse hour and minute
     let hour = 0;
     let minute = 0;
-    
+
     if (numbers.length <= 2) {
       // Just hour (e.g., "8" or "12")
       hour = parseInt(numbers);
@@ -136,16 +136,16 @@ function AvailableDays({ user_id }: Props) {
       hour = parseInt(numbers.substring(0, 2));
       minute = parseInt(numbers.substring(2, 4));
     }
-    
+
     // Validate hour (1-12 or 0-23)
     if (hour < 0 || hour > 23) return null;
-    
+
     // Validate minute (0-59)
     if (minute < 0 || minute > 59) return null;
-    
+
     // If hour is 0 and period is AM, convert to 12 AM
     if (hour === 0 && period === 'AM') hour = 12;
-    
+
     // If hour is > 12 and no period specified, assume 24-hour format
     if (hour > 12 && !period) {
       // Convert 24-hour to 12-hour with PM
@@ -157,30 +157,30 @@ function AvailableDays({ user_id }: Props) {
       // Default to AM if no period specified for 12-hour times
       period = 'AM';
     }
-    
+
     // Format with leading zeros
     const formattedHour = hour.toString().padStart(2, '0');
     const formattedMinute = minute.toString().padStart(2, '0');
-    
+
     return `${formattedHour}:${formattedMinute} ${period}`;
   };
 
   // Convert formatted AM/PM to 24-hour format
   const convertAMPMto24Hour = (time12: string): string | null => {
     if (!time12 || time12 === '') return null;
-    
+
     const formatted = formatTimeInput(time12);
     if (!formatted) return null;
-    
+
     const [timePart, period] = formatted.split(' ');
     let [hours, minutes] = timePart.split(':').map(Number);
-    
+
     if (period === 'PM' && hours < 12) {
       hours += 12;
     } else if (period === 'AM' && hours === 12) {
       hours = 0;
     }
-    
+
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
@@ -193,48 +193,48 @@ function AvailableDays({ user_id }: Props) {
     setIsLoading(true);
     try {
       const response = await getBusinessHours();
-      
+
       if (response?.success && response.data) {
         const data = response.data;
-        
+
         const newBusinessHours: BusinessHoursData = {
-          sunday: { 
-            enabled: data.sunday === 1, 
+          sunday: {
+            enabled: data.sunday === 1,
             startTime: data.sunday_starts || "09:00",
             endTime: data.sunday_ends || "17:00"
           },
-          monday: { 
-            enabled: data.monday === 1, 
+          monday: {
+            enabled: data.monday === 1,
             startTime: data.monday_starts || "09:00",
             endTime: data.monday_ends || "17:00"
           },
-          tuesday: { 
-            enabled: data.tuesday === 1, 
+          tuesday: {
+            enabled: data.tuesday === 1,
             startTime: data.tuesday_starts || "09:00",
             endTime: data.tuesday_ends || "17:00"
           },
-          wednesday: { 
-            enabled: data.wednesday === 1, 
+          wednesday: {
+            enabled: data.wednesday === 1,
             startTime: data.wednesday_starts || "09:00",
             endTime: data.wednesday_ends || "17:00"
           },
-          thursday: { 
-            enabled: data.thursday === 1, 
+          thursday: {
+            enabled: data.thursday === 1,
             startTime: data.thursday_starts || "09:00",
             endTime: data.thursday_ends || "17:00"
           },
-          friday: { 
-            enabled: data.friday === 1, 
+          friday: {
+            enabled: data.friday === 1,
             startTime: data.friday_starts || "09:00",
             endTime: data.friday_ends || "17:00"
           },
-          saturday: { 
-            enabled: data.saturday === 1, 
+          saturday: {
+            enabled: data.saturday === 1,
             startTime: data.saturday_starts || "09:00",
             endTime: data.saturday_ends || "17:00"
           },
         };
-        
+
         setBusinessHours(newBusinessHours);
       }
     } catch (error) {
@@ -249,10 +249,10 @@ function AvailableDays({ user_id }: Props) {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     // Format the input
     const convertedTime = convertAMPMto24Hour(value);
-    
+
     if (convertedTime) {
       setBusinessHours(prev => ({
         ...prev,
@@ -261,7 +261,7 @@ function AvailableDays({ user_id }: Props) {
           [field]: convertedTime
         }
       }));
-      
+
       // Update Apply to All inputs if this is a valid time
       if (applyStartRef.current && field === 'startTime') {
         applyStartRef.current.value = formatTimeToAMPM(convertedTime);
@@ -269,7 +269,7 @@ function AvailableDays({ user_id }: Props) {
       if (applyEndRef.current && field === 'endTime') {
         applyEndRef.current.value = formatTimeToAMPM(convertedTime);
       }
-      
+
       toast.success(`Time updated to ${formatTimeToAMPM(convertedTime)}`);
     } else if (value) {
       toast.error(`Invalid time format: "${value}". Use formats like "8:00 AM" or "08:00"`);
@@ -285,7 +285,7 @@ function AvailableDays({ user_id }: Props) {
         [field]: value
       }
     }));
-    
+
     // Update Apply to All inputs
     if (applyStartRef.current && field === 'startTime') {
       applyStartRef.current.value = formatTimeToAMPM(value);
@@ -363,24 +363,24 @@ function AvailableDays({ user_id }: Props) {
   const handleSetAllTimes = () => {
     const startValue = applyStartRef.current?.value || "";
     const endValue = applyEndRef.current?.value || "";
-    
+
     if (!startValue || !endValue) {
       toast.error("Please enter both start and end times");
       return;
     }
-    
+
     // Validate inputs before applying
     const formattedStart = convertAMPMto24Hour(startValue);
     const formattedEnd = convertAMPMto24Hour(endValue);
-    
+
     if (!formattedStart || !formattedEnd) {
       toast.error("Invalid time format. Use formats like '8:00 AM' or '08:00'");
       return;
     }
-    
+
     const updatedHours = { ...businessHours };
     let appliedCount = 0;
-    
+
     days.forEach(day => {
       if (updatedHours[day.key].enabled) {
         updatedHours[day.key] = {
@@ -391,9 +391,9 @@ function AvailableDays({ user_id }: Props) {
         appliedCount++;
       }
     });
-    
+
     setBusinessHours(updatedHours);
-    
+
     if (appliedCount > 0) {
       toast.success(`Time set to ${formatTimeToAMPM(formattedStart)} - ${formatTimeToAMPM(formattedEnd)} for ${appliedCount} open days`);
     } else {
@@ -404,8 +404,8 @@ function AvailableDays({ user_id }: Props) {
   // Handle Enter key press in type inputs - FIXED TYPE ERROR
   const handleTypeInputKeyPress = (e: React.KeyboardEvent, dayKey: string, field: 'startTime' | 'endTime') => {
     if (e.key === 'Enter') {
-      const input = field === 'startTime' 
-        ? typeInputRefs.current[dayKey]?.start 
+      const input = field === 'startTime'
+        ? typeInputRefs.current[dayKey]?.start
         : typeInputRefs.current[dayKey]?.end;
       if (input && input.value) {
         handleTimeChange(dayKey, field, input.value);
@@ -416,8 +416,8 @@ function AvailableDays({ user_id }: Props) {
 
   // Handle OK button click for type inputs - FIXED TYPE ERROR
   const handleTypeInputOkClick = (dayKey: string, field: 'startTime' | 'endTime') => {
-    const input = field === 'startTime' 
-      ? typeInputRefs.current[dayKey]?.start 
+    const input = field === 'startTime'
+      ? typeInputRefs.current[dayKey]?.start
       : typeInputRefs.current[dayKey]?.end;
     if (input && input.value) {
       handleTimeChange(dayKey, field, input.value);
@@ -463,7 +463,7 @@ function AvailableDays({ user_id }: Props) {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <Calendar className="w-5 h-5 text-gray-700" />
-          <h3 className="font-semibold text-lg text-gray-800">Business Hours</h3>
+          <h3 className="font-semibold text-lg text-gray-800">Available Days</h3>
         </div>
         <p className="text-gray-600 text-sm">
           Set your weekly operating hours. Disabled days will not store time data.
@@ -476,11 +476,11 @@ function AvailableDays({ user_id }: Props) {
           <Zap className="w-4 h-4 text-blue-600" />
           <h4 className="font-medium text-gray-800">Quick Actions</h4>
         </div>
-        
+
         <div className="mb-4">
           <div className="flex flex-wrap gap-2 mb-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => handleSetAllDays(true)}
               className="h-9 border-green-200 bg-green-50 hover:bg-green-100 text-green-700"
@@ -488,8 +488,8 @@ function AvailableDays({ user_id }: Props) {
               <CheckCircle className="w-4 h-4 mr-2" />
               Enable All Days
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => handleSetAllDays(false)}
               className="h-9 border-red-200 bg-red-50 hover:bg-red-100 text-red-700"
@@ -498,7 +498,7 @@ function AvailableDays({ user_id }: Props) {
               Disable All Days
             </Button>
           </div>
-          
+
           <div className="mb-4">
             <Label className="text-sm font-medium text-gray-700 mb-2 block">Quick Time Presets:</Label>
             <div className="flex flex-wrap gap-2">
@@ -520,13 +520,13 @@ function AvailableDays({ user_id }: Props) {
               ))}
             </div>
           </div>
-          
+
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="flex items-center gap-2 mb-3">
               <Settings className="w-4 h-4 text-blue-600" />
               <Label className="text-sm font-medium text-gray-700">Apply to All Open Days</Label>
             </div>
-            
+
             {/* FIXED: Aligned Apply to Open Days button properly */}
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto">
@@ -552,7 +552,7 @@ function AvailableDays({ user_id }: Props) {
                     }}
                   />
                 </div>
-                
+
                 <div className="space-y-1 min-w-[140px]">
                   <Label className="text-xs text-gray-500">End Time</Label>
                   <Input
@@ -576,9 +576,9 @@ function AvailableDays({ user_id }: Props) {
                   />
                 </div>
               </div>
-              
-              <Button 
-                variant="default" 
+
+              <Button
+                variant="default"
                 size="sm"
                 onClick={handleSetAllTimes}
                 className="h-9 bg-blue-600 hover:bg-blue-700 whitespace-nowrap w-full sm:w-auto"
@@ -586,7 +586,7 @@ function AvailableDays({ user_id }: Props) {
                 Apply to Open Days
               </Button>
             </div>
-            
+
             <p className="text-xs text-gray-500 mt-2">
               Tip: Editing any day's time will auto-fill these fields
             </p>
@@ -598,10 +598,10 @@ function AvailableDays({ user_id }: Props) {
       <div className="space-y-3">
         {days.map((day) => {
           const schedule = businessHours[day.key];
-          
+
           return (
-            <div 
-              key={day.key} 
+            <div
+              key={day.key}
               className={`flex flex-col md:flex-row md:items-start justify-between p-4 rounded-lg border transition-all ${schedule.enabled ? 'border-green-200 bg-green-50 hover:bg-green-100' : 'border-gray-200 hover:bg-gray-50'}`}
             >
               {/* Day name and toggle */}
@@ -644,7 +644,7 @@ function AvailableDays({ user_id }: Props) {
                             ))}
                           </SelectContent>
                         </Select>
-                        
+
                         <div className="relative flex items-center gap-1">
                           <Input
                             ref={(el) => {
@@ -668,9 +668,9 @@ function AvailableDays({ user_id }: Props) {
                         </div>
                       </div>
                     </div>
-                    
+
                     <span className="text-gray-400 hidden sm:block">-</span>
-                    
+
                     {/* End Time Group */}
                     <div className="flex items-center gap-2">
                       <Label className="text-xs text-gray-500 whitespace-nowrap">Close:</Label>
@@ -692,7 +692,7 @@ function AvailableDays({ user_id }: Props) {
                             ))}
                           </SelectContent>
                         </Select>
-                        
+
                         <div className="relative flex items-center gap-1">
                           <Input
                             ref={(el) => {
@@ -717,7 +717,7 @@ function AvailableDays({ user_id }: Props) {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Second line: Time display - Centered */}
                   <div className="flex justify-center w-full">
                     <div className="text-sm text-gray-600 bg-white px-3 py-1.5 rounded border min-w-[160px] text-center">
@@ -739,17 +739,17 @@ function AvailableDays({ user_id }: Props) {
       </div>
 
       <div className="flex items-center justify-end mt-8 pt-6 border-t border-gray-200">
-        <Button 
-          onClick={handleSave} 
-          disabled={isSaving} 
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
           isLoading={isSaving}
           className="px-6 h-10 bg-blue-600 hover:bg-blue-700"
         >
-          
+
           {isSaving ? "Saving..." : "Save"}
         </Button>
       </div>
-      
+
     </div>
   );
 }
