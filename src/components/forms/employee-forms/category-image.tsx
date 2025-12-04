@@ -21,13 +21,15 @@ const EmployeeImage = ({ images, userId }: Props) => {
     formData.append("file", file);
 
     // ✅ MUST SEND user_id
-    const res = await fetch(
-      `http://localhost/managerbp/public/seller/employees/upload.php?user_id=${userId}`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+const res = await fetch(
+  `http://localhost/managerbp/public/seller/employees/upload.php?user_id=${userId}&module=employees`,
+  {
+    method: "POST",
+    body: formData,
+  }
+);
+
+
 
     const result = await res.json();
     setIsUploading(false);
@@ -58,14 +60,14 @@ const EmployeeImage = ({ images, userId }: Props) => {
             <X size={14} />
           </button>
 
-          <Image
-            src={`http://localhost/managerbp/public/uploads/sellers/${images.value}`}
-            width={160}
-            height={160}
-            className="rounded-lg object-cover border"
-            alt="Employee"
-            unoptimized
-          />
+       <Image
+  src={`http://localhost/managerbp/public/uploads/sellers/${images.value}`}
+  width={160}
+  height={160}
+  alt="Employee"
+  unoptimized
+/>
+
         </div>
       )}
     </div>

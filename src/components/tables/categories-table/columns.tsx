@@ -104,21 +104,40 @@ export const columns: ColumnDef<Category>[] = [
     header: "#",
     cell: ({ row }) => row.index + 1,
   },
-  {
-    header: "Image",
-    cell: ({ row }) => {
-      const data = row.original;
+{
+  header: "Image",
+  cell: ({ row }) => {
+    const data = row.original;
+    const img = data.image;
+
+    // ❌ If image is null, undefined, empty, or missing extension — show placeholder
+    const isValid =
+      img &&
+      typeof img === "string" &&
+      img.includes("."); // ensures a real file is present
+
+    if (!isValid) {
       return (
-        <Image
-          src={data.image}
-          alt={data.name}
-          width={50}
-          height={50}
-          className="rounded"
-        />
+        <div className="w-[50px] h-[50px] rounded bg-gray-200 border flex items-center justify-center text-xs text-gray-500">
+          N/A
+        </div>
       );
-    },
+    }
+
+    // ✔ Safe to use <Image>
+    return (
+      <Image
+        src={img}
+        alt={data.name}
+        width={50}
+        height={50}
+        className="rounded object-cover border"
+        unoptimized
+      />
+    );
   },
+},
+
   {
     accessorKey: "name",
     header: "Category Name",

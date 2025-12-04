@@ -14,7 +14,7 @@ export interface InputField {
   | "select"
   | "textarea"
   | "phone"
-   | "date"   
+  | "date"
   | "checkbox"
   | "time"
   | "calendar"
@@ -78,6 +78,8 @@ export interface CategoryFormProps {
   categoryId: string;
   categoryData: Category;
   isEdit: boolean;
+  userId: string;          // ⭐ this must exist
+
 }
 
 export interface ServiceFormProps {

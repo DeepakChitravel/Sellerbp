@@ -10,11 +10,7 @@ const nextConfig = {
       },
 
       // CATEGORIES
-      {
-        protocol: "http",
-        hostname: "localhost",
-        pathname: "/managerbp/public/uploads/categories/**",
-      },
+
 
       // ⭐ SELLERS — REQUIRED (your image lives inside here)
       {

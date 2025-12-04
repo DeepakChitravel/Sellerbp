@@ -40,11 +40,12 @@ const CategoryImage = ({ images, userId }: Props) => {
   };
 
   // ⭐ Only show image if valid
-  const hasImage =
-    images.value &&
-    typeof images.value === "string" &&
-    images.value.trim() !== "" &&
-    images.value.includes(".");
+ const hasImage =
+  images.value &&
+  typeof images.value === "string" &&
+  images.value !== "null" &&
+  images.value.trim() !== "" &&
+  images.value.includes(".");
 
   return (
     <div className="bg-white rounded-xl p-5">
@@ -68,13 +69,14 @@ const CategoryImage = ({ images, userId }: Props) => {
           </button>
 
           <Image
-            src={`http://localhost/managerbp/public/uploads/sellers/${images.value}`}
+            src={`http://localhost/managerbp/public/uploads/${images.value}`}
             width={160}
             height={160}
             alt="Category"
             className="rounded-lg object-cover border"
             unoptimized
           />
+
         </div>
       )}
     </div>

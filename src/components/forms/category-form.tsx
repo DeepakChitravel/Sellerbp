@@ -12,7 +12,7 @@ import { handleToast } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { CategoryFormProps } from "@/types";
 
-const CategoryForm = ({ categoryId, categoryData, isEdit }: CategoryFormProps) => {
+const CategoryForm = ({ categoryId, categoryData, isEdit, userId }: CategoryFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,11 +21,9 @@ const CategoryForm = ({ categoryId, categoryData, isEdit }: CategoryFormProps) =
   const [metaTitle, setMetaTitle] = useState<string>(categoryData?.metaTitle);
   const [metaDescription, setMetaDescription] = useState<string>(categoryData?.metaDescription);
 
-  // ⭐ FIXED — remove full URL and keep filename only
-const [images, setImages] = useState<string>(
-  categoryData?.image?.replace("http://localhost/managerbp/public/uploads/", "")
-);
-
+  const [images, setImages] = useState<string>(
+    categoryData?.image?.replace("http://localhost/managerbp/public/uploads/", "")
+  );
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -34,7 +32,7 @@ const [images, setImages] = useState<string>(
       const data = {
         name,
         slug,
-        image: images, // filename only
+        image: images,
         metaTitle,
         metaDescription,
       };
@@ -47,7 +45,6 @@ const [images, setImages] = useState<string>(
 
       if (!isEdit && response.success)
         router.push(`/categories?${Math.random()}`);
-
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -73,6 +70,7 @@ const [images, setImages] = useState<string>(
         <div className="lg:col-span-5 col-span-12">
           <CategoryImage
             images={{ value: images, setValue: setImages }}
+            userId={userId}  // ← FIXED HERE
           />
         </div>
       </div>
