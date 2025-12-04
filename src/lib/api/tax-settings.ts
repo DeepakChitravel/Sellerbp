@@ -1,4 +1,4 @@
-// lib/api/tax-settings.ts
+// lib/api/tax-settings.ts - CLEAN VERSION
 "use server";
 
 import { apiUrl } from "@/config";
@@ -15,27 +15,32 @@ export interface TaxSettingsData {
    GET TAX SETTINGS
 --------------------------------------------------------- */
 export const getTaxSettings = async () => {
-  const token = cookies().get("token")?.value;
-  const user_id = cookies().get("user_id")?.value;
-
-  if (!user_id) {
-    return null;
-  }
-
-  const url = `${apiUrl}/seller/settings/tax-settings/get.php`;
-
   try {
+    const token = cookies().get("token")?.value;
+    const user_id = cookies().get("user_id")?.value;
+
+    if (!user_id) {
+      return { 
+        success: false, 
+        message: "User not authenticated",
+        data: null 
+      };
+    }
+
+    const url = `${apiUrl}/seller/settings/tax-settings/get.php`;
+    
     const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
       params: { user_id },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
 
     return response.data;
-  } catch (error) {
-    console.error("Get tax settings error:", error);
-    return null;
+  } catch (error: any) {
+    return { 
+      success: false, 
+      message: "Failed to load tax settings",
+      data: null 
+    };
   }
 };
 
@@ -43,34 +48,43 @@ export const getTaxSettings = async () => {
    UPDATE TAX SETTINGS
 --------------------------------------------------------- */
 export const updateTaxSettings = async (data: TaxSettingsData) => {
-  const token = cookies().get("token")?.value;
-  const user_id = cookies().get("user_id")?.value;
-
-  if (!user_id) {
-    return { success: false, message: "User not authenticated" };
-  }
-
-  const url = `${apiUrl}/seller/settings/tax-settings/update.php`;
-
-  // Add user_id to data
-  const requestData = { ...data, user_id };
-
   try {
+    const token = cookies().get("token")?.value;
+    const user_id = cookies().get("user_id")?.value;
+
+    if (!user_id) {
+      return { 
+        success: false, 
+        message: "User not authenticated" 
+      };
+    }
+
+    const url = `${apiUrl}/seller/settings/tax-settings/update.php`;
+    
+    const requestData = { 
+      ...data, 
+      user_id
+    };
+
     const response = await axios.post(url, requestData, {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
 
     return response.data;
   } catch (error: any) {
-    console.error("Update tax settings error:", error);
-    return (
-      error.response?.data || {
+    if (error.response) {
+      return error.response.data || {
         success: false,
-        message: "Server unreachable",
-      }
-    );
+        message: "Server error occurred"
+      };
+    } else {
+      return {
+        success: false,
+        message: "Network error. Please check your connection."
+      };
+    }
   }
 };

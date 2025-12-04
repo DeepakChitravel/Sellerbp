@@ -1,4 +1,4 @@
-// components/settings/TaxSettings.tsx - FIXED DATA LOADING
+// components/settings/TaxSettings.tsx - CLEAN VERSION
 "use client";
 import FormInputs from "@/components/form-inputs";
 import { Button } from "@/components/ui/button";
@@ -47,26 +47,24 @@ const TaxSettings = ({ initialData }: Props) => {
       if (response?.success && response.data) {
         const data = response.data;
         
-        // ✅ ALWAYS set the form data from DB (even if empty)
+        // Set form data from database
         setSettings({
           gstNumber: data.gst_number || "",
           gstType: data.gst_type || GST_TYPES[0]?.value || "",
           taxPercent: data.tax_percent !== null ? data.tax_percent : null
         });
         
-        // ✅ SIMPLE LOGIC: Switch should be ON if ANY field has value in DB
+        // Switch should be ON if any field has value in DB
         const hasAnyValue = 
           (data.gst_number && data.gst_number.trim() !== "") ||
           (data.gst_type && data.gst_type.trim() !== "") ||
           data.tax_percent !== null;
         
-        console.log("🔍 Load Settings - DB Data:", data);
-        console.log("🔍 Load Settings - Has Any Value:", hasAnyValue);
-        
         setIsGSTDisplayed(hasAnyValue);
       }
     } catch (error) {
       console.error("Failed to load tax settings:", error);
+      toast.error("Failed to load tax settings");
     }
     setIsLoading(false);
   };
@@ -106,7 +104,7 @@ const TaxSettings = ({ initialData }: Props) => {
   };
 
   const handleSave = async () => {
-    // ✅ VALIDATION
+    // Validation
     if (!settings.gstNumber?.trim()) {
       toast.error("GST Number is required");
       return;
@@ -133,13 +131,11 @@ const TaxSettings = ({ initialData }: Props) => {
       });
 
       if (response.success) {
-        toast.success("Tax settings saved");
-        // ✅ Switch should ALWAYS be ON after saving
+        toast.success("Tax settings saved successfully");
         setIsGSTDisplayed(true);
-        // Reload to confirm
         await loadSettings();
       } else {
-        toast.error(response.message || "Failed to save");
+        toast.error(response.message || "Failed to save tax settings");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to save settings");
