@@ -6,7 +6,7 @@ import { useState } from "react";
 import { uploadsUrl } from "@/config";
 
 interface Props {
-  value: string;
+  value: string; // example: "user/9/profile/1764909180_iphone.png"
   setValue: (v: any) => void;
   userId: number;
 }
@@ -32,9 +32,18 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
     setUploading(false);
 
     if (result.success) {
-      setValue(result.filename);
+      setValue(result.filename); // "user/9/profile/xxxx.png"
     }
   };
+
+  // Build final URL from DB value
+const finalImageUrl = value
+  ? `${uploadsUrl}/${value.replace("sellers/", "")}`
+  : "";
+
+
+  console.log("DB Value:", value);
+  console.log("Final URL:", finalImageUrl);
 
   return (
     <div className="bg-white rounded-xl p-5 mt-5">
@@ -57,7 +66,7 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
           </button>
 
           <Image
-            src={`${uploadsUrl}/${value}`}
+            src={finalImageUrl}
             width={128}
             height={128}
             className="rounded-full border object-cover"

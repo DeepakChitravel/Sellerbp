@@ -18,6 +18,9 @@ interface Form {
 }
 
 const ProfileSettings = ({ user }: Props) => {
+  // FIX — ALWAYS use correct ID (fallback to user.id)
+  const userId = user.user_id ?? user.id;
+
   const [isLoading, setIsLoading] = useState(false);
 
   const [name, setName] = useState<string>(user?.name);
@@ -66,12 +69,13 @@ const ProfileSettings = ({ user }: Props) => {
 
     let uploadedImage = image;
 
+    // FIX — Upload image with correct userId
     if (image instanceof File) {
       const formData = new FormData();
       formData.append("file", image);
 
       const uploadRes = await fetch(
-        `http://localhost/managerbp/public/seller/users/upload-profile.php?user_id=${user.user_id}`,
+        `http://localhost/managerbp/public/seller/users/upload-profile.php?user_id=${userId}`,
         { method: "POST", body: formData }
       );
 
@@ -82,8 +86,9 @@ const ProfileSettings = ({ user }: Props) => {
     }
 
     try {
+      // FIX — Send correct user ID to backend
       const response = await updateUser({
-        user_id: user.user_id,
+        user_id: userId,
         name,
         email,
         phone,
@@ -91,25 +96,26 @@ const ProfileSettings = ({ user }: Props) => {
         image: uploadedImage,
       });
 
-
       handleToast(response);
+
     } catch (error: any) {
       toast.error(error.message);
     }
 
     setIsLoading(false);
   };
-console.log("PROFILE USER:", user);
+
+  console.log("PROFILE USER:", user);
 
   return (
     <>
       <FormInputs inputFields={inputFields} />
+
       <ProfileImage
         value={image}
         setValue={setImage}
-        userId={user.user_id}
+        userId={userId} // FIXED
       />
-
 
       <div className="flex items-center justify-end mt-6">
         <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
