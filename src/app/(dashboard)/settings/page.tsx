@@ -1,4 +1,4 @@
-import BasicSettings from "@/components/forms/settings/basic-settings";
+import BasicSettings from "@/components/forms/settings/basic-settings/basic-settings";
 import { currentUser } from "@/lib/api/users";
 
 const Settings = async () => {
@@ -18,7 +18,7 @@ const Settings = async () => {
         </p>
       </div>
 
-      <BasicSettings settingsData={settingsData} />
+<BasicSettings initialData={settingsData} />
     </div>
   );
 };

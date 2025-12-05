@@ -1,4 +1,5 @@
 "use client";
+
 import FormInputs from "@/components/form-inputs";
 import { Button } from "@/components/ui/button";
 import { COUNTRIES, CURRENCIES } from "@/constants";
@@ -9,6 +10,9 @@ import { InputField, Option } from "@/types";
 import getSymbolFromCurrency from "currency-symbol-map";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+import LogoUpload from "./LogoUpload";
+import FaviconUpload from "./FaviconUpload";
 
 interface Props {
   initialData?: any;
@@ -25,7 +29,9 @@ const BasicSettings = ({ initialData }: Props) => {
   const [states, setStates] = useState<Option[]>([]);
   const [settings, setSettings] = useState<any>(initialData || null);
 
-  // Initialize state for BASIC FIELDS ONLY
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // BASIC FIELDS
   const [logo, setLogo] = useState<string>(settings?.logo || "");
   const [favicon, setFavicon] = useState<string>(settings?.favicon || "");
   const [email, setEmail] = useState<string>(settings?.email || "");
@@ -36,7 +42,7 @@ const BasicSettings = ({ initialData }: Props) => {
   const [state, setStateValue] = useState<string>(settings?.state || "");
   const [address, setAddress] = useState<string>(settings?.address || "");
 
-  // Fetch settings if not provided
+  // Fetch settings from server
   useEffect(() => {
     if (!initialData) {
       fetchSettings();
@@ -45,11 +51,15 @@ const BasicSettings = ({ initialData }: Props) => {
 
   const fetchSettings = async () => {
     setFetching(true);
+
     try {
       const response = await getBasicSettings();
+
       if (response.success && response.data) {
         setSettings(response.data);
-        // Update all state values
+
+        setUserId(response.data.user_id); // ⭐ IMPORTANT
+
         setLogo(response.data.logo || "");
         setFavicon(response.data.favicon || "");
         setEmail(response.data.email || "");
@@ -67,63 +77,45 @@ const BasicSettings = ({ initialData }: Props) => {
     }
   };
 
-  // Load currencies
+  // Load currency options
   useEffect(() => {
-    const Currencies: Option[] = [];
-    CURRENCIES.forEach((currencyItem) => {
-      Currencies.push({
-        value: currencyItem.code,
-        label: `${currencyItem.name} (${getSymbolFromCurrency(currencyItem.code)})`,
-      });
-    });
-    setCurrencies(Currencies);
+    const list: Option[] = CURRENCIES.map((c) => ({
+      value: c.code,
+      label: `${c.name} (${getSymbolFromCurrency(c.code)})`,
+    }));
+
+    setCurrencies(list);
   }, []);
 
   // Load states when country changes
   useEffect(() => {
-    async function getStates() {
-      if (country) {
-        try {
-          const statesData = await statesByCountry(country);
-          const statesArray: Option[] = statesData.map((item: { [key: string]: string }) => ({
+    async function loadStates() {
+      if (!country) return setStates([]);
+
+      try {
+        const list = await statesByCountry(country);
+
+        setStates(
+          list.map((item: any) => ({
             value: item.iso2,
             label: item.name,
-          }));
-          setStates(statesArray);
-        } catch (error) {
-          console.error("Error fetching states:", error);
-          setStates([]);
-        }
-      } else {
-        setStates([]);
+          }))
+        );
+      } catch (error) {
+        console.error("Failed loading states:", error);
       }
     }
-    getStates();
+
+    loadStates();
   }, [country]);
 
+  // Form Inputs (non-file fields)
   const inputFields: Form = {
-    logo: {
-      type: "file",
-      value: logo,
-      setValue: setLogo,
-      label: "Logo",
-      placeholder: "Upload logo image",
-      containerClassName: "md:col-span-6",
-    },
-    favicon: {
-      type: "file",
-      value: favicon,
-      setValue: setFavicon,
-      label: "Favicon",
-      placeholder: "Upload favicon image",
-      containerClassName: "md:col-span-6",
-    },
     phone: {
       type: "text",
       value: phone,
       setValue: setPhone,
       label: "Mobile Number",
-      placeholder: "Enter mobile number",
       containerClassName: "md:col-span-6",
     },
     whatsapp: {
@@ -135,16 +127,13 @@ const BasicSettings = ({ initialData }: Props) => {
           <span>WhatsApp Number</span>
           <button
             type="button"
-            onClick={() => {
-              setWhatsapp(phone);
-            }}
+            onClick={() => setWhatsapp(phone)}
             className="text-primary underline text-sm"
           >
             Same as Mobile Number
           </button>
         </div>
       ),
-      placeholder: "Enter WhatsApp number",
       containerClassName: "md:col-span-6",
     },
     email: {
@@ -152,7 +141,6 @@ const BasicSettings = ({ initialData }: Props) => {
       value: email,
       setValue: setEmail,
       label: "Email Address",
-      placeholder: "Enter email address",
       containerClassName: "md:col-span-6",
     },
     currency: {
@@ -161,7 +149,6 @@ const BasicSettings = ({ initialData }: Props) => {
       setValue: setCurrency,
       label: "Currency",
       options: currencies,
-      placeholder: "Select currency",
       containerClassName: "md:col-span-6",
     },
     country: {
@@ -170,7 +157,6 @@ const BasicSettings = ({ initialData }: Props) => {
       setValue: setCountry,
       label: "Country",
       options: COUNTRIES,
-      placeholder: "Select country",
       containerClassName: "md:col-span-6",
     },
     state: {
@@ -179,7 +165,6 @@ const BasicSettings = ({ initialData }: Props) => {
       setValue: setStateValue,
       label: "State",
       options: states,
-      placeholder: "Select state",
       containerClassName: "md:col-span-6",
     },
     address: {
@@ -187,7 +172,6 @@ const BasicSettings = ({ initialData }: Props) => {
       value: address,
       setValue: setAddress,
       label: "Address",
-      placeholder: "Enter your address",
     },
   };
 
@@ -195,34 +179,31 @@ const BasicSettings = ({ initialData }: Props) => {
     setIsLoading(true);
 
     try {
-      const data = {
-        logo: logo || null,
-        favicon: favicon || null,
-        email: email || null,
-        phone: phone || null,
-        whatsapp: whatsapp || null,
-        currency: currency || "INR",
-        country: country || null,
-        state: state || null,
-        address: address || null,
+      const payload = {
+        logo,
+        favicon,
+        email,
+        phone,
+        whatsapp,
+        currency,
+        country,
+        state,
+        address,
       };
 
-      const response = await updateBasicSettings(data);
+      const res = await updateBasicSettings(payload);
 
-      handleToast(response);
-      
-      // Refresh settings after successful update
-      if (response.success) {
-        await fetchSettings();
-      }
+      handleToast(res);
+
+      if (res.success) fetchSettings();
     } catch (error: any) {
-      toast.error(error.message || "Failed to save settings");
+      toast.error(error?.message || "Failed to save settings");
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (fetching) {
+  if (fetching || !userId) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -232,10 +213,17 @@ const BasicSettings = ({ initialData }: Props) => {
 
   return (
     <div className="space-y-6">
-      
+
+      {/* Normal Input Fields */}
       <FormInputs inputFields={inputFields} />
 
-      <div className="flex items-center justify-end mt-6">
+      {/* File Upload Components */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <LogoUpload value={logo} setValue={setLogo} userId={userId} />
+        <FaviconUpload value={favicon} setValue={setFavicon} userId={userId} />
+      </div>
+
+      <div className="flex justify-end mt-6">
         <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
           Save Changes
         </Button>

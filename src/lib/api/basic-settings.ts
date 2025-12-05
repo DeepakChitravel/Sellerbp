@@ -16,7 +16,7 @@ export interface BasicSettingsData {
   address?: string | null;
 }
 
-// Get basic settings
+// Get settings
 export const getBasicSettings = async () => {
   const token = cookies().get("token")?.value;
   const user_id = cookies().get("user_id")?.value;
@@ -24,18 +24,18 @@ export const getBasicSettings = async () => {
   const url = `${apiUrl}/seller/settings/basic-settings/get.php?user_id=${user_id}`;
 
   try {
-    const response = await axios.get(url, {
+    const res = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    return response.data;
-  } catch (error: any) {
-    console.error("Error fetching basic settings:", error);
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching basic settings:", err);
     return { success: false, data: null };
   }
 };
 
-// Update basic settings
+// Update settings (filename only)
 export const updateBasicSettings = async (data: BasicSettingsData) => {
   const token = cookies().get("token")?.value;
   const user_id = cookies().get("user_id")?.value;
@@ -43,18 +43,14 @@ export const updateBasicSettings = async (data: BasicSettingsData) => {
   const url = `${apiUrl}/seller/settings/basic-settings/update.php?user_id=${user_id}`;
 
   try {
-    const response = await axios.post(url, data, {
+    const res = await axios.post(url, data, {
       headers: { 
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
     });
 
-    return {
-      success: response.data.success,
-      message: response.data.message,
-      data: response.data.data || null,
-    };
+    return res.data;
   } catch (error: any) {
     console.error("Error updating basic settings:", error);
     return {
@@ -70,29 +66,26 @@ export const uploadLogo = async (file: File) => {
   const user_id = cookies().get("user_id")?.value;
 
   const formData = new FormData();
-  formData.append("logo", file);
+  formData.append("file", file);
 
   const url = `${apiUrl}/seller/settings/upload-logo.php?user_id=${user_id}`;
 
   try {
-    const response = await axios.post(url, formData, {
+    const res = await axios.post(url, formData, {
       headers: { 
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
+        "Content-Type": "multipart/form-data",
       },
     });
 
     return {
-      success: response.data.success,
-      filename: response.data.filename,
-      message: response.data.message,
+      success: res.data.success,
+      filename: res.data.filename,  // IMPORTANT
+      message: res.data.message,
     };
-  } catch (error: any) {
-    console.error("Error uploading logo:", error);
-    return {
-      success: false,
-      message: error?.response?.data?.message || "Failed to upload logo",
-    };
+  } catch (err) {
+    console.error("Error uploading logo:", err);
+    return { success: false, message: "Upload failed" };
   }
 };
 
@@ -102,28 +95,25 @@ export const uploadFavicon = async (file: File) => {
   const user_id = cookies().get("user_id")?.value;
 
   const formData = new FormData();
-  formData.append("favicon", file);
+  formData.append("file", file);
 
   const url = `${apiUrl}/seller/settings/upload-favicon.php?user_id=${user_id}`;
 
   try {
-    const response = await axios.post(url, formData, {
+    const res = await axios.post(url, formData, {
       headers: { 
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
+        "Content-Type": "multipart/form-data",
       },
     });
 
     return {
-      success: response.data.success,
-      filename: response.data.filename,
-      message: response.data.message,
+      success: res.data.success,
+      filename: res.data.filename,
+      message: res.data.message,
     };
-  } catch (error: any) {
-    console.error("Error uploading favicon:", error);
-    return {
-      success: false,
-      message: error?.response?.data?.message || "Failed to upload favicon",
-    };
+  } catch (err) {
+    console.error("Error uploading favicon:", err);
+    return { success: false, message: "Upload failed" };
   }
 };
