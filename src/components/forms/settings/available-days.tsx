@@ -730,7 +730,7 @@ function AvailableDays({ user_id }: Props) {
               ) : (
                 <div className="text-gray-400 text-sm flex items-center">
                   <Clock className="w-3 h-3 mr-2" />
-                  Closed - Times will not be stored
+                  Closed
                 </div>
               )}
             </div>

@@ -35,7 +35,7 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    
+
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
@@ -55,7 +55,7 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
       );
 
       const result = await res.json();
-      
+
       if (result.success) {
         setValue(result.filename);
       }
@@ -84,7 +84,7 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
             Upload a professional photo for your profile
           </p>
         </div>
-        
+
         {value && !uploading && (
           <button
             onClick={handleRemove}
@@ -117,7 +117,7 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
               )}
             </div>
           </div>
-          
+
           {value && (
             <div className="mt-4 text-center">
               <p className="text-sm font-medium text-gray-700">Current Photo</p>
@@ -129,11 +129,10 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
         <div className="flex-1">
           {!value ? (
             <div
-              className={`border-2 border-dashed rounded-2xl p-8 transition-all ${
-                dragOver 
-                  ? "border-blue-500 bg-blue-50" 
+              className={`border-2 border-dashed rounded-2xl p-8 transition-all ${dragOver
+                  ? "border-blue-500 bg-blue-50"
                   : "border-gray-300 hover:border-gray-400"
-              }`}
+                }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -146,11 +145,11 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
                     <Upload size={28} className="text-blue-600" />
                   )}
                 </div>
-                
+
                 <h4 className="text-lg font-medium text-gray-900 mb-2">
                   {uploading ? "Uploading..." : "Upload your photo"}
                 </h4>
-                
+
                 <p className="text-gray-500 mb-6 max-w-md mx-auto">
                   Drag & drop your photo here, or click to browse
                 </p>
@@ -179,16 +178,15 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
             /* Replace Photo Area */
             <div className="border border-gray-200 rounded-2xl p-6 bg-gray-50">
               <h4 className="font-medium text-gray-900 mb-4">Replace Photo</h4>
-              
+
               <div className="grid md:grid-cols-2 gap-4">
-                <label className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-                  dragOver 
-                    ? "border-blue-500 bg-blue-50" 
+                <label className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${dragOver
+                    ? "border-blue-500 bg-blue-50"
                     : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                 >
                   <Upload size={24} className="mx-auto text-gray-500 mb-3" />
                   <p className="font-medium text-gray-900 mb-1">Upload New</p>
