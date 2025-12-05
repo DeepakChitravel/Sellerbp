@@ -3,63 +3,99 @@ import FormInputs from "@/components/form-inputs";
 import { Button } from "@/components/ui/button";
 import { COUNTRIES, CURRENCIES } from "@/constants";
 import { statesByCountry } from "@/lib/api/csc";
-import { updateSiteSettings } from "@/lib/api/site-settings";
+import { getBasicSettings, updateBasicSettings } from "@/lib/api/basic-settings";
 import { handleToast } from "@/lib/utils";
-import { InputField, Option, siteSettings } from "@/types";
+import { InputField, Option } from "@/types";
 import getSymbolFromCurrency from "currency-symbol-map";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface Props {
-  settingsData: siteSettings;
+  initialData?: any;
 }
 
 interface Form {
   [key: string]: InputField;
 }
 
-const BasicSettings = ({ settingsData }: Props) => {
+const BasicSettings = ({ initialData }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [fetching, setFetching] = useState(!initialData);
   const [currencies, setCurrencies] = useState<Option[]>([]);
   const [states, setStates] = useState<Option[]>([]);
+  const [settings, setSettings] = useState<any>(initialData || null);
 
-  const [logo, setLogo] = useState<string>(settingsData?.logo);
-  const [favicon, setFavicon] = useState<string>(settingsData?.favicon);
-  const [email, setEmail] = useState<string>(settingsData?.email);
-  const [phone, setPhone] = useState<string>(settingsData?.phone);
-  const [whatsapp, setWhatsapp] = useState<string>(settingsData?.whatsapp);
-  const [currency, setCurrency] = useState<string>(settingsData?.currency);
-  const [country, setCountry] = useState<string>(settingsData?.country);
-  const [state, setState] = useState<string>(settingsData?.state);
-  const [address, setAddress] = useState<string>(settingsData?.address);
+  // Initialize state for BASIC FIELDS ONLY
+  const [logo, setLogo] = useState<string>(settings?.logo || "");
+  const [favicon, setFavicon] = useState<string>(settings?.favicon || "");
+  const [email, setEmail] = useState<string>(settings?.email || "");
+  const [phone, setPhone] = useState<string>(settings?.phone || "");
+  const [whatsapp, setWhatsapp] = useState<string>(settings?.whatsapp || "");
+  const [currency, setCurrency] = useState<string>(settings?.currency || "INR");
+  const [country, setCountry] = useState<string>(settings?.country || "");
+  const [state, setStateValue] = useState<string>(settings?.state || "");
+  const [address, setAddress] = useState<string>(settings?.address || "");
 
+  // Fetch settings if not provided
   useEffect(() => {
-    let Currencies: Option[] = [];
-    CURRENCIES.map((currency) => {
+    if (!initialData) {
+      fetchSettings();
+    }
+  }, []);
+
+  const fetchSettings = async () => {
+    setFetching(true);
+    try {
+      const response = await getBasicSettings();
+      if (response.success && response.data) {
+        setSettings(response.data);
+        // Update all state values
+        setLogo(response.data.logo || "");
+        setFavicon(response.data.favicon || "");
+        setEmail(response.data.email || "");
+        setPhone(response.data.phone || "");
+        setWhatsapp(response.data.whatsapp || "");
+        setCurrency(response.data.currency || "INR");
+        setCountry(response.data.country || "");
+        setStateValue(response.data.state || "");
+        setAddress(response.data.address || "");
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  // Load currencies
+  useEffect(() => {
+    const Currencies: Option[] = [];
+    CURRENCIES.forEach((currencyItem) => {
       Currencies.push({
-        value: currency.code,
-        label: `${currency.name} (${getSymbolFromCurrency(currency.code)})`,
+        value: currencyItem.code,
+        label: `${currencyItem.name} (${getSymbolFromCurrency(currencyItem.code)})`,
       });
     });
-
     setCurrencies(Currencies);
   }, []);
 
+  // Load states when country changes
   useEffect(() => {
     async function getStates() {
-      try {
-        const states = await statesByCountry(country);
-
-        let statesArray: Option[] = [];
-        states.map((item: { [key: string]: string }) => {
-          statesArray.push({
+      if (country) {
+        try {
+          const statesData = await statesByCountry(country);
+          const statesArray: Option[] = statesData.map((item: { [key: string]: string }) => ({
             value: item.iso2,
             label: item.name,
-          });
-        });
-        setStates(statesArray);
-      } catch (error) {
-        console.log(error);
+          }));
+          setStates(statesArray);
+        } catch (error) {
+          console.error("Error fetching states:", error);
+          setStates([]);
+        }
+      } else {
+        setStates([]);
       }
     }
     getStates();
@@ -71,6 +107,7 @@ const BasicSettings = ({ settingsData }: Props) => {
       value: logo,
       setValue: setLogo,
       label: "Logo",
+      placeholder: "Upload logo image",
       containerClassName: "md:col-span-6",
     },
     favicon: {
@@ -78,36 +115,36 @@ const BasicSettings = ({ settingsData }: Props) => {
       value: favicon,
       setValue: setFavicon,
       label: "Favicon",
+      placeholder: "Upload favicon image",
       containerClassName: "md:col-span-6",
     },
     phone: {
-      type: "phone",
+      type: "text",
       value: phone,
       setValue: setPhone,
       label: "Mobile Number",
-      placeholder: "Mobile Number",
+      placeholder: "Enter mobile number",
       containerClassName: "md:col-span-6",
     },
     whatsapp: {
-      type: "phone",
+      type: "text",
       value: whatsapp,
       setValue: setWhatsapp,
       label: (
         <div className="flex items-center justify-between">
           <span>WhatsApp Number</span>
-
           <button
             type="button"
             onClick={() => {
               setWhatsapp(phone);
             }}
-            className="text-primary underline"
+            className="text-primary underline text-sm"
           >
             Same as Mobile Number
           </button>
         </div>
       ),
-      placeholder: "WhatsApp Number",
+      placeholder: "Enter WhatsApp number",
       containerClassName: "md:col-span-6",
     },
     email: {
@@ -115,7 +152,7 @@ const BasicSettings = ({ settingsData }: Props) => {
       value: email,
       setValue: setEmail,
       label: "Email Address",
-      placeholder: "Email Address",
+      placeholder: "Enter email address",
       containerClassName: "md:col-span-6",
     },
     currency: {
@@ -124,6 +161,7 @@ const BasicSettings = ({ settingsData }: Props) => {
       setValue: setCurrency,
       label: "Currency",
       options: currencies,
+      placeholder: "Select currency",
       containerClassName: "md:col-span-6",
     },
     country: {
@@ -132,14 +170,16 @@ const BasicSettings = ({ settingsData }: Props) => {
       setValue: setCountry,
       label: "Country",
       options: COUNTRIES,
+      placeholder: "Select country",
       containerClassName: "md:col-span-6",
     },
     state: {
       type: "select",
       value: state,
-      setValue: setState,
+      setValue: setStateValue,
       label: "State",
       options: states,
+      placeholder: "Select state",
       containerClassName: "md:col-span-6",
     },
     address: {
@@ -147,7 +187,7 @@ const BasicSettings = ({ settingsData }: Props) => {
       value: address,
       setValue: setAddress,
       label: "Address",
-      placeholder: "Address",
+      placeholder: "Enter your address",
     },
   };
 
@@ -156,28 +196,43 @@ const BasicSettings = ({ settingsData }: Props) => {
 
     try {
       const data = {
-        logo: logo,
-        favicon: favicon,
-        email: email,
-        phone: phone,
-        whatsapp: whatsapp,
-        currency: currency,
-        country: country,
-        state: state,
-        address: address,
+        logo: logo || null,
+        favicon: favicon || null,
+        email: email || null,
+        phone: phone || null,
+        whatsapp: whatsapp || null,
+        currency: currency || "INR",
+        country: country || null,
+        state: state || null,
+        address: address || null,
       };
 
-      const response = await updateSiteSettings(data);
+      const response = await updateBasicSettings(data);
 
       handleToast(response);
+      
+      // Refresh settings after successful update
+      if (response.success) {
+        await fetchSettings();
+      }
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to save settings");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
+  if (fetching) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="space-y-6">
+      
       <FormInputs inputFields={inputFields} />
 
       <div className="flex items-center justify-end mt-6">
@@ -185,7 +240,7 @@ const BasicSettings = ({ settingsData }: Props) => {
           Save Changes
         </Button>
       </div>
-    </>
+    </div>
   );
 };
 
