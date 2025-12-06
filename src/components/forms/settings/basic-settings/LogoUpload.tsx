@@ -3,14 +3,19 @@
 import Image from "next/image";
 import { Upload, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { uploadsUrl, apiUrl } from "@/config";
+import { apiUrl } from "@/config";
 
 export default function LogoUpload({ value, setValue, userId }) {
   const [uploading, setUploading] = useState(false);
 
-  const previewUrl = value ? `${uploadsUrl}/${value}` : "";
+  const previewUrl = value ? `${apiUrl}/uploads/${value}` : "";
 
   const handleFileSelect = async (e) => {
+    if (!userId) {
+      console.error("User ID not ready — cannot upload.");
+      return;
+    }
+
     const file = e.target.files?.[0];
     if (!file) return;
 

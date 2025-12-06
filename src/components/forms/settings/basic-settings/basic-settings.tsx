@@ -46,36 +46,45 @@ const BasicSettings = ({ initialData }: Props) => {
   useEffect(() => {
     if (!initialData) {
       fetchSettings();
+      
     }
   }, []);
 
-  const fetchSettings = async () => {
-    setFetching(true);
+const fetchSettings = async () => {
+  setFetching(true);
 
-    try {
-      const response = await getBasicSettings();
+  try {
+    const response = await getBasicSettings();
 
-      if (response.success && response.data) {
-        setSettings(response.data);
+    // 🔥 ADD THESE LOGS HERE
+    console.log("FULL API RESPONSE:", response);
+    console.log("response.data:", response.data);
+    console.log("response.data.user_id:", response.data?.user_id);
+    console.log("response.data.data:", response.data?.data);
+    console.log("response.data.data.user_id:", response.data?.data?.user_id);
+    // 🔥 END LOGS
 
-        setUserId(response.data.user_id); // ⭐ IMPORTANT
+    if (response.success && response.data) {
+      const d = response.data; // <-- shortcut
 
-        setLogo(response.data.logo || "");
-        setFavicon(response.data.favicon || "");
-        setEmail(response.data.email || "");
-        setPhone(response.data.phone || "");
-        setWhatsapp(response.data.whatsapp || "");
-        setCurrency(response.data.currency || "INR");
-        setCountry(response.data.country || "");
-        setStateValue(response.data.state || "");
-        setAddress(response.data.address || "");
-      }
-    } catch (error) {
-      console.error("Error fetching settings:", error);
-    } finally {
-      setFetching(false);
+      setUserId(d.user_id);
+
+      setLogo(d.logo || "");
+      setFavicon(d.favicon || "");
+      setEmail(d.email || "");
+      setPhone(d.phone || "");
+      setWhatsapp(d.whatsapp || "");
+      setCurrency(d.currency || "INR");
+      setCountry(d.country || "");
+      setStateValue(d.state || "");
+      setAddress(d.address || "");
     }
-  };
+  } catch (error) {
+    console.error("Error fetching settings:", error);
+  } finally {
+    setFetching(false);
+  }
+};
 
   // Load currency options
   useEffect(() => {
@@ -180,6 +189,8 @@ const BasicSettings = ({ initialData }: Props) => {
 
     try {
       const payload = {
+          user_id: userId,   // ⭐ FIXED
+
         logo,
         favicon,
         email,
@@ -218,10 +229,15 @@ const BasicSettings = ({ initialData }: Props) => {
       <FormInputs inputFields={inputFields} />
 
       {/* File Upload Components */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <LogoUpload value={logo} setValue={setLogo} userId={userId} />
-        <FaviconUpload value={favicon} setValue={setFavicon} userId={userId} />
-      </div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {userId && (
+    <>
+      <LogoUpload value={logo} setValue={setLogo} userId={userId} />
+      <FaviconUpload value={favicon} setValue={setFavicon} userId={userId} />
+    </>
+  )}
+</div>
+
 
       <div className="flex justify-end mt-6">
         <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
