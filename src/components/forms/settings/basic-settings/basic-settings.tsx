@@ -46,45 +46,39 @@ const BasicSettings = ({ initialData }: Props) => {
   useEffect(() => {
     if (!initialData) {
       fetchSettings();
-      
     }
   }, []);
 
-const fetchSettings = async () => {
-  setFetching(true);
+  const fetchSettings = async () => {
+    setFetching(true);
+    try {
+      const response = await getBasicSettings();
 
-  try {
-    const response = await getBasicSettings();
+      console.log("FULL API RESPONSE:", response);
+      console.log("response.data:", response.data);
+      console.log("response.data.user_id:", response.data?.user_id);
+      console.log("response.data.data:", response.data?.data);
+      console.log("response.data.data.user_id:", response.data?.data?.user_id);
 
-    // 🔥 ADD THESE LOGS HERE
-    console.log("FULL API RESPONSE:", response);
-    console.log("response.data:", response.data);
-    console.log("response.data.user_id:", response.data?.user_id);
-    console.log("response.data.data:", response.data?.data);
-    console.log("response.data.data.user_id:", response.data?.data?.user_id);
-    // 🔥 END LOGS
-
-    if (response.success && response.data) {
-      const d = response.data; // <-- shortcut
-
-      setUserId(d.user_id);
-
-      setLogo(d.logo || "");
-      setFavicon(d.favicon || "");
-      setEmail(d.email || "");
-      setPhone(d.phone || "");
-      setWhatsapp(d.whatsapp || "");
-      setCurrency(d.currency || "INR");
-      setCountry(d.country || "");
-      setStateValue(d.state || "");
-      setAddress(d.address || "");
+      if (response.success && response.data) {
+        const d = response.data;
+        setUserId(d.user_id);
+        setLogo(d.logo || "");
+        setFavicon(d.favicon || "");
+        setEmail(d.email || "");
+        setPhone(d.phone || "");
+        setWhatsapp(d.whatsapp || "");
+        setCurrency(d.currency || "INR");
+        setCountry(d.country || "");
+        setStateValue(d.state || "");
+        setAddress(d.address || "");
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    } finally {
+      setFetching(false);
     }
-  } catch (error) {
-    console.error("Error fetching settings:", error);
-  } finally {
-    setFetching(false);
-  }
-};
+  };
 
   // Load currency options
   useEffect(() => {
@@ -92,7 +86,6 @@ const fetchSettings = async () => {
       value: c.code,
       label: `${c.name} (${getSymbolFromCurrency(c.code)})`,
     }));
-
     setCurrencies(list);
   }, []);
 
@@ -100,10 +93,8 @@ const fetchSettings = async () => {
   useEffect(() => {
     async function loadStates() {
       if (!country) return setStates([]);
-
       try {
         const list = await statesByCountry(country);
-
         setStates(
           list.map((item: any) => ({
             value: item.iso2,
@@ -114,7 +105,6 @@ const fetchSettings = async () => {
         console.error("Failed loading states:", error);
       }
     }
-
     loadStates();
   }, [country]);
 
@@ -137,7 +127,7 @@ const fetchSettings = async () => {
           <button
             type="button"
             onClick={() => setWhatsapp(phone)}
-            className="text-primary underline text-sm"
+            className="text-primary underline text-sm hover:text-primary-dark transition-colors"
           >
             Same as Mobile Number
           </button>
@@ -186,11 +176,9 @@ const fetchSettings = async () => {
 
   const handleSave = async () => {
     setIsLoading(true);
-
     try {
       const payload = {
-          user_id: userId,   // ⭐ FIXED
-
+        user_id: userId,
         logo,
         favicon,
         email,
@@ -201,11 +189,8 @@ const fetchSettings = async () => {
         state,
         address,
       };
-
       const res = await updateBasicSettings(payload);
-
       handleToast(res);
-
       if (res.success) fetchSettings();
     } catch (error: any) {
       toast.error(error?.message || "Failed to save settings");
@@ -223,24 +208,43 @@ const fetchSettings = async () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Brand Identity Section - Moved to Top */}
+      <div className="bg-white rounded-xl border shadow-sm p-6">
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold text-gray-800">Brand Identity</h3>
+          <p className="text-gray-600 text-sm mt-1">Make your brand shine with a beautiful logo</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {userId && (
+            <>
+              <LogoUpload value={logo} setValue={setLogo} userId={userId} />
+              <FaviconUpload value={favicon} setValue={setFavicon} userId={userId} />
+              
+            </>
+          )}
+        </div>
+        
+      </div>
 
       {/* Normal Input Fields */}
-      <FormInputs inputFields={inputFields} />
+      <div className="bg-white rounded-xl border shadow-sm p-6">
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold text-gray-800">Contact Information</h3>
+          <p className="text-gray-600 text-sm mt-1">Update your business contact details</p>
+        </div>
+        <FormInputs inputFields={inputFields} />
+      </div>
 
-      {/* File Upload Components */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-  {userId && (
-    <>
-      <LogoUpload value={logo} setValue={setLogo} userId={userId} />
-      <FaviconUpload value={favicon} setValue={setFavicon} userId={userId} />
-    </>
-  )}
-</div>
-
-
-      <div className="flex justify-end mt-6">
-        <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleSave} 
+          disabled={isLoading} 
+          isLoading={isLoading}
+          className="px-8 py-2.5 text-base font-medium rounded-lg shadow-md hover:shadow-lg transition-shadow"
+        >
           Save Changes
         </Button>
       </div>

@@ -1,72 +1,138 @@
 "use client";
 
 import Image from "next/image";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, X } from "lucide-react";
 import { useState } from "react";
 import { apiUrl } from "@/config";
 
 export default function FaviconUpload({ value, setValue, userId }) {
   const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
-  // Correct preview URL
   const previewUrl = value ? `${apiUrl}/uploads/${value}` : "";
 
-  const handleFileSelect = async (e) => {
-    // Prevent undefined userId issue
+  const handleFileSelect = async (file) => {
     if (!userId) {
       console.error("User ID missing — cannot upload favicon");
       return;
     }
 
-    const file = e.target.files?.[0];
-    if (!file) return;
-
     setUploading(true);
-
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch(
-      `${apiUrl}/seller/settings/basic-settings/upload-favicon.php?user_id=${userId}`,
-      { method: "POST", body: formData }
-    );
-
-    const result = await res.json();
-
-    if (result.success) {
-      setValue(result.filename); // returns sellers/9/site-settings/favicon/file.png
+    try {
+      const res = await fetch(
+        `${apiUrl}/seller/settings/basic-settings/upload-favicon.php?user_id=${userId}`,
+        { method: "POST", body: formData }
+      );
+      const result = await res.json();
+      if (result.success) {
+        setValue(result.filename);
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+    } finally {
+      setUploading(false);
     }
+  };
 
-    setUploading(false);
+  const handleFileInput = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) await handleFileSelect(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) await handleFileSelect(file);
+  };
+
+  const handleRemove = () => {
+    setValue("");
   };
 
   return (
-    <div className="space-y-2">
-      <p className="font-medium">Favicon</p>
+    <div className="space-y-3">
+      <div>
+        <p className="font-medium text-gray-800">Favicon</p>
+        <p className="text-sm text-gray-500 mt-1">Small icon for browser tabs</p>
+      </div>
 
-      <label className="cursor-pointer w-20 h-20 flex items-center justify-center border rounded-lg bg-gray-50 overflow-hidden shadow">
-        {uploading ? (
-          <Loader2 className="animate-spin" />
-        ) : previewUrl ? (
-          <Image
-            src={previewUrl}
-            alt="Favicon"
-            width={80}
-            height={80}
-            className="object-contain"
-            unoptimized
+      <div className="relative">
+        <label
+          className={`
+            cursor-pointer flex flex-col items-center justify-center 
+            border-2 ${dragOver ? "border-primary border-dashed" : "border-dashed border-gray-300"} 
+            rounded-xl bg-white p-6 transition-all duration-200
+            ${dragOver ? "scale-[1.02] shadow-md" : "hover:border-gray-400 hover:shadow-sm"}
+            h-48
+          `}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {uploading ? (
+            <div className="text-center">
+              <Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" />
+              <p className="text-sm text-gray-600 mt-3">Uploading...</p>
+            </div>
+          ) : previewUrl ? (
+            <div className="relative group">
+              <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleRemove();
+                  }}
+                  className="bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+              <Image
+                src={previewUrl}
+                alt="Favicon Preview"
+                width={64}
+                height={64}
+                className="object-contain"
+                unoptimized
+              />
+              <div className="mt-3 text-center">
+                <p className="text-xs text-green-600 font-medium">Looking good!</p>
+                <p className="text-xs text-gray-500 mt-1">Click to change</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="bg-blue-50 p-4 rounded-full mb-3">
+                <Upload className="h-6 w-6 text-blue-500" />
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-gray-700">Upload Favicon</p>
+                <p className="text-xs text-gray-500 mt-2">PNG or ICO format</p>
+              </div>
+            </>
+          )}
+          <input
+            type="file"
+            className="hidden"
+            accept=".png,.ico"
+            onChange={handleFileInput}
           />
-        ) : (
-          <Upload size={20} className="text-gray-500" />
-        )}
-
-        <input
-          type="file"
-          className="hidden"
-          accept="image/*"
-          onChange={handleFileSelect}
-        />
-      </label>
+        </label>
+      </div>
     </div>
   );
 }
