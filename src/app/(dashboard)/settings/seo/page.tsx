@@ -1,8 +1,9 @@
-import SeoSettings from "@/components/forms/settings/seo-settings";
-import { currentUser } from "@/lib/api/users";
+import SeoSettings from "@/components/forms/settings/seo-settings/seo-settings";
+import { getSeoSettings } from "@/lib/api/seo-settings";
 
 const SettingsSEO = async () => {
-  const user = await currentUser();
+  // Fetch SEO data directly from your PHP backend
+  const seo = await getSeoSettings();
 
   return (
     <div>
@@ -13,7 +14,10 @@ const SettingsSEO = async () => {
         </p>
       </div>
 
-<SeoSettings settingsData={user?.siteSettings?.[0] ?? null} />
+      <SeoSettings 
+        settingsData={seo?.data ?? null}
+        userId={seo?.data?.user_id}  // REAL PRIMARY KEY
+      />
     </div>
   );
 };
