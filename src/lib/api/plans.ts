@@ -8,6 +8,13 @@ export const getPlans = async () => {
     const res = await axios.get(`${apiUrl}/seller/plans/get.php`);
     return res.data;
   } catch {
-    return { success: false, data: [] };
+    return { 
+      success: false, 
+      data: [],
+      gst_settings: {
+        gst_percentage: 18,
+        gst_tax_type: 'exclusive'
+      }
+    };
   }
 };

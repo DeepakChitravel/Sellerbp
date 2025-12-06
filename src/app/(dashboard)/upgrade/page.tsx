@@ -12,6 +12,15 @@ interface Plan {
   description: string;
   feature_lists: string[];
   is_trial: boolean;
+  gst_type: string;
+  display_price: number;
+  is_price_inclusive: boolean;
+  previous_display_price?: number;
+}
+
+interface GstSettings {
+  gst_percentage: number;
+  gst_tax_type: string;
 }
 
 export default function UpgradePage() {
@@ -63,6 +72,28 @@ export default function UpgradePage() {
     return `${days} Days`;
   };
 
+  const formatCurrency = (amount: number) => {
+    // Always show as integer (no decimals)
+    return Math.round(amount).toLocaleString('en-IN');
+  };
+
+  // Calculate discount percentage based on previous amount vs current display price
+  const calculateDiscountPercentage = (currentPrice: number, previousPrice?: number) => {
+    if (!previousPrice || previousPrice <= 0 || previousPrice <= currentPrice) {
+      return 0;
+    }
+    const discount = ((previousPrice - currentPrice) / previousPrice) * 100;
+    return Math.round(discount);
+  };
+
+  // Calculate savings amount based on previous amount vs current display price
+  const calculateSavingsAmount = (currentPrice: number, previousPrice?: number) => {
+    if (!previousPrice || previousPrice <= 0 || previousPrice <= currentPrice) {
+      return 0;
+    }
+    return previousPrice - currentPrice;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-5 flex items-center justify-center">
@@ -88,20 +119,22 @@ export default function UpgradePage() {
         <div className="bg-white border rounded-full p-1 flex gap-2 shadow-sm">
           <button
             onClick={() => handleDurationChange("monthly")}
-            className={`px-5 py-2 rounded-full text-sm transition ${duration === "monthly"
+            className={`px-5 py-2 rounded-full text-sm transition ${
+              duration === "monthly"
                 ? "bg-blue-600 text-white"
                 : "text-gray-600"
-              }`}
+            }`}
           >
             Monthly Plans
           </button>
 
           <button
             onClick={() => handleDurationChange("yearly")}
-            className={`px-5 py-2 rounded-full text-sm transition ${duration === "yearly"
+            className={`px-5 py-2 rounded-full text-sm transition ${
+              duration === "yearly"
                 ? "bg-blue-600 text-white"
                 : "text-gray-600"
-              }`}
+            }`}
           >
             Yearly Plans
           </button>
@@ -130,88 +163,108 @@ export default function UpgradePage() {
           const features = Array.isArray(p.feature_lists) ? p.feature_lists : [];
           const planType = getPlanType(p.duration);
           const formattedDuration = formatDuration(p.duration);
-
-          // Check if we should show the discount badge
-          const shouldShowDiscount = p.previous_amount &&
-            p.previous_amount > 0 &&
-            p.previous_amount > p.amount;
+          
+          // Calculate discount from previous amount (no GST calculation for previous amount)
+          const discountPercentage = calculateDiscountPercentage(p.display_price, p.previous_display_price);
+          const savingsAmount = calculateSavingsAmount(p.display_price, p.previous_display_price);
+          
+          // Check if we should show discount badge
+          const shouldShowDiscount = discountPercentage > 0;
 
           return (
             <div
               key={i}
-              className={`relative p-8 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${p.is_trial
+              className={`relative p-8 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
+                p.is_trial
                   ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white border-blue-500"
                   : planType === 'monthly'
                     ? "bg-white border-blue-100"
                     : "bg-white border-green-100"
-                }`}
+              }`}
             >
-              {/* Plan Header - Align badge to left */}
+              {/* Plan Header */}
               <div className="text-left mb-6">
-                {/* Plan Type Badge - Left aligned */}
+                {/* Plan Type Badge */}
                 <div className="mb-4 flex justify-start">
-                  <span className={`inline-block px-4 py-1.5 text-xs font-semibold rounded-full ${planType === 'monthly'
+                  <span className={`inline-block px-4 py-1.5 text-xs font-semibold rounded-full ${
+                    planType === 'monthly'
                       ? 'bg-blue-100 text-blue-800 border border-blue-200'
                       : 'bg-green-100 text-green-800 border border-green-200'
-                    }`}>
+                  }`}>
                     {planType === 'monthly' ? 'Monthly' : 'Yearly'}
                   </span>
                 </div>
 
                 <h2 className="text-2xl font-bold mb-2">{p.name}</h2>
 
-                {/* Price Section - Left aligned */}
-                <div className="text-left mb-4">
-                  <div className="flex items-baseline gap-1 mb-1">
-                    <span className={`text-4xl font-bold ${p.is_trial ? 'text-white' : 'text-gray-900'
-                      }`}>
-                      ₹{p.amount}
+                {/* Discount Badge - Only show if there's actual discount from previous amount */}
+                {shouldShowDiscount && (
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full font-semibold">
+                      {discountPercentage}% OFF
                     </span>
-                    <span className={`text-lg ${p.is_trial ? 'text-blue-100' : 'text-gray-600'
-                      }`}>
+                    <span className="text-sm text-gray-600">
+                      Save ₹{formatCurrency(savingsAmount)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Price Section - Previous Amount (MRP) + Current Price */}
+                <div className="text-left mb-4">
+                  {/* Previous Amount with strikethrough + Current Price inline */}
+                  <div className="flex items-baseline gap-2 mb-2">
+                    {shouldShowDiscount && p.previous_display_price && (
+                      <span className="text-gray-400 text-lg line-through">
+                        ₹{formatCurrency(p.previous_display_price)}
+                      </span>
+                    )}
+                    <span className={`text-4xl font-bold ${
+                      p.is_trial ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      ₹{formatCurrency(p.display_price)}
+                    </span>
+                    <span className={`text-lg ${
+                      p.is_trial ? 'text-blue-100' : 'text-gray-600'
+                    }`}>
                       /{formattedDuration}
                     </span>
                   </div>
 
-                  {/* Original Price & Save Badge */}
-                  {shouldShowDiscount && (
-                    <div className={`text-sm mb-2 ${p.is_trial ? 'text-blue-200' : 'text-gray-500'
-                      }`}>
-                      <span className="line-through mr-2">₹{p.previous_amount}</span>
-                      <span className="px-2 py-0.5 bg-red-100 text-red-800 text-xs font-medium rounded-full">
-                        Save {Math.round((1 - p.amount / p.previous_amount) * 100)}%
-                      </span>
-                    </div>
+                  {/* Description */}
+                  {p.description && (
+                    <p className={`text-sm ${
+                      p.is_trial ? 'text-blue-100' : 'text-gray-600'
+                    } mb-4`}>
+                      {p.description}
+                    </p>
                   )}
                 </div>
-
-                {/* Description */}
-                {p.description && (
-                  <p className={`text-sm ${p.is_trial ? 'text-blue-100' : 'text-gray-600'
-                    } mb-4`}>
-                    {p.description}
-                  </p>
-                )}
               </div>
 
               {/* Features List */}
               <div className="border-t pt-6 mb-8">
-                <h4 className={`text-sm font-semibold mb-4 uppercase tracking-wider ${p.is_trial ? 'text-white' : 'text-gray-700'
-                  }`}>
+                <h4 className={`text-sm font-semibold mb-4 uppercase tracking-wider ${
+                  p.is_trial ? 'text-white' : 'text-gray-700'
+                }`}>
                   What's included:
                 </h4>
                 <div className="space-y-3">
                   {features.map((f: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-3">
-                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${p.is_trial ? 'bg-blue-500' : planType === 'monthly' ? 'bg-blue-100' : 'bg-green-100'
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${
+                        p.is_trial ? 'bg-blue-500' : 
+                        planType === 'monthly' ? 'bg-blue-100' : 'bg-green-100'
+                      }`}>
+                        <span className={`text-xs ${
+                          p.is_trial ? 'text-white' : 
+                          planType === 'monthly' ? 'text-blue-600' : 'text-green-600'
                         }`}>
-                        <span className={`text-xs ${p.is_trial ? 'text-white' : planType === 'monthly' ? 'text-blue-600' : 'text-green-600'
-                          }`}>
                           ✓
                         </span>
                       </div>
-                      <span className={`text-sm ${p.is_trial ? 'text-blue-100' : 'text-gray-600'
-                        }`}>
+                      <span className={`text-sm ${
+                        p.is_trial ? 'text-blue-100' : 'text-gray-600'
+                      }`}>
                         {f}
                       </span>
                     </div>
@@ -221,14 +274,15 @@ export default function UpgradePage() {
 
               {/* CTA Button */}
               <button
-                className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-md hover:shadow-lg ${p.is_trial
+                className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-md hover:shadow-lg ${
+                  p.is_trial
                     ? "bg-white text-blue-700 hover:bg-gray-50"
                     : planType === 'monthly'
                       ? "bg-blue-600 text-white hover:bg-blue-700"
                       : "bg-green-600 text-white hover:bg-green-700"
-                  }`}
+                }`}
               >
-                Choose {planType === 'monthly' ? 'Monthly' : 'Yearly'} Plan
+                {p.is_trial ? 'Start Free Trial' : `Choose ${planType === 'monthly' ? 'Monthly' : 'Yearly'} Plan`}
               </button>
             </div>
           );
