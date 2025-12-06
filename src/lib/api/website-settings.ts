@@ -1,45 +1,56 @@
 "use server";
-import { apiUrl } from "@/config";
-import { WebsiteSettingsData } from "@/types";
 import axios from "axios";
+import { apiUrl } from "@/config";
 import { cookies } from "next/headers";
 
-const route = "/website-settings";
-
-// Get data
 export const getWebsiteSettings = async () => {
+  const publicId = cookies().get("user_id")?.value;
   const token = cookies().get("token")?.value;
-  const url = apiUrl + route;
 
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
+  if (!publicId) return null;
 
   try {
-    const response = await axios.get(url, options);
-    return response.data;
-  } catch (error: any) {
-    return false;
+    const res = await axios.get(
+      `${apiUrl}/seller/website-setup/header-settings/get.php?user_id=${publicId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      }
+    );
+
+    return res.data?.data;
+  } catch (err) {
+    console.log("HEADER GET ERROR →", err?.response?.data);
+    return null;
   }
 };
 
-// save website settings
-export const saveWebsiteSettings = async (data: WebsiteSettingsData) => {
+export const saveWebsiteSettings = async (data: any) => {
   const token = cookies().get("token")?.value;
-  const url = apiUrl + route;
-
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
 
   try {
-    const response = await axios.post(url, data, options);
-    return { success: true, message: response.data.message };
+    const res = await axios.post(
+      `${apiUrl}/seller/website-setup/header-settings/update.php`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      }
+    );
+
+    return res.data;
   } catch (error: any) {
-    return { success: false, message: error.response.data.message };
+    console.log("HEADER UPDATE ERROR →", error?.response?.data);
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message ||
+        "Failed to update header settings",
+    };
   }
 };

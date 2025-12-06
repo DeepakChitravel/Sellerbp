@@ -1,4 +1,5 @@
 "use client";
+
 import FormInputs from "@/components/form-inputs";
 import { Button } from "@/components/ui/button";
 import { saveWebsiteSettings } from "@/lib/api/website-settings";
@@ -7,42 +8,43 @@ import { InputField, WebsiteSettings } from "@/types";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
+import HeroImageUpload from "./hero-image-upload";
+
 interface Props {
   data: WebsiteSettings;
+  userId: number;       // REAL PRIMARY KEY
 }
 
 interface Form {
   [key: string]: InputField;
 }
 
-const HomepageSettings = ({ data }: Props) => {
+const HomepageSettings = ({ data, userId }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const [heroTitle, setHeroTitle] = useState<string>(data?.heroTitle);
-  const [heroDescription, setHeroDescription] = useState<string>(
-    data?.heroDescription
+  // ⭐ MATCHES DATABASE FIELDS (snake_case)
+  const [heroTitle, setHeroTitle] = useState(data?.hero_title || "");
+  const [heroDescription, setHeroDescription] = useState(
+    data?.hero_description || ""
   );
-  const [heroImage, setHeroImage] = useState<string>(data?.heroImage);
 
+  // ⭐ Saved path from DB (ex: sellers/12/website/img.png)
+  const [heroImage, setHeroImage] = useState(data?.hero_image || "");
+
+  // Text fields (ONLY inputs)
   const inputFields: Form = {
-    heroTitle: {
+    hero_title: {
       type: "text",
       value: heroTitle,
       setValue: setHeroTitle,
       label: "Hero Title",
     },
-    heroDescription: {
+    hero_description: {
       type: "textarea",
       value: heroDescription,
       setValue: setHeroDescription,
       label: "Hero Description",
       rows: 5,
-    },
-    heroImage: {
-      type: "file",
-      value: heroImage,
-      setValue: setHeroImage,
-      label: "Hero Image",
     },
   };
 
@@ -50,25 +52,38 @@ const HomepageSettings = ({ data }: Props) => {
     setIsLoading(true);
 
     try {
-      const data = {
-        heroTitle,
-        heroDescription,
-        heroImage,
+      const payload = {
+        user_id: userId,
+
+        // ⭐ MUST match PHP update.php exactly
+        hero_title: heroTitle,
+        hero_description: heroDescription,
+        hero_image: heroImage,
       };
 
-      const response = await saveWebsiteSettings(data);
+      const response = await saveWebsiteSettings(payload);
 
       handleToast(response);
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save homepage settings");
     }
+
     setIsLoading(false);
   };
 
   return (
     <>
+      {/* TEXT INPUTS */}
       <FormInputs inputFields={inputFields} />
 
+      {/* IMAGE UPLOAD (custom component) */}
+      <HeroImageUpload
+        value={heroImage}
+        setValue={setHeroImage}
+        userId={userId}
+      />
+
+      {/* SAVE BUTTON */}
       <div className="flex items-center justify-end mt-6">
         <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
           Save Changes

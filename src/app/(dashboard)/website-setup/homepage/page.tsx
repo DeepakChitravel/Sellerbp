@@ -1,4 +1,4 @@
-import HomepageSettings from "@/components/forms/website-setup/homepage-settings";
+import HomepageSettings from "@/components/forms/website-setup/homepage-settings/homepage-settings";
 import { getWebsiteSettings } from "@/lib/api/website-settings";
 
 const Homepage = async () => {

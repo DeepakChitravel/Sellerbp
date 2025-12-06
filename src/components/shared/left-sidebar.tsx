@@ -22,12 +22,19 @@ const LeftSidebar = async () => {
         <div className="flex items-center justify-between gap-3 border-b border-white/10 mb-5 pb-5">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <Image
-              src={uploadsUrl + "/static/logo.png"}
-              alt=""
-              width={44}
-              height={44}
-            />
+<Image
+  src={
+    user?.siteSettings?.logo_url 
+      ? user.siteSettings.logo_url
+      : uploadsUrl + "/static/logo.png"
+  }
+  alt="Site Logo"
+  width={44}
+  height={44}
+  className="object-contain"
+/>
+
+
             <span className="font-semibold text-white text-lg 2xl:block hidden">
               {user.siteName}
             </span>
