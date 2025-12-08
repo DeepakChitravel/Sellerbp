@@ -8,8 +8,8 @@ import { uploadsUrl, apiUrl } from "@/config";
 export default function HeroImageUpload({ value, setValue, userId }) {
   const [uploading, setUploading] = useState(false);
 
-  // ⭐ Correct preview URL
-  const previewUrl = value ? `${uploadsUrl}/${value}` : "";
+  // value = { url: "...", path: "..." }
+  const previewUrl = value?.url || "";
 
   const handleFileSelect = async (e) => {
     if (!userId) {
@@ -34,8 +34,15 @@ export default function HeroImageUpload({ value, setValue, userId }) {
     console.log("UPLOAD RESULT:", result);
 
     if (result.success) {
-      console.log("PREVIEW URL:", `${uploadsUrl}/${result.filename}`);
-      setValue(result.filename);
+      const fullUrl = `${uploadsUrl}/${result.filename}`;
+
+      // ⭐ Set both URL (for preview) + PATH (for DB)
+      setValue({
+        url: fullUrl,
+        path: result.filename,
+      });
+
+      console.log("PREVIEW URL:", fullUrl);
     }
 
     setUploading(false);

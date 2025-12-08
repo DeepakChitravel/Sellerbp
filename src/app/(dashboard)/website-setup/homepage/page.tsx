@@ -1,8 +1,12 @@
 import HomepageSettings from "@/components/forms/website-setup/homepage-settings/homepage-settings";
 import { getWebsiteSettings } from "@/lib/api/website-settings";
+import { cookies } from "next/headers";  // ⭐ REQUIRED
 
 const Homepage = async () => {
   const data = await getWebsiteSettings();
+
+  // ⭐ REAL USER ID
+  const userId = Number(cookies().get("user_id")?.value);
 
   return (
     <div>
@@ -13,7 +17,11 @@ const Homepage = async () => {
         </p>
       </div>
 
-      <HomepageSettings data={data} />
+      {/* ⭐ Now userId is passed correctly */}
+      <HomepageSettings
+        data={data}
+        userId={userId}
+      />
     </div>
   );
 };

@@ -12,7 +12,7 @@ import HeroImageUpload from "./hero-image-upload";
 
 interface Props {
   data: WebsiteSettings;
-  userId: number;       // REAL PRIMARY KEY
+  userId: number; // REAL PRIMARY KEY
 }
 
 interface Form {
@@ -22,16 +22,18 @@ interface Form {
 const HomepageSettings = ({ data, userId }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // ⭐ MATCHES DATABASE FIELDS (snake_case)
+  // ⭐ MATCHES DATABASE FIELDS
   const [heroTitle, setHeroTitle] = useState(data?.hero_title || "");
   const [heroDescription, setHeroDescription] = useState(
     data?.hero_description || ""
   );
 
-  // ⭐ Saved path from DB (ex: sellers/12/website/img.png)
-  const [heroImage, setHeroImage] = useState(data?.hero_image || "");
+  // ⭐ FIXED → store BOTH url + path
+  const [heroImage, setHeroImage] = useState({
+    url: data?.hero_image_url || "",
+    path: data?.hero_image || ""
+  });
 
-  // Text fields (ONLY inputs)
   const inputFields: Form = {
     hero_title: {
       type: "text",
@@ -54,11 +56,9 @@ const HomepageSettings = ({ data, userId }: Props) => {
     try {
       const payload = {
         user_id: userId,
-
-        // ⭐ MUST match PHP update.php exactly
         hero_title: heroTitle,
         hero_description: heroDescription,
-        hero_image: heroImage,
+        hero_image: heroImage.path, // ⭐ SAVE ONLY RELATIVE PATH
       };
 
       const response = await saveWebsiteSettings(payload);
@@ -73,17 +73,15 @@ const HomepageSettings = ({ data, userId }: Props) => {
 
   return (
     <>
-      {/* TEXT INPUTS */}
       <FormInputs inputFields={inputFields} />
 
-      {/* IMAGE UPLOAD (custom component) */}
+      {/* IMAGE UPLOAD */}
       <HeroImageUpload
         value={heroImage}
         setValue={setHeroImage}
         userId={userId}
       />
 
-      {/* SAVE BUTTON */}
       <div className="flex items-center justify-end mt-6">
         <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
           Save Changes

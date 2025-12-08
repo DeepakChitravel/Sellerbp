@@ -11,7 +11,7 @@ export const getWebsiteSettings = async () => {
 
   try {
     const res = await axios.get(
-      `${apiUrl}/seller/website-setup/header-settings/get.php?user_id=${publicId}`,
+      `${apiUrl}/seller/website-setup/homepage-settings/get.php?user_id=${publicId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -32,7 +32,7 @@ export const saveWebsiteSettings = async (data: any) => {
 
   try {
     const res = await axios.post(
-      `${apiUrl}/seller/website-setup/header-settings/update.php`,
+      `${apiUrl}/seller/website-setup/homepage-settings/update.php`,
       data,
       {
         headers: {
