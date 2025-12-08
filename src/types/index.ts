@@ -317,27 +317,31 @@ export type Category = {
   createdAt: Date;
 };
 
-export type AdditionalImage = { id: number; image: string; createdAt: Date };
+export type AdditionalImage = {
+  id: number;
+  image: string;
+  created_at: string;   // MUST MATCH backend
+};
 
 export type Service = {
   id: number;
-  serviceId: string;
-  userId: number;
+  service_id: string;      // <- must match backend
+  user_id: number;         // <- backend uses user_id, not userId
   name: string;
   slug: string;
   amount: string;
-  previousAmount: string;
+  previous_amount: string;
   image: string;
-  categoryId: number;
-  timeSlotInterval: string;
-  intervalType: string;
+  category_id: number | null;
+  time_slot_interval: string;
+  interval_type: string;
   description: string;
-  gstPercentage: number;
-  metaTitle: string;
-  metaDescription: string;
+  gst_percentage: number | null;
+  meta_title: string | null;
+  meta_description: string | null;
   status: boolean;
-  createdAt: Date;
-  category: Category;
+  created_at: string;      // <- must match backend
+  category: Category | null;
   additionalImages: AdditionalImage[];
   user: User;
 };

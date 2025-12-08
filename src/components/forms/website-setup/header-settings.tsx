@@ -20,42 +20,39 @@ interface Form {
 const HeaderSettings = ({ data }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const [navLinks, setNavLinks] = useState<NavLink[]>(data?.navLinks);
+const [navLinks, setNavLinks] = useState<NavLink[]>(data?.navLinks || []);
 
-  const handleSave = async () => {
-    setIsLoading(true);
+ const handleSave = async () => {
+  setIsLoading(true);
 
-    let isValid = true;
+  let isValid = true;
 
-    navLinks.forEach((item) => {
-      if (!item.label) {
-        toast.error("Label must be provided");
-        isValid = false;
-      }
-      if (!item.link) {
-        toast.error("Link must be provided");
-        isValid = false;
-      }
-    });
+  navLinks.forEach((item) => {
+    if (!item.label || !item.link) isValid = false;
+  });
 
-    if (!isValid) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const data = {
-        navLinks,
-      };
-
-      const response = await saveWebsiteSettings(data);
-
-      handleToast(response);
-    } catch (error: any) {
-      toast.error(error.message);
-    }
+  if (!isValid) {
+    toast.error("All fields must be filled");
     setIsLoading(false);
-  };
+    return;
+  }
+
+  try {
+    const payload = {
+      user_id: data.user_id,   // ⭐ REQUIRED
+      navLinks,
+    };
+
+    const response = await saveWebsiteSettings(payload);
+
+    handleToast(response);
+  } catch (error: any) {
+    toast.error(error.message);
+  }
+
+  setIsLoading(false);
+};
+
 
   const handleUpdateValue = (
     index: number,

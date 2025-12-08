@@ -67,24 +67,50 @@ export const addService = async (data: serviceData) => {
   }
 };
 
-
-// Update a service
-export const updateService = async (serviceId: string, data: serviceData) => {
+export const updateService = async (serviceId: string, data: any) => {
   const token = cookies().get("token")?.value;
   const user_id = cookies().get("user_id")?.value;
 
   const url = `${apiUrl}/seller/services/update.php?service_id=${serviceId}&user_id=${user_id}`;
 
+  const formData = new FormData();
+
+  // Normal fields
+  Object.keys(data).forEach((key) => {
+    if (key !== "newMainImage" && key !== "newAdditionalImages") {
+      formData.append(key, data[key] ?? "");
+    }
+  });
+
+  // NEW uploaded main image
+  if (data.newMainImage instanceof File) {
+    formData.append("main_image", data.newMainImage);
+  } else {
+    formData.append("existing_main_image", data.image);
+  }
+
+  // NEW additional images
+  (data.newAdditionalImages || []).forEach((file: File) => {
+    formData.append("additional_images[]", file);
+  });
+
+  // Old additional images kept
+  formData.append("existing_additional_images", JSON.stringify(data.additionalImages));
+
   try {
-    const response = await axios.post(url, data, {
-      headers: { Authorization: `Bearer ${token}` },
+    const response = await axios.post(url, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
     });
 
-    return { success: response.data.success, message: response.data.message };
+    return response.data;
   } catch (error: any) {
     return { success: false, message: error?.response?.data?.message || "Failed" };
   }
 };
+
 
 
 

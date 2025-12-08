@@ -22,16 +22,16 @@ const ServiceImage = ({ images }) => {
     }
   }, []);
 
-  const getSrc = (path: string) => {
-    if (!path) return "/placeholder-image.jpg";
-    
-    if (path.startsWith("http")) {
-      return path;
-    }
-    
-    // Construct full URL for main image
-    return `http://localhost/managerbp/public/uploads/${path}`;
-  };
+const getSrc = (path: string) => {
+  if (!path) return "/placeholder-image.jpg";
+
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+
+  return `http://localhost/managerbp/public/uploads/${path}`;
+};
+
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
