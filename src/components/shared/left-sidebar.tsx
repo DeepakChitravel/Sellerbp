@@ -68,18 +68,7 @@ const LeftSidebar = async () => {
           ))}
         </ul>
       </div>
-
-      <Link href="/upgrade" className="hidden 2xl:flex items-center gap-3.5">
-        <Award size="36" variant="Bulk" />
-        <div>
-          <span className="block text-sm font-medium text-white/90">
-            Upgrade Plan
-          </span>
-          <span className="block text-xs text-white/60 mt-0.5">
-            Get extra benefits
-          </span>
-        </div>
-      </Link>
+      
     </div>
   );
 };

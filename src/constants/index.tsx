@@ -34,13 +34,15 @@ const SIDEBAR_LINKS = [
   { label: "Calendar", href: "/calendar", icon: <Calendar /> },
   { label: "Reports", href: "/reports", icon: <Chart /> },
   { label: "Categories", href: "/categories", icon: <Grid2 /> },
-  { label: "Event", href: "/event", icon: <Grid2 /> },
+  { label: "Employees", href: "/employees", icon: <Profile2User /> },
+  { label: "Event", href: "/event", icon: <CalendarTick /> },
   { label: "Services", href: "/services", icon: <TaskSquare /> },
   { label: "Coupons", href: "/coupons", icon: <DiscountShape /> },
+  { label: "Upgrade Plan", href: "/upgrade", icon: <Moneys /> },
   { label: "Plugins", href: "/plugins", icon: <Flash /> },
-  { label: "Employees", href: "/employees", icon: <Profile2User /> },
   { label: "Settings", href: "/settings", icon: <Setting2 /> },
   { label: "Website Setup", href: "/website-setup", icon: <MonitorMobbile /> },
+
 ];
 
 const MY_ACCOUNT_DROPDOWN_OPTIONS = [

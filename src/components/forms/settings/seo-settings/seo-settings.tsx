@@ -12,7 +12,7 @@ import SharingPreviewUpload from "./sharing-preview-upload";
 
 interface Props {
   settingsData: siteSettings;
-  userId: number; // REAL PRIMARY KEY
+  userId: number;
 }
 
 interface Form {
@@ -77,6 +77,8 @@ const SeoSettings = ({ settingsData, userId }: Props) => {
         value={sharingImagePreview}
         setValue={setSharingImagePreview}
         userId={userId}
+        metaTitle={metaTitle}
+        metaDescription={metaDescription}
       />
 
       <div className="flex items-center justify-end mt-6">
