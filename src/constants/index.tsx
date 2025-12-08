@@ -34,6 +34,7 @@ const SIDEBAR_LINKS = [
   { label: "Calendar", href: "/calendar", icon: <Calendar /> },
   { label: "Reports", href: "/reports", icon: <Chart /> },
   { label: "Categories", href: "/categories", icon: <Grid2 /> },
+  { label: "Event", href: "/event", icon: <Grid2 /> },
   { label: "Services", href: "/services", icon: <TaskSquare /> },
   { label: "Coupons", href: "/coupons", icon: <DiscountShape /> },
   { label: "Plugins", href: "/plugins", icon: <Flash /> },
