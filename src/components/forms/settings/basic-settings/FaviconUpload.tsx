@@ -58,8 +58,17 @@ export default function FaviconUpload({ value, setValue, userId }) {
     if (file) await handleFileSelect(file);
   };
 
-  const handleRemove = () => {
+  const handleRemove = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setValue("");
+  };
+
+  const handleImageClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Open file selector when image is clicked
+    document.getElementById("favicon-file-input")?.click();
   };
 
   return (
@@ -88,30 +97,32 @@ export default function FaviconUpload({ value, setValue, userId }) {
               <p className="text-sm text-gray-600 mt-3">Uploading...</p>
             </div>
           ) : previewUrl ? (
-            <div className="relative group">
-              <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleRemove();
-                  }}
-                  className="bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-              <Image
-                src={previewUrl}
-                alt="Favicon Preview"
-                width={64}
-                height={64}
-                className="object-contain"
-                unoptimized
-              />
-              <div className="mt-3 text-center">
-                <p className="text-xs text-green-600 font-medium">Looking good!</p>
-                <p className="text-xs text-gray-500 mt-1">Click to change</p>
+            <div className="relative">
+              {/* X button positioned closer to the image */}
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="absolute -top-1 -right-1 z-10 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors shadow-sm"
+              >
+                <X size={12} />
+              </button>
+              
+              <div 
+                onClick={handleImageClick}
+                className="cursor-pointer hover:opacity-90 transition-opacity flex flex-col items-center"
+              >
+                <Image
+                  src={previewUrl}
+                  alt="Favicon Preview"
+                  width={64}
+                  height={64}
+                  className="object-contain"
+                  unoptimized
+                />
+                <div className="mt-3 text-center">
+                  <p className="text-xs text-green-600 font-medium">Looking good!</p>
+                  <p className="text-xs text-gray-500 mt-1">Click image to change</p>
+                </div>
               </div>
             </div>
           ) : (
@@ -126,6 +137,7 @@ export default function FaviconUpload({ value, setValue, userId }) {
             </>
           )}
           <input
+            id="favicon-file-input"
             type="file"
             className="hidden"
             accept=".png,.ico"
