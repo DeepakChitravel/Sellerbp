@@ -58,8 +58,17 @@ export default function LogoUpload({ value, setValue, userId }) {
     if (file) await handleFileSelect(file);
   };
 
-  const handleRemove = () => {
+  const handleRemove = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setValue("");
+  };
+
+  const handleImageClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Open file selector when image is clicked
+    document.getElementById("logo-file-input")?.click();
   };
 
   return (
@@ -88,32 +97,34 @@ export default function LogoUpload({ value, setValue, userId }) {
               <p className="text-sm text-gray-600 mt-3">Uploading...</p>
             </div>
           ) : previewUrl ? (
-            <div className="relative group">
-              <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleRemove();
-                  }}
-                  className="bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <div className="p-4">
-                <Image
-                  src={previewUrl}
-                  alt="Logo Preview"
-                  width={140}
-                  height={140}
-                  className="object-contain"
-                  unoptimized
-                />
-              </div>
-              <div className="mt-2 text-center">
-                <p className="text-sm text-green-600 font-medium">Nice logo!</p>
-                <p className="text-xs text-gray-500">Click to change</p>
+            <div className="relative">
+              {/* X button positioned closer to the image */}
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="absolute -top-1 -right-1 z-10 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors shadow-sm"
+              >
+                <X size={14} />
+              </button>
+              
+              <div 
+                onClick={handleImageClick}
+                className="cursor-pointer hover:opacity-90 transition-opacity flex flex-col items-center"
+              >
+                <div className="p-4">
+                  <Image
+                    src={previewUrl}
+                    alt="Logo Preview"
+                    width={140}
+                    height={140}
+                    className="object-contain"
+                    unoptimized
+                  />
+                </div>
+                <div className="mt-2 text-center">
+                  <p className="text-sm text-green-600 font-medium">Nice logo!</p>
+                  <p className="text-xs text-gray-500">Click image to change</p>
+                </div>
               </div>
             </div>
           ) : (
@@ -129,6 +140,7 @@ export default function LogoUpload({ value, setValue, userId }) {
             </>
           )}
           <input
+            id="logo-file-input"
             type="file"
             className="hidden"
             accept=".png,.svg,.jpg,.jpeg"

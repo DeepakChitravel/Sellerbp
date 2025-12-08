@@ -209,6 +209,16 @@ const BasicSettings = ({ initialData }: Props) => {
 
   return (
     <div className="space-y-8">
+
+      {/* Normal Input Fields */}
+      <div className="bg-white rounded-xl border shadow-sm p-6">
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold text-gray-800">Contact Information</h3>
+          <p className="text-gray-600 text-sm mt-1">Update your business contact details</p>
+        </div>
+        <FormInputs inputFields={inputFields} />
+      </div>
+
       {/* Brand Identity Section - Moved to Top */}
       <div className="bg-white rounded-xl border shadow-sm p-6">
         <div className="mb-6">
@@ -221,33 +231,25 @@ const BasicSettings = ({ initialData }: Props) => {
             <>
               <LogoUpload value={logo} setValue={setLogo} userId={userId} />
               <FaviconUpload value={favicon} setValue={setFavicon} userId={userId} />
-              
+
             </>
           )}
         </div>
-        
-      </div>
 
-      {/* Normal Input Fields */}
-      <div className="bg-white rounded-xl border shadow-sm p-6">
-        <div className="mb-6">
-          <h3 className="text-xl font-semibold text-gray-800">Contact Information</h3>
-          <p className="text-gray-600 text-sm mt-1">Update your business contact details</p>
-        </div>
-        <FormInputs inputFields={inputFields} />
       </div>
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button 
-          onClick={handleSave} 
-          disabled={isLoading} 
+        <Button
+          onClick={handleSave}
+          disabled={isLoading}
           isLoading={isLoading}
           className="px-8 py-2.5 text-base font-medium rounded-lg shadow-md hover:shadow-lg transition-shadow"
         >
           Save Changes
         </Button>
       </div>
+
     </div>
   );
 };
