@@ -141,46 +141,47 @@ const QRCode = () => {
               <div className="flex flex-col h-full">
                 {/* Top Section - Name & Title (Centered) */}
                 <div className="text-center mb-4">
-                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-1">
+                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
                     {qrData.name || "Your Name"}
                   </h2>
-                  <p className="text-blue-600 text-sm font-semibold uppercase tracking-wider">
+                  <p className="text-blue-600 text-sm font-semibold uppercase tracking-wider mt-1">
                     CEO & FOUNDER
                   </p>
                 </div>
 
                 <div className="flex flex-1 gap-6">
                   {/* Left Side - Contact Info */}
-                  <div className="flex-1 flex flex-col justify-center">
+                  <div className="flex-1 flex flex-col justify-center space-y-2">
                     {/* Phone */}
                     {qrData.phone && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <PhoneCall className="w-3.5 h-3.5 text-gray-600" />
+                      <div className="flex items-center gap-2">
+                        <PhoneCall className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
                         <span className="text-sm text-gray-800 font-medium">{qrData.phone}</span>
                       </div>
                     )}
 
-                    {/* Email */}
+                    {/* Email - Fixed to prevent truncation */}
                     {qrData.email && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <Mail className="w-3.5 h-3.5 text-gray-600" />
-                        <span className="text-sm text-gray-800 font-medium truncate">{qrData.email}</span>
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+                        <span className="text-sm text-gray-800 font-medium break-all">{qrData.email}</span>
+                      </div>
+                    )}
+
+                    {/* Address - Added from your data */}
+                    {qrData.address && (
+                      <div className="flex items-start gap-2">
+                        <MapPin className="w-3.5 h-3.5 text-gray-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-800 font-medium">{qrData.address}</span>
                       </div>
                     )}
 
                     {/* Website */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <Globe className="w-3.5 h-3.5 text-gray-600" />
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
                       <span className="text-sm text-blue-600 font-semibold">
                         mysaas.com/{qrData.siteSlug}
                       </span>
-                    </div>
-
-                    {/* Scan to Connect text - positioned at bottom left */}
-                    <div className="mt-auto pt-4">
-                      <p className="text-xs text-gray-500 font-medium">
-                        Scan to Connect
-                      </p>
                     </div>
                   </div>
 
@@ -198,6 +199,13 @@ const QRCode = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Scan to Connect - Fixed position at bottom center */}
+                <div className="text-center mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 font-medium">
+                    Scan to Connect
+                  </p>
                 </div>
               </div>
             </div>
@@ -306,7 +314,7 @@ const QRCode = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-400 text-xs font-medium">Email</p>
-                  <p className="text-white font-medium">{qrData.email}</p>
+                  <p className="text-white font-medium break-all">{qrData.email}</p>
                 </div>
               </div>
             )}
