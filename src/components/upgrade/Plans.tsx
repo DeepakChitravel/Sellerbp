@@ -86,22 +86,20 @@ export default function UpgradePlans({ initialPlans }) {
         <div className="bg-white border rounded-full p-1 flex gap-2 shadow-sm">
           <button
             onClick={() => handleDurationChange("monthly")}
-            className={`px-5 py-2 rounded-full text-sm transition ${
-              duration === "monthly"
+            className={`px-5 py-2 rounded-full text-sm transition ${duration === "monthly"
                 ? "bg-blue-600 text-white"
                 : "text-gray-600"
-            }`}
+              }`}
           >
             Monthly Plans
           </button>
 
           <button
             onClick={() => handleDurationChange("yearly")}
-            className={`px-5 py-2 rounded-full text-sm transition ${
-              duration === "yearly"
+            className={`px-5 py-2 rounded-full text-sm transition ${duration === "yearly"
                 ? "bg-blue-600 text-white"
                 : "text-gray-600"
-            }`}
+              }`}
           >
             Yearly Plans
           </button>
@@ -145,27 +143,16 @@ export default function UpgradePlans({ initialPlans }) {
           return (
             <div
               key={i}
-              className={`relative p-8 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-                p.is_trial
+              className={`relative p-8 rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${p.is_trial
                   ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white border-blue-500"
                   : planType === "monthly"
-                  ? "bg-white border-blue-100"
-                  : "bg-white border-green-100"
-              }`}
+                    ? "bg-white border-blue-100"
+                    : "bg-white border-green-100"
+                }`}
             >
               {/* Header */}
               <div className="text-left mb-6">
-                <div className="mb-4 flex justify-start">
-                  <span
-                    className={`inline-block px-4 py-1.5 text-xs font-semibold rounded-full ${
-                      planType === "monthly"
-                        ? "bg-blue-100 text-blue-800 border border-blue-200"
-                        : "bg-green-100 text-green-800 border border-green-200"
-                    }`}
-                  >
-                    {planType === "monthly" ? "Monthly" : "Yearly"}
-                  </span>
-                </div>
+             
 
                 <h2 className="text-2xl font-bold mb-2">{p.name}</h2>
 
@@ -189,16 +176,14 @@ export default function UpgradePlans({ initialPlans }) {
                       </span>
                     )}
                     <span
-                      className={`text-4xl font-bold ${
-                        p.is_trial ? "text-white" : "text-gray-900"
-                      }`}
+                      className={`text-4xl font-bold ${p.is_trial ? "text-white" : "text-gray-900"
+                        }`}
                     >
                       ₹{formatCurrency(p.display_price)}
                     </span>
                     <span
-                      className={`text-lg ${
-                        p.is_trial ? "text-blue-100" : "text-gray-600"
-                      }`}
+                      className={`text-lg ${p.is_trial ? "text-blue-100" : "text-gray-600"
+                        }`}
                     >
                       /{formattedDuration}
                     </span>
@@ -206,9 +191,8 @@ export default function UpgradePlans({ initialPlans }) {
 
                   {p.description && (
                     <p
-                      className={`text-sm ${
-                        p.is_trial ? "text-blue-100" : "text-gray-600"
-                      } mb-4`}
+                      className={`text-sm ${p.is_trial ? "text-blue-100" : "text-gray-600"
+                        } mb-4`}
                     >
                       {p.description}
                     </p>
@@ -219,9 +203,8 @@ export default function UpgradePlans({ initialPlans }) {
               {/* Features */}
               <div className="border-t pt-6 mb-8">
                 <h4
-                  className={`text-sm font-semibold mb-4 uppercase tracking-wider ${
-                    p.is_trial ? "text-white" : "text-gray-700"
-                  }`}
+                  className={`text-sm font-semibold mb-4 uppercase tracking-wider ${p.is_trial ? "text-white" : "text-gray-700"
+                    }`}
                 >
                   What's included:
                 </h4>
@@ -230,31 +213,28 @@ export default function UpgradePlans({ initialPlans }) {
                   {features.map((f, idx) => (
                     <div key={idx} className="flex items-start gap-3">
                       <div
-                        className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${
-                          p.is_trial
+                        className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${p.is_trial
                             ? "bg-blue-500"
                             : planType === "monthly"
-                            ? "bg-blue-100"
-                            : "bg-green-100"
-                        }`}
+                              ? "bg-blue-100"
+                              : "bg-green-100"
+                          }`}
                       >
                         <span
-                          className={`text-xs ${
-                            p.is_trial
+                          className={`text-xs ${p.is_trial
                               ? "text-white"
                               : planType === "monthly"
-                              ? "text-blue-600"
-                              : "text-green-600"
-                          }`}
+                                ? "text-blue-600"
+                                : "text-green-600"
+                            }`}
                         >
                           ✓
                         </span>
                       </div>
 
                       <span
-                        className={`text-sm ${
-                          p.is_trial ? "text-blue-100" : "text-gray-600"
-                        }`}
+                        className={`text-sm ${p.is_trial ? "text-blue-100" : "text-gray-600"
+                          }`}
                       >
                         {f}
                       </span>
@@ -266,20 +246,18 @@ export default function UpgradePlans({ initialPlans }) {
               {/* CTA Button */}
               <button
                 onClick={() => router.push(`/plan?plan_id=${p.id}`)}
-                className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-md hover:shadow-lg ${
-                  p.is_trial
+                className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-md hover:shadow-lg ${p.is_trial
                     ? "bg-white text-blue-700 hover:bg-gray-50"
                     : planType === "monthly"
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-green-600 text-white hover:bg-green-700"
-                }`}
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-green-600 text-white hover:bg-green-700"
+                  }`}
               >
                 {p.is_trial
                   ? "Start Free Trial"
-                  : `Choose ${
-                      planType === "monthly" ? "Monthly" : "Yearly"
-                    } Plan`}
+                  : `Choose ${planType === "monthly" ? "Monthly" : "Yearly"} Plan`}
               </button>
+
             </div>
           );
         })}
