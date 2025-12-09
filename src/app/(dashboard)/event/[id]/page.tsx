@@ -16,11 +16,13 @@ const EventPage = async ({ params: { id } }: { params: { id: string } }) => {
         {id === "add" ? "Add" : "Edit"} Event
       </h1>
 
-      <EventForm
-        eventId={id}
-        eventData={id === "add" ? null : event.data}
-        isEdit={id !== "add"}
-      />
+<EventForm
+  eventId={id}
+  eventData={id === "add" ? null : event.data}
+  isEdit={id !== "add"}
+  userId={9} // 🔥 TEMP VALUE — replace with real logged-in user id
+/>
+
     </>
   );
 };
