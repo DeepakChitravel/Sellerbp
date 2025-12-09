@@ -33,6 +33,47 @@ export interface InputField {
   inputFieldBottomArea?: React.ReactNode;
 }
 
+// =============================
+//          EVENT TYPES
+// =============================
+
+export type eventParams = {
+  limit?: number;
+  page?: number;
+  q?: string;
+};
+
+export type eventData = {
+  title: string;
+  description?: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  location: string;
+  organizer?: string;
+  category?: string;
+  status?: string;
+  banner?: string;
+};
+
+export type Event = {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  location: string;
+  organizer?: string;
+  category?: string;
+  status: string;
+  bannerUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+
+
 export interface NavLinkProps {
   label: string;
   href: string;

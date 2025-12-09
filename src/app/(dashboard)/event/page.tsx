@@ -1,28 +1,30 @@
-import EmployeesFilter from "@/components/filters/employees-filter";
-import { DataTable } from "@/components/tables/employees-table/data-table";
-import { columns } from "@/components/tables/employees-table/columns";
-import { employeeParams } from "@/types";
+import EventsFilter from "@/components/filters/events-filter";
+import { DataTable } from "@/components/tables/events-table/data-table";
+import { columns } from "@/components/tables/events-table/columns";
+import { eventParams } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Add } from "iconsax-react";
-import { getAllEmployees } from "@/lib/api/employees";
+import { getAllEvents } from "@/lib/api/events";
 import Link from "next/link";
 
-const Employees = async ({
+const Events = async ({
   searchParams: { limit, page, q },
 }: {
-  searchParams: employeeParams;
+  searchParams: eventParams;
 }) => {
-  const data = await getAllEmployees({
+
+  const data = await getAllEvents({
     limit,
     page,
     q,
   });
-  console.log("EMPLOYEES DATA ===> ", data);
+
+  console.log("EVENT DATA ===> ", data);
 
   return (
     <>
       <div className="flex items-center justify-between gap-5 mb-5">
-        <h1 className="text-2xl font-bold">Employees</h1>
+        <h1 className="text-2xl font-bold">Events</h1>
 
         <Link href="/event/add">
           <Button variant="success">
@@ -35,12 +37,11 @@ const Employees = async ({
       </div>
 
       <div className="space-y-5">
-        <EmployeesFilter data={data.records} />
-        <DataTable columns={columns} data={data} />
-
-      </div>
+        <EventsFilter data={data.records} />
+<DataTable columns={columns} data={data.records ?? []} />
+        </div>
     </>
   );
 };
 
-export default Employees;
+export default Events;

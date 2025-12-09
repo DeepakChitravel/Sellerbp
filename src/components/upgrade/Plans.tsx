@@ -153,7 +153,6 @@ export default function UpgradePlans({ initialPlans }) {
               {/* Header */}
               <div className="text-left mb-6">
              
-
                 <h2 className="text-2xl font-bold mb-2">{p.name}</h2>
 
                 {shouldShowDiscount && (

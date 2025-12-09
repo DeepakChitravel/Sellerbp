@@ -1,33 +1,28 @@
-import EmployeeForm from "@/components/forms/employee-form";
-import { getEmployee } from "@/lib/api/employees";
+import EventForm from "@/components/forms/event-form";
+import { getEvent } from "@/lib/api/events";
 import { notFound } from "next/navigation";
 
-const Employee = async ({ params: { id } }: { params: { id: string } }) => {
-  let employee = null;
+const EventPage = async ({ params: { id } }: { params: { id: string } }) => {
+  let event = null;
 
   if (id !== "add") {
-    employee = await getEmployee(id);
-
-    console.log("EMPLOYEE FETCH =>", employee);
-
-    if (!employee || employee.success === false) {
-      return notFound();
-    }
+    event = await getEvent(id);
+    if (!event || event.success === false) return notFound();
   }
 
   return (
     <>
       <h1 className="text-2xl font-bold mb-5">
-        {id === "add" ? "Add" : "Edit"} Employee
+        {id === "add" ? "Add" : "Edit"} Event
       </h1>
 
-      <EmployeeForm
-        employeeId={id}
-        employeeData={id === "add" ? null : employee.data}   // ⭐ FIXED
+      <EventForm
+        eventId={id}
+        eventData={id === "add" ? null : event.data}
         isEdit={id !== "add"}
       />
     </>
   );
 };
 
-export default Employee;
+export default EventPage;
