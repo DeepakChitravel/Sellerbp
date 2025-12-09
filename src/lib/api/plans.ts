@@ -18,3 +18,19 @@ export const getPlans = async () => {
     };
   }
 };
+
+// Validate discount code only
+export const validateDiscount = async (code, planId) => {
+  try {
+    const res = await axios.post(`${apiUrl}/seller/plans/discount_validate.php`, {
+      code,
+      planId
+    });
+    return res.data;
+  } catch (error) {
+    return {
+      success: false,
+      message: "Error validating discount code"
+    };
+  }
+};

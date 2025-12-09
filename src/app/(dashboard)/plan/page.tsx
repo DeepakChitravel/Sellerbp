@@ -1,5 +1,7 @@
-import Checkout from "./Checkout";
+//import Checkout from "./Checkout";
+import Checkout from "@/components/forms/checkout/checkout";
 import { getPlans } from "@/lib/api/plans";
+
 
 export default async function PlanPage({ searchParams }) {
   const planId = searchParams?.plan_id;
