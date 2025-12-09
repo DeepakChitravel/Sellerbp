@@ -52,6 +52,7 @@
     "react-hook-form": "^7.68.0",
     "react-phone-number-input": "^3.3.12",
     "react-qr-code": "^2.0.12",
+    "react-quill": "^2.0.0",
     "recharts": "^2.12.7",
     "sonner": "^1.4.41",
     "tailwind-merge": "^2.2.2",

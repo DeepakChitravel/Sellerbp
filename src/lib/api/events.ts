@@ -1,125 +1,55 @@
-"use server";
-
-import { apiUrl } from "@/config";
-import { eventData, eventParams } from "@/types";
 import axios from "axios";
-import { cookies } from "next/headers";
 
-/* ---------------------------------------------------------
-   GET ALL EVENTS
---------------------------------------------------------- */
-export const getAllEvents = async (params: eventParams) => {
-  const token = cookies().get("token")?.value;
-  const user_id = cookies().get("user_id")?.value;
+const BASE_URL = "http://localhost/managerbp/public/seller/events";
 
-  if (!user_id) {
-    return { totalPages: 1, totalRecords: 0, records: [] };
-  }
-
-  const url = `${apiUrl}/seller/events/get.php`;
-
+// GET ALL EVENTS
+export async function getAllEvents() {
   try {
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      params: {
-        user_id,
-        limit: params.limit ?? 10,
-        page: params.page ?? 1,
-        q: params.q ?? "",
-      },
-    });
-
-    return response.data;
-  } catch (error) {
-    return { totalPages: 1, totalRecords: 0, records: [] };
+    const res = await axios.get(`${BASE_URL}/get.php`);
+    return res.data;
+  } catch (err: any) {
+    return { success: false, data: [], message: err.message };
   }
-};
+}
 
-/* ---------------------------------------------------------
-   GET SINGLE EVENT (EDIT PAGE)
---------------------------------------------------------- */
-export const getEvent = async (eventId: string) => {
-  const token = cookies().get("token")?.value;
-
-  const url = `${apiUrl}/seller/events/single.php?id=${eventId}`;
-
+// GET A SINGLE EVENT
+export const getEvent = async (id: string | number) => {
   try {
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.data?.success) return false;
-
-    return response.data;
-  } catch {
-    return false;
-  }
-};
-
-/* ---------------------------------------------------------
-   ADD EVENT
---------------------------------------------------------- */
-export const addEvent = async (data: eventData) => {
-  const token = cookies().get("token")?.value;
-  const url = `${apiUrl}/seller/events/add.php`;
-
-  try {
-    const response = await axios.post(url, data, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
+    const response = await axios.get(`${BASE_URL}/get.php?id=${id}`);
     return response.data;
   } catch (error: any) {
-    return (
-      error.response?.data || { success: false, message: "Server unreachable" }
-    );
+    return { success: false, message: "Failed to fetch event." };
   }
 };
 
-/* ---------------------------------------------------------
-   UPDATE EVENT
---------------------------------------------------------- */
-export const updateEvent = async (eventId: string, data: any) => {
-  const token = cookies().get("token")?.value;
-  const url = `${apiUrl}/seller/events/update.php?id=${eventId}`;
-
+// CREATE EVENT
+export const addEvent = async (data: any) => {
   try {
-    const response = await axios.post(url, data, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await axios.post(`${BASE_URL}/add.php`, data, {
+      headers: { "Content-Type": "application/json" },
+      timeout: 15000,
     });
-
     return response.data;
   } catch (error: any) {
-    return (
-      error.response?.data || { success: false, message: "Server unreachable" }
-    );
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Error adding event",
+    };
   }
 };
 
-/* ---------------------------------------------------------
-   DELETE EVENT
---------------------------------------------------------- */
-export const deleteEvent = async (id: number) => {
-  const token = cookies().get("token")?.value;
-  const url = `${apiUrl}/seller/events/delete.php?id=${id}`;
-
+// UPDATE EVENT
+export const updateEvent = async (id: string | number, data: any) => {
   try {
-    const response = await axios.delete(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await axios.post(`${BASE_URL}/update.php?id=${id}`, data, {
+      headers: { "Content-Type": "application/json" },
+      timeout: 15000,
     });
-
     return response.data;
   } catch (error: any) {
-    throw error.response?.data || { success: false, message: "Delete failed" };
+    return {
+      success: false,
+      message: error?.response?.data?.message || "Error updating event",
+    };
   }
 };

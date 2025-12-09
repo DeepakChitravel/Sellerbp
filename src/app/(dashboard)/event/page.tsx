@@ -1,47 +1,36 @@
 import EventsFilter from "@/components/filters/events-filter";
 import { DataTable } from "@/components/tables/events-table/data-table";
 import { columns } from "@/components/tables/events-table/columns";
-import { eventParams } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Add } from "iconsax-react";
 import { getAllEvents } from "@/lib/api/events";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Add } from "iconsax-react";
 
-const Events = async ({
-  searchParams: { limit, page, q },
-}: {
-  searchParams: eventParams;
-}) => {
+export default async function Events() {
 
-  const data = await getAllEvents({
-    limit,
-    page,
-    q,
-  });
+  const response = await getAllEvents();
 
-  console.log("EVENT DATA ===> ", data);
+  // FIX: use "data" instead of "records"
+  const events = response?.success ? response.data : [];
+
+  console.log("EVENTS FROM API ===> ", events);
 
   return (
     <>
-      <div className="flex items-center justify-between gap-5 mb-5">
+      <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-bold">Events</h1>
 
         <Link href="/event/add">
           <Button variant="success">
-            <span className="mobile_l:block hidden">Add Event</span>
-            <span className="mobile_l:hidden block">
-              <Add />
-            </span>
+            Add Event <Add className="ml-2" />
           </Button>
         </Link>
       </div>
 
       <div className="space-y-5">
-        <EventsFilter data={data.records} />
-<DataTable columns={columns} data={data.records ?? []} />
-        </div>
+        <EventsFilter data={events} />
+        <DataTable columns={columns} data={events} />   {/* FIXED */}
+      </div>
     </>
   );
-};
-
-export default Events;
+}

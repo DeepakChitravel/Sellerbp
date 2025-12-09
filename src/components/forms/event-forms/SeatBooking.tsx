@@ -8,17 +8,17 @@ const layouts = [
   {
     id: "theatre",
     label: "Theatre Seating",
-    image: "/images/seats/theatre.png",
+    image: "/images/seats/theatre.webp",
   },
   {
     id: "hotel",
     label: "Hotel / Banquet Seating",
-    image: "/images/seats/hotel.png",
+    image: "/images/seats/hotel.webp",
   },
   {
     id: "wedding",
     label: "Wedding Seating",
-    image: "/images/seats/wedding.png",
+    image: "/images/seats/wedding.webp",
   },
 ];
 
