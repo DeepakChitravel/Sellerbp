@@ -53,3 +53,37 @@ export const updateEvent = async (id: string | number, data: any) => {
     };
   }
 };
+export async function uploadEventImage(file: File, type: string, userId: number) {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("type", type);
+  form.append("user_id", String(userId));
+
+  const response = await fetch(
+    "http://localhost/managerbp/public/seller/events/upload-image.php",
+    {
+      method: "POST",
+      body: form,
+    }
+  );
+
+  return await response.json();
+}
+
+
+export const deleteEvent = async (id: number) => {
+  try {
+    const res = await axios.get(
+      `http://localhost/managerbp/public/seller/events/delete.php?id=${id}`,
+      { withCredentials: false }
+    );
+
+    return res.data;
+  } catch (err: any) {
+    return {
+      success: false,
+      message: err?.response?.data?.message || "Delete failed",
+    };
+  }
+};
+

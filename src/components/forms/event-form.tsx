@@ -18,6 +18,7 @@ import EventLocation from "./event-forms/EventLocation";
 import EventBanner from "./event-forms/EventBanner";
 import EventTerms from "./event-forms/EventTerms";
 import SeatBooking from "./event-forms/SeatBooking";
+import EventLogo from "./event-forms/EventLogo";
 
 interface EventFormProps {
   eventId?: number | string;
@@ -33,7 +34,7 @@ function safeArray(value: any) {
   try {
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) return parsed;
-  } catch (_) {}
+  } catch (_) { }
   if (typeof value === "string" && value.includes(",")) {
     return value.split(",").map((v) => v.trim());
   }
@@ -126,7 +127,10 @@ export default function EventForm({ eventData = null, isEdit = false, eventId, u
 
           <div className="col-span-12 lg:col-span-6 space-y-6">
             <EventLocation />
-            <EventBanner />
+            <EventBanner userId={userId} />
+            <EventLogo userId={userId} />
+            {/* 👍 Now properly imported and working */}
+
           </div>
         </div>
 

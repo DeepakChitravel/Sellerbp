@@ -6,10 +6,12 @@ import { X } from "lucide-react";
 
 interface Props {
   images: { value: string; setValue: (v: string) => void };
-  userId: string; // ⭐ REQUIRED
+  userId: string;
 }
 
 const CategoryImage = ({ images, userId }: Props) => {
+  console.log("EDIT MODE → images.value =", images.value);
+
   const [isUploading, setIsUploading] = useState(false);
 
   const handleUpload = async (e: any) => {
@@ -21,7 +23,6 @@ const CategoryImage = ({ images, userId }: Props) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    // ⭐ Correct upload URL with user_id
     const res = await fetch(
       `http://localhost/managerbp/public/seller/categories/upload.php?user_id=${userId}`,
       {
@@ -33,19 +34,17 @@ const CategoryImage = ({ images, userId }: Props) => {
     const result = await res.json();
     setIsUploading(false);
 
-    // result.filename = "123/categories/2025/12/03/file.png"
     if (result.success) {
       images.setValue(result.filename);
     }
   };
 
-  // ⭐ Only show image if valid
- const hasImage =
-  images.value &&
-  typeof images.value === "string" &&
-  images.value !== "null" &&
-  images.value.trim() !== "" &&
-  images.value.includes(".");
+  const hasImage = !!images.value;
+
+  // 🟢 FIX: Detect full URL vs relative
+  const imgSrc = images.value.startsWith("http")
+    ? images.value
+    : `http://localhost/managerbp/public/uploads/${images.value}`;
 
   return (
     <div className="bg-white rounded-xl p-5">
@@ -69,14 +68,13 @@ const CategoryImage = ({ images, userId }: Props) => {
           </button>
 
           <Image
-            src={`http://localhost/managerbp/public/uploads/${images.value}`}
+            src={imgSrc}
             width={160}
             height={160}
             alt="Category"
             className="rounded-lg object-cover border"
             unoptimized
           />
-
         </div>
       )}
     </div>

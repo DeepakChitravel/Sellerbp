@@ -15,6 +15,8 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) => {
   const router = useRouter();
   const { userData } = useCurrentUser();
+console.log("🔥 USER DATA FROM HOOK =>", userData);
+console.log("🔥 REAL USER ID =>", userData?.user_id);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,42 +43,46 @@ const EmployeeForm = ({ employeeId, employeeData, isEdit }: EmployeeFormProps) =
     }
   }, [employeeData]);
 
-  const handleSave = async () => {
-    if (!realUserId) {
-      toast.error("User ID missing");
-      return;
+const handleSave = async () => {
+  if (!realUserId) {
+    toast.error("User ID missing");
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const data = {
+      employee_id: isEdit ? employeeData.employee_id : crypto.randomUUID(),
+      name,
+      position,
+      email,
+      phone,
+      address,
+      image,
+      joining_date,
+    };
+
+    const response = isEdit
+      ? await updateEmployee(employeeData.employee_id, data)
+      : await addEmployee(data);
+
+    // ⭐ CONSOLE HERE
+    console.log("EMPLOYEE SAVE RESPONSE =>", response);
+
+    handleToast(response);
+
+    if (response.success) {
+      router.push(`/employees?refresh=${Date.now()}`);
     }
+  } catch (error: any) {
+    toast.error(error.message);
+  }
 
-    setIsLoading(true);
+  setIsLoading(false);
+};
 
-    try {
-      const data = {
-        user_id: realUserId,   // ⭐ Always use user_id
-        employee_id: isEdit ? employeeData.employee_id : crypto.randomUUID(),
-        name,
-        position,
-        email,
-        phone,
-        address,
-        image,
-        joining_date,
-      };
 
-      const response = isEdit
-        ? await updateEmployee(employeeData.employee_id, data)
-        : await addEmployee(data);
-
-      handleToast(response);
-
-      if (response.success) {
-        router.push(`/employees?refresh=${Date.now()}`);
-      }
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-
-    setIsLoading(false);
-  };
 
   return (
     <>

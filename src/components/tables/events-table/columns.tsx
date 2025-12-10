@@ -13,15 +13,17 @@ import { useRouter } from "next/navigation";
 function Action({ id }: { id: number }) {
   const router = useRouter();
 
-  const handleDelete = async () => {
-    try {
-      const res = await deleteEvent(id);
-      toast.success(res.message);
-      router.refresh();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
+const handleDelete = async () => {
+  const res = await deleteEvent(id);
+
+  if (res?.success) {
+    toast.success(res.message || "Deleted");
+    router.refresh();
+  } else {
+    toast.error(res.message || "Delete failed");
+  }
+};
+
 
   return (
     <DropdownMenu>

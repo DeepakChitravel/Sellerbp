@@ -11,9 +11,6 @@ const route = "/users";
 export const currentUser = async () => {
   const token = cookies().get("token")?.value;
 
-  // ⭐ DEBUG HERE
-  console.log("SERVER TOKEN:", token);
-
   if (!token) return null;
 
   try {
@@ -24,21 +21,40 @@ export const currentUser = async () => {
       body: JSON.stringify({ token }),
     });
 
-    const text = await res.text();
+    const raw = await res.text();
 
+    let json;
     try {
-      const data = JSON.parse(text);
-      if (!data.success) return null;
-      return data.data || data.user || null;
+      json = JSON.parse(raw);
     } catch {
-      console.log("SERVER RESPONSE (NOT JSON):", text);
+      console.log(" INVALID JSON RESPONSE => ", raw);
       return null;
     }
 
+    if (!json.success || !json.data) return null;
+console.log("🔥 FULL RAW USER RESPONSE =>", json);
+
+    const u = json.data;
+
+    // ⭐ NORMALIZE THE USER OBJECT HERE
+    return {
+      id: u.id,                 // DB primary key
+      user_id: u.user_id,       // SELLER ID (68294)
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      image: u.image,
+      siteName: u.site_name,
+      siteSlug: u.site_slug,
+      country: u.country,
+    };
+
   } catch (err) {
+    console.log("currentUser ERROR:", err);
     return null;
   }
 };
+
 
 
 // Update a user data

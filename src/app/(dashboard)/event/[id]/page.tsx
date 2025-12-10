@@ -1,8 +1,13 @@
 import EventForm from "@/components/forms/event-form";
 import { getEvent } from "@/lib/api/events";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 
-const EventPage = async ({ params: { id } }: { params: { id: string } }) => {
+const EventPage = async ({ params: { id } }) => {
+  const userId = cookies().get("user_id")?.value;
+
+  if (!userId) return notFound();
+
   let event = null;
 
   if (id !== "add") {
@@ -16,13 +21,12 @@ const EventPage = async ({ params: { id } }: { params: { id: string } }) => {
         {id === "add" ? "Add" : "Edit"} Event
       </h1>
 
-<EventForm
-  eventId={id}
-  eventData={id === "add" ? null : event.data}
-  isEdit={id !== "add"}
-  userId={9} // 🔥 TEMP VALUE — replace with real logged-in user id
-/>
-
+      <EventForm
+        eventId={id}
+        eventData={id === "add" ? null : event.data}
+        isEdit={id !== "add"}
+        userId={Number(userId)}   // ⭐ Now REAL user ID
+      />
     </>
   );
 };

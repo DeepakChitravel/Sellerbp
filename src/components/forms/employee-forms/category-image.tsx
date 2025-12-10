@@ -61,7 +61,7 @@ const res = await fetch(
           </button>
 
        <Image
-  src={`http://localhost/managerbp/public/uploads/sellers/${images.value}`}
+src={`http://localhost/managerbp/public${images.value}`}
   width={160}
   height={160}
   alt="Employee"

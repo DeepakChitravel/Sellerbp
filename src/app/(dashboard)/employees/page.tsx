@@ -17,7 +17,7 @@ const Employees = async ({
     page,
     q,
   });
-console.log("EMPLOYEES DATA ===> ", data);
+  console.log("EMPLOYEES DATA ===> ", data);
 
   return (
     <>
@@ -35,8 +35,8 @@ console.log("EMPLOYEES DATA ===> ", data);
       </div>
 
       <div className="space-y-5">
-       <EmployeesFilter data={data.records} />
-<DataTable columns={columns} data={data} />
+        <EmployeesFilter data={data.records} />
+        <DataTable columns={columns} data={data} />
 
       </div>
     </>

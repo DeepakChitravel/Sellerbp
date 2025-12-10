@@ -18,12 +18,12 @@ export const loginAction = async (formData: any) => {
       httpOnly: true,
     });
 
-    // Save user_id cookie — REQUIRED for Employees list
-    cookies().set("user_id", user.id.toString(), {
+    // ⭐ FIXED — Save correct USER_ID (seller ID)
+    cookies().set("user_id", user.user_id.toString(), {
       path: "/",
     });
 
-    // Optional: save full user data
+    // Optional — save the whole user object
     cookies().set("user_data", JSON.stringify(user), {
       path: "/",
     });

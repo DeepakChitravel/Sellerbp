@@ -110,11 +110,12 @@ export const columns: ColumnDef<Employee>[] = [
           <Avatar>
 <AvatarImage
   className="object-cover"
-  src={
-    data.image
-      ? `http://localhost/managerbp/public/uploads/sellers/${data.image}`
-      : "/default-user.png"
-  }
+src={
+  data.image
+    ? `http://localhost/managerbp/public${data.image}`
+    : "/default-user.png"
+}
+
 />
 
 

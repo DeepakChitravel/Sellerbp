@@ -12,6 +12,8 @@ const useCurrentUser = () => {
       try {
         const user = await currentUser();
 
+        console.log("🔥 Hook currentUser() =>", user);
+
         setUserData(user);
         setLoading(false);
       } catch (error: any) {

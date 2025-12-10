@@ -18,39 +18,44 @@ const CategoryForm = ({ categoryId, categoryData, isEdit, userId }: CategoryForm
 
   const [name, setName] = useState<string>(categoryData?.name);
   const [slug, setSlug] = useState<string>(categoryData?.slug);
-  const [metaTitle, setMetaTitle] = useState<string>(categoryData?.metaTitle);
+const [metaTitle, setMetaTitle] = useState(categoryData?.metaTitle || "");
   const [metaDescription, setMetaDescription] = useState<string>(categoryData?.metaDescription);
 
-  const [images, setImages] = useState<string>(
-    categoryData?.image?.replace("http://localhost/managerbp/public/uploads/", "")
-  );
+const [images, setImages] = useState<string>(categoryData?.image || "");
 
-  const handleSave = async () => {
-    setIsLoading(true);
 
-    try {
-      const data = {
-        name,
-        slug,
-        image: images,
-        metaTitle,
-        metaDescription,
-      };
+const handleSave = async () => {
+  setIsLoading(true);
 
-      const response = !isEdit
-        ? await addCategory(data)
-        : await updateCategory(categoryId, data);
+  try {
+    const data = {
+      name,
+      slug,
+      image: images,
+      metaTitle,
+      metaDescription,
+    };
 
-      handleToast(response);
+    console.log("CATEGORY FORM → DATA SENT:", data);
 
-      if (!isEdit && response.success)
-        router.push(`/categories?${Math.random()}`);
-    } catch (error: any) {
-      toast.error(error.message);
-    }
+    const response = !isEdit
+      ? await addCategory(data)
+      : await updateCategory(categoryId, data);
 
-    setIsLoading(false);
-  };
+    console.log("CATEGORY FORM → RESPONSE:", response);
+
+    handleToast(response);
+
+    if (!isEdit && response.success)
+      router.push(`/categories?${Math.random()}`);
+  } catch (error: any) {
+    toast.error(error.message);
+  }
+
+  setIsLoading(false);
+};
+
+
 
   return (
     <>
