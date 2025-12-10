@@ -1,9 +1,7 @@
-//import Checkout from "./Checkout";
 import Checkout from "@/components/forms/checkout/checkout";
 import { getPlans } from "@/lib/api/plans";
 
-
-export default async function PlanPage({ searchParams }) {
+export default async function PlanPage({ searchParams }: { searchParams: { plan_id?: string } }) {
   const planId = searchParams?.plan_id;
 
   if (!planId) {
@@ -15,12 +13,19 @@ export default async function PlanPage({ searchParams }) {
   const plans = response?.success ? response.data : [];
 
   // Find selected plan
-  const selectedPlan = plans.find((p) => Number(p.id) === Number(planId));
+  const selectedPlan = plans.find((p: any) => Number(p.id) === Number(planId));
 
   if (!selectedPlan) {
     return <div className="p-10 text-center text-red-600">Plan not found</div>;
   }
 
-  // DIRECTLY render Checkout (no plan details)
-  return <Checkout plan={selectedPlan} gst={response.gst_settings} />;
+  // Pass all settings to Checkout component
+  return (
+    <Checkout 
+      plan={selectedPlan} 
+      gst={response.gst_settings}
+      currencySettings={response.currency_settings}
+      companySettings={response.company_settings}
+    />
+  );
 }

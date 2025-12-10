@@ -11,6 +11,10 @@ export const getPlans = async () => {
     return { 
       success: false, 
       data: [],
+      currency_settings: {
+        currency: 'INR',
+        currency_symbol: '₹'
+      },
       gst_settings: {
         gst_percentage: 18,
         gst_tax_type: 'exclusive'

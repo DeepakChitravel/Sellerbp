@@ -40,6 +40,7 @@ interface PaymentDetails {
     method: string;
     payment_id: string;
     currency: string;
+    currency_symbol: string;
     amount: number;
     gst_amount: number;
     gst_type: string;
@@ -161,13 +162,15 @@ export default function PaymentSuccessPage() {
     });
   };
 
+  // Dynamic currency formatting
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    const currencySymbol = paymentDetails?.payment?.currency_symbol || '₹';
+    const formattedAmount = new Intl.NumberFormat('en-IN', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
+    
+    return `${currencySymbol}${formattedAmount}`;
   };
 
   if (loading) {
@@ -294,6 +297,10 @@ export default function PaymentSuccessPage() {
                   <div className="flex justify-between">
                     <span>Status:</span>
                     <span className="font-medium text-green-600">{paymentDetails.invoice.status}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Currency:</span>
+                    <span className="font-medium">{paymentDetails.payment.currency}</span>
                   </div>
                 </div>
               </div>

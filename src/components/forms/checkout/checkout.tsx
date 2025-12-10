@@ -11,8 +11,35 @@ declare global {
   }
 }
 
-export default function Checkout({ plan, gst, user }) {
-  const formatCurrency = (num) => Math.round(num || 0).toLocaleString("en-IN");
+interface CheckoutProps {
+  plan: any;
+  gst: any;
+  user?: any;
+  currencySettings?: {
+    currency: string;
+    currency_symbol: string;
+  };
+  companySettings?: {
+    app_name: string;
+    address: string;
+    gst_number?: string;
+  };
+}
+
+export default function Checkout({ plan, gst, user, currencySettings, companySettings }: CheckoutProps) {
+  const defaultCurrency = currencySettings || { currency: 'INR', currency_symbol: '₹' };
+  const defaultCompany = companySettings || { app_name: 'Book Pannu', address: '' };
+
+  // Helper function to format currency with symbol
+  const formatCurrency = (num: number) => {
+    return Math.round(num || 0).toLocaleString("en-IN");
+  };
+
+  // Function to format price with currency symbol
+  const formatPrice = (amount: number) => {
+    const formattedAmount = formatCurrency(amount);
+    return `${defaultCurrency.currency_symbol}${formattedAmount}`;
+  };
 
   // State for discount
   const [discountCode, setDiscountCode] = useState("");
@@ -121,7 +148,7 @@ export default function Checkout({ plan, gst, user }) {
   };
 
   // Validate GSTIN format
-  const validateGSTIN = (gstin) => {
+  const validateGSTIN = (gstin: string) => {
     if (!gstin) return true;
 
     // Basic GSTIN validation
@@ -142,16 +169,16 @@ export default function Checkout({ plan, gst, user }) {
   };
 
   // Handle GSTIN input change with validation
-  const handleGstinChange = (value) => {
+  const handleGstinChange = (value: string) => {
     setGstinNumber(value);
-    
+
     if (value.length === 15) {
       validateGSTIN(value);
     }
   };
 
   // Handle billing info change
-  const handleBillingInfoChange = (field, value) => {
+  const handleBillingInfoChange = (field: string, value: string) => {
     setBillingInfo(prev => ({
       ...prev,
       [field]: value
@@ -161,9 +188,9 @@ export default function Checkout({ plan, gst, user }) {
   // Validate all required billing fields
   const validateBillingInfo = () => {
     const requiredFields = ['name', 'phone', 'pin_code', 'address_1', 'state', 'city'];
-    
+
     for (const field of requiredFields) {
-      if (!billingInfo[field]?.trim()) {
+      if (!billingInfo[field as keyof typeof billingInfo]?.trim()) {
         toast.error(`Please fill in ${field.replace('_', ' ')}`);
         return false;
       }
@@ -198,7 +225,7 @@ export default function Checkout({ plan, gst, user }) {
     try {
       // Get Razorpay credentials
       const credentials = await getRazorpayCredentials();
-      
+
       if (!credentials.razorpay_key_id) {
         toast.error("Razorpay credentials not configured");
         return;
@@ -214,7 +241,7 @@ export default function Checkout({ plan, gst, user }) {
           },
           body: JSON.stringify({
             amount: discountedTotal,
-            currency: "INR",
+            currency: defaultCurrency.currency,
             plan_id: plan.id,
             user_id: user?.id || 1 // Replace with actual user ID
           })
@@ -235,10 +262,10 @@ export default function Checkout({ plan, gst, user }) {
         key: credentials.razorpay_key_id,
         amount: order.amount,
         currency: order.currency,
-        name: "Book Pannu",
+        name: defaultCompany.app_name,
         description: `Payment for ${plan.name}`,
         order_id: order.id,
-        handler: async function (response) {
+        handler: async function (response: any) {
           // Verify payment on your server
           const verificationResponse = await fetch(
             "http://localhost/managerbp/public/seller/payment/verify-razorpay-payment.php",
@@ -263,7 +290,8 @@ export default function Checkout({ plan, gst, user }) {
                   gst_type: isGstInclusive ? 'inclusive' : 'exclusive',
                   gst_percentage: gstPercentage,
                   discount: discountAmount,
-                  currency: "INR"
+                  currency: defaultCurrency.currency,
+                  currency_symbol: defaultCurrency.currency_symbol
                 }
               })
             }
@@ -273,10 +301,15 @@ export default function Checkout({ plan, gst, user }) {
 
           if (verificationData.success) {
             toast.success(`Payment successful! Invoice: ${verificationData.invoice_number}`);
-            // Redirect to success page or update UI
-            window.location.href = `/payment-success?invoice=${verificationData.invoice_number}`;
+
+            // Use redirect_url from server response or default
+            const redirectUrl = verificationData.redirect_url || `/payment-success?invoice=${verificationData.invoice_number}`;
+
+            // Redirect to success page
+            window.location.href = redirectUrl;
           } else {
             toast.error("Payment verification failed");
+            setProcessingPayment(false);
           }
         },
         prefill: {
@@ -292,21 +325,33 @@ export default function Checkout({ plan, gst, user }) {
           color: "#5f57ff"
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
             toast.info("Payment cancelled");
             setProcessingPayment(false);
+          },
+          onclose: function () {
+            // Handle modal close
+            if (!processingPayment) {
+              setProcessingPayment(false);
+            }
           }
         }
       };
 
       // Initialize Razorpay
       const razorpay = new window.Razorpay(options);
+
+      // Set up error handling
+      razorpay.on('payment.failed', function (response: any) {
+        toast.error("Payment failed: " + (response.error.description || "Unknown error"));
+        setProcessingPayment(false);
+      });
+
       razorpay.open();
 
     } catch (error) {
       console.error("Payment error:", error);
       toast.error("Payment processing failed");
-    } finally {
       setProcessingPayment(false);
     }
   };
@@ -319,50 +364,50 @@ export default function Checkout({ plan, gst, user }) {
           <h2 className="text-lg font-semibold mb-4">Billing Information</h2>
 
           <div className="space-y-4">
-            <Input 
-              label="Name or Company Name *" 
+            <Input
+              label="Name or Company Name *"
               value={billingInfo.name}
               onChange={(e) => handleBillingInfoChange('name', e.target.value)}
             />
-            <Input 
-              label="Mobile Number *" 
+            <Input
+              label="Mobile Number *"
               value={billingInfo.phone}
               onChange={(e) => handleBillingInfoChange('phone', e.target.value)}
               type="tel"
             />
-            <Input 
-              label="Email Address" 
+            <Input
+              label="Email Address"
               value={billingInfo.email}
               onChange={(e) => handleBillingInfoChange('email', e.target.value)}
               type="email"
             />
-            <Input 
-              label="Zip/Postal Code *" 
+            <Input
+              label="Zip/Postal Code *"
               value={billingInfo.pin_code}
               onChange={(e) => handleBillingInfoChange('pin_code', e.target.value)}
             />
-            <Input 
-              label="Address Line 1 *" 
+            <Input
+              label="Address Line 1 *"
               value={billingInfo.address_1}
               onChange={(e) => handleBillingInfoChange('address_1', e.target.value)}
             />
-            <Input 
-              label="Address Line 2" 
+            <Input
+              label="Address Line 2"
               value={billingInfo.address_2}
               onChange={(e) => handleBillingInfoChange('address_2', e.target.value)}
             />
-            <Input 
-              label="State *" 
+            <Input
+              label="State *"
               value={billingInfo.state}
               onChange={(e) => handleBillingInfoChange('state', e.target.value)}
             />
-            <Input 
-              label="City *" 
+            <Input
+              label="City *"
               value={billingInfo.city}
               onChange={(e) => handleBillingInfoChange('city', e.target.value)}
             />
-            <Input 
-              label="Country" 
+            <Input
+              label="Country"
               value={billingInfo.country}
               onChange={(e) => handleBillingInfoChange('country', e.target.value)}
               disabled
@@ -487,13 +532,13 @@ export default function Checkout({ plan, gst, user }) {
             <h2 className="text-lg font-semibold mb-4">Summary</h2>
 
             {/* Summary details */}
-            <Row label="Sub Total" value={`₹${formatCurrency(subTotal)}`} />
+            <Row label="Sub Total" value={formatPrice(subTotal)} />
 
             {/* Discount row */}
             <div className="flex justify-between py-2">
               <span className="text-gray-600">Discount</span>
               <span className={discountAmount > 0 ? "text-green-600 font-medium" : "text-gray-600"}>
-                {discountAmount > 0 ? `-₹${formatCurrency(discountAmount)}` : `₹0`}
+                {discountAmount > 0 ? `-${formatPrice(discountAmount)}` : formatPrice(0)}
               </span>
             </div>
 
@@ -503,7 +548,7 @@ export default function Checkout({ plan, gst, user }) {
                 <span className="text-gray-600">GST ({gstPercentage}% {isGstInclusive ? "inclusive" : "exclusive"})</span>
               </div>
               <div className="text-right">
-                <span className="text-gray-800">₹{formatCurrency(gstAmount)}</span>
+                <span className="text-gray-800">{formatPrice(gstAmount)}</span>
                 {isGstInclusive && gstAmount === 0 && (
                   <div className="text-xs text-gray-500">Included in price</div>
                 )}
@@ -515,14 +560,14 @@ export default function Checkout({ plan, gst, user }) {
 
             <div className="flex justify-between items-center py-2">
               <span className="text-gray-800 font-semibold text-lg">Total</span>
-              <span className="font-bold text-xl text-blue-700">₹{formatCurrency(discountedTotal)}</span>
+              <span className="font-bold text-xl text-blue-700">{formatPrice(discountedTotal)}</span>
             </div>
           </div>
 
           {/* PAYMENT SECTION */}
           <div className="bg-white p-6 shadow-md rounded-xl">
             <h2 className="text-lg font-semibold mb-4">Select Payment Method</h2>
-            
+
             <div className="space-y-3">
               {/* Razorpay Button */}
               {paymentGateways.razorpay && (
@@ -598,7 +643,7 @@ export default function Checkout({ plan, gst, user }) {
 }
 
 /* UI Helpers */
-function Input({ label, value, onChange, type = "text", disabled = false }) {
+function Input({ label, value, onChange, type = "text", disabled = false }: any) {
   return (
     <div className="flex flex-col">
       <label className="text-sm font-medium mb-2 text-gray-700">{label}</label>
@@ -613,7 +658,7 @@ function Input({ label, value, onChange, type = "text", disabled = false }) {
   );
 }
 
-function Row({ label, value, bold }) {
+function Row({ label, value, bold }: any) {
   return (
     <div className="flex justify-between py-2">
       <span className="text-gray-600">{label}</span>

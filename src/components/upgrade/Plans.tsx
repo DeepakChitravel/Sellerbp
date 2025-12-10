@@ -3,19 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function UpgradePlans({ initialPlans }) {
+export default function UpgradePlans({ initialPlans, initialCurrencySettings }) {
   const router = useRouter();
 
   const [plans, setPlans] = useState(initialPlans || []);
   const [filteredPlans, setFilteredPlans] = useState([]);
   const [duration, setDuration] = useState("yearly");
+  const [currencySettings, setCurrencySettings] = useState(
+    initialCurrencySettings || { currency: 'INR', currency_symbol: '₹' }
+  );
 
   useEffect(() => {
     if (!initialPlans) return;
 
     setPlans(initialPlans);
     filterPlansByDuration(initialPlans, "yearly");
-  }, [initialPlans]);
+    
+    // Set currency settings if provided
+    if (initialCurrencySettings) {
+      setCurrencySettings(initialCurrencySettings);
+    }
+  }, [initialPlans, initialCurrencySettings]);
 
   const getPlanType = (durationDays: number) => {
     const isMonthly = durationDays % 30 === 0 && durationDays % 365 !== 0;
@@ -52,8 +60,15 @@ export default function UpgradePlans({ initialPlans }) {
     return `${days} Days`;
   };
 
+  // Updated formatCurrency to use dynamic currency symbol
   const formatCurrency = (amount: number) => {
     return Math.round(amount).toLocaleString("en-IN");
+  };
+
+  // Helper function to format currency with symbol
+  const formatPrice = (amount: number) => {
+    const formattedAmount = formatCurrency(amount);
+    return `${currencySettings.currency_symbol}${formattedAmount}`;
   };
 
   const calculateDiscountPercentage = (
@@ -70,6 +85,11 @@ export default function UpgradePlans({ initialPlans }) {
   ) => {
     if (!previousPrice || previousPrice <= currentPrice) return 0;
     return previousPrice - currentPrice;
+  };
+
+  // Format savings amount with currency symbol
+  const formatSavingsAmount = (amount: number) => {
+    return `${currencySettings.currency_symbol}${formatCurrency(amount)}`;
   };
 
   return (
@@ -152,7 +172,6 @@ export default function UpgradePlans({ initialPlans }) {
             >
               {/* Header */}
               <div className="text-left mb-6">
-             
                 <h2 className="text-2xl font-bold mb-2">{p.name}</h2>
 
                 {shouldShowDiscount && (
@@ -161,7 +180,7 @@ export default function UpgradePlans({ initialPlans }) {
                       {discountPercentage}% OFF
                     </span>
                     <span className="text-sm text-gray-600">
-                      Save ₹{formatCurrency(savingsAmount)}
+                      Save {formatSavingsAmount(savingsAmount)}
                     </span>
                   </div>
                 )}
@@ -171,14 +190,14 @@ export default function UpgradePlans({ initialPlans }) {
                   <div className="flex items-baseline gap-2 mb-2">
                     {shouldShowDiscount && p.previous_display_price && (
                       <span className="text-gray-400 text-lg line-through">
-                        ₹{formatCurrency(p.previous_display_price)}
+                        {formatPrice(p.previous_display_price)}
                       </span>
                     )}
                     <span
                       className={`text-4xl font-bold ${p.is_trial ? "text-white" : "text-gray-900"
                         }`}
                     >
-                      ₹{formatCurrency(p.display_price)}
+                      {formatPrice(p.display_price)}
                     </span>
                     <span
                       className={`text-lg ${p.is_trial ? "text-blue-100" : "text-gray-600"
