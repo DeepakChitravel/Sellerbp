@@ -10,61 +10,67 @@ const ServiceImage = ({ images }) => {
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
+
+    if (typeof window !== "undefined") {
       const cookieValue = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('user_id='))
-        ?.split('=')[1];
-      
-      if (cookieValue) {
-        setUserId(cookieValue);
-      }
+        .split("; ")
+        .find((row) => row.startsWith("user_id="))
+        ?.split("=")[1];
+
+      if (cookieValue) setUserId(cookieValue);
     }
   }, []);
 
-const getSrc = (path: string) => {
-  if (!path) return "/placeholder-image.jpg";
+  /** Convert stored DB path → full image URL */
+  const getSrc = (path: string) => {
+    if (!path) return "/placeholder-image.jpg";
 
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
-  }
+    // If full URL already → return as-is
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path;
+    }
 
-  return `http://localhost/managerbp/public/uploads/${path}`;
-};
+    // DB stores: /uploads/sellers/....
+    return `http://localhost/managerbp/public${path}`;
+  };
 
-
+  /** Upload handler */
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userId) {
-      e.target.value = '';
+      e.target.value = "";
       return;
     }
 
     setUploading(true);
+
     const formData = new FormData();
     formData.append("file", file);
 
     try {
       const res = await fetch(
         `http://localhost/managerbp/public/seller/services/upload.php?user_id=${userId}`,
-        { 
-          method: "POST", 
-          body: formData
+        {
+          method: "POST",
+          body: formData,
         }
       );
 
       const result = await res.json();
+
       if (result.success) {
+        // result.filename → /uploads/sellers/.../srv_xxx.png
         images.setValue(result.filename);
       }
     } catch (error) {
       console.error("Upload error:", error);
     } finally {
       setUploading(false);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
+  /** Loading placeholder */
   if (!mounted) {
     return (
       <div className="bg-white rounded-xl p-5">
@@ -81,15 +87,19 @@ const getSrc = (path: string) => {
       <h3 className="font-medium mb-4">Main Image</h3>
 
       {!images.value ? (
+        // ----------------------------
+        // NO IMAGE UPLOADED YET
+        // ----------------------------
         <div className="border border-dashed border-gray-300 p-5 rounded-lg text-center">
           <label className="cursor-pointer block">
-            <input 
-              type="file" 
-              className="hidden" 
-              onChange={handleUpload}
+            <input
+              type="file"
+              className="hidden"
               accept="image/*"
               disabled={uploading || !userId}
+              onChange={handleUpload}
             />
+
             <div className="py-3">
               {uploading ? (
                 <div className="text-blue-600">
@@ -105,6 +115,9 @@ const getSrc = (path: string) => {
           </label>
         </div>
       ) : (
+        // ----------------------------
+        // IMAGE ALREADY AVAILABLE
+        // ----------------------------
         <div className="mt-3">
           <div className="relative w-40 inline-block">
             <button
@@ -119,8 +132,8 @@ const getSrc = (path: string) => {
               <Image
                 src={getSrc(images.value)}
                 fill
-                className="object-cover"
                 alt="Service main image"
+                className="object-cover"
                 sizes="160px"
                 unoptimized
               />

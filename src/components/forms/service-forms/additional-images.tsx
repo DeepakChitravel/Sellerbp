@@ -31,7 +31,7 @@ const AdditionalImages = ({ images }) => {
     }
 
     // convert relative → full
-    return `http://localhost/managerbp/public/uploads/${path}`;
+    return `http://localhost/managerbp/public${path}`;
   };
 
   /** Upload handler */

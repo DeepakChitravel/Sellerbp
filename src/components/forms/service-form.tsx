@@ -10,7 +10,6 @@ import { addService, updateService } from "@/lib/api/services";
 import { handleToast } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ServiceFormProps } from "@/types";
-import { uploadsUrl } from "@/config";
 import AdditionalImages from "./service-forms/additional-images";
 import ServiceGst from "./service-forms/serviceGst";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -18,65 +17,40 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const router = useRouter();
   const { userData } = useCurrentUser();
-
   const [isLoading, setIsLoading] = useState(false);
 
-  // ----------------------------
-  // ⭐ FIXED — Normalize URLs
-  // ----------------------------
-  const normalizeUrl = (img: string) => {
-    if (!img) return "";
-    if (img.startsWith("http")) return img; // already full URL
-    return `${uploadsUrl}/${img}`; // convert relative → full
-  };
-
+  // Basic fields
   const [name, setName] = useState<string>(serviceData?.name);
   const [slug, setSlug] = useState<string>(serviceData?.slug);
   const [amount, setAmount] = useState<string>(serviceData?.amount);
-  const [previousAmount, setPreviousAmount] = useState<string>(
-    serviceData?.previousAmount
-  );
+  const [previousAmount, setPreviousAmount] = useState<string>(serviceData?.previousAmount);
 
   const [categoryId, setCategoryId] = useState<string | undefined>(
-    serviceData?.categoryId ? serviceData?.categoryId.toString() : undefined
+    serviceData?.categoryId ? serviceData.categoryId.toString() : undefined
   );
 
-  const [timeSlotInterval, setTimeSlotInterval] = useState<string>(
-    serviceData?.timeSlotInterval
-  );
-
+  const [timeSlotInterval, setTimeSlotInterval] = useState<string>(serviceData?.timeSlotInterval);
   const [intervalType, setIntervalType] = useState<string>(
-    serviceData?.intervalType ? serviceData.intervalType : "minutes"
+    serviceData?.intervalType || "minutes"
   );
 
-  const [description, setDescription] = useState<string>(
-    serviceData?.description
-  );
-
+  const [description, setDescription] = useState<string>(serviceData?.description);
   const [gstPercentage, setGstPercentage] = useState<string | number>(
     serviceData?.gstPercentage?.toString()
   );
-
   const [status, setStatus] = useState<boolean>(serviceData?.status);
 
   // ----------------------------
-  // ⭐ FIX — MAIN IMAGE handling
+  // ⭐ MAIN IMAGE (store raw DB path)
   // ----------------------------
-  const [image, setImage] = useState<string>(
-    normalizeUrl(serviceData?.image || "")
-  );
-
-const normalizeImage = (img: string) => {
-  if (!img) return "";
-
-  // remove accidental double URLs
-  return img.replace("http://localhost/managerbp/public/uploads/http://localhost/managerbp/public/uploads/", 
-                     "http://localhost/managerbp/public/uploads/");
-};
-
+const [image, setImage] = useState<string>(
+  serviceData?.image?.startsWith("/") 
+    ? serviceData.image 
+    : "/" + serviceData?.image || ""
+);
 
   // ----------------------------
-  // ⭐ FIX — Additional images
+  // ⭐ ADDITIONAL IMAGES (always raw paths)
   // ----------------------------
   const [additionalImages, setAdditionalImages] = useState<string[]>([]);
 
@@ -86,17 +60,14 @@ const normalizeImage = (img: string) => {
       return;
     }
 
-    const arr = serviceData.additionalImages.map((img) =>
-      normalizeUrl(img.image)
-    );
+    // backend gives: [{ image: "uploads/sellers/..." }]
+    const arr = serviceData.additionalImages.map((item) => item.image);
 
     setAdditionalImages(arr);
   }, [serviceData]);
 
   const [metaTitle, setMetaTitle] = useState<string>(serviceData?.metaTitle);
-  const [metaDescription, setMetaDescription] = useState<string>(
-    serviceData?.metaDescription
-  );
+  const [metaDescription, setMetaDescription] = useState<string>(serviceData?.metaDescription);
 
   // ----------------------------
   // SAVE HANDLER
@@ -110,7 +81,7 @@ const normalizeImage = (img: string) => {
         slug,
         amount,
         previousAmount,
-        image, // ⭐ always normalized full URL
+        image, // raw relative path
         categoryId: categoryId ? parseInt(categoryId) : null,
         timeSlotInterval,
         intervalType,
@@ -119,7 +90,7 @@ const normalizeImage = (img: string) => {
         metaTitle,
         metaDescription,
         status,
-        additionalImages, // ⭐ all normalized URLs
+        additionalImages, // raw list of relative paths
       };
 
       const response = !isEdit
@@ -149,20 +120,14 @@ const normalizeImage = (img: string) => {
             previousAmount={{ value: previousAmount, setValue: setPreviousAmount }}
             description={{ value: description, setValue: setDescription }}
             categoryId={{ value: categoryId, setValue: setCategoryId }}
-            timeSlotInterval={{
-              value: timeSlotInterval,
-              setValue: setTimeSlotInterval,
-            }}
+            timeSlotInterval={{ value: timeSlotInterval, setValue: setTimeSlotInterval }}
             intervalType={{ value: intervalType, setValue: setIntervalType }}
             status={{ value: status, setValue: setStatus }}
           />
 
           <ServiceSEO
             metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
-            metaDescription={{
-              value: metaDescription,
-              setValue: setMetaDescription,
-            }}
+            metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
           />
         </div>
 
@@ -173,7 +138,7 @@ const normalizeImage = (img: string) => {
             <ServiceImage
               images={{
                 value: image,
-                setValue: (v: string) => setImage(normalizeUrl(v)),
+                setValue: (v: string) => setImage(v), // MUST be raw path
               }}
             />
 
@@ -181,8 +146,7 @@ const normalizeImage = (img: string) => {
             <AdditionalImages
               images={{
                 value: additionalImages,
-                setValue: (arr: string[]) =>
-                  setAdditionalImages(arr.map(normalizeUrl)),
+                setValue: (arr: string[]) => setAdditionalImages(arr),
               }}
             />
 
