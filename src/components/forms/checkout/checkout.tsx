@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { validateDiscount } from "@/lib/api/plans";
 import { getRazorpayCredentials } from "@/lib/api/razorpay";
 import { toast } from "sonner";
@@ -65,6 +65,18 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
     city: "",
     country: "India"
   });
+
+  // Load user data if available
+  useEffect(() => {
+    if (user) {
+      setBillingInfo(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || ""
+      }));
+    }
+  }, [user]);
 
   // Get GST percentage from API response
   const gstPercentage = gst?.gst_percentage || 18;
@@ -243,7 +255,9 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
             amount: discountedTotal,
             currency: defaultCurrency.currency,
             plan_id: plan.id,
-            user_id: user?.id || 1 // Replace with actual user ID
+            // Pass user email/phone for backend lookup
+            user_email: billingInfo.email,
+            user_phone: billingInfo.phone
           })
         }
       );
@@ -251,11 +265,25 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
       const orderData = await orderResponse.json();
 
       if (!orderData.success) {
-        toast.error("Failed to create payment order");
+        toast.error("Failed to create payment order: " + (orderData.message || "Unknown error"));
+        setProcessingPayment(false);
         return;
       }
 
       const order = orderData.order;
+
+      // Load Razorpay script dynamically if not loaded
+      if (!window.Razorpay) {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+        
+        // Wait for script to load
+        await new Promise((resolve) => {
+          script.onload = resolve;
+        });
+      }
 
       // Razorpay options
       const options = {
@@ -280,7 +308,6 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
                 razorpay_signature: response.razorpay_signature,
                 billing_data: {
                   ...billingInfo,
-                  user_id: user?.id || 1,
                   gstin: gstinNumber
                 },
                 plan_data: {
@@ -308,18 +335,18 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
             // Redirect to success page
             window.location.href = redirectUrl;
           } else {
-            toast.error("Payment verification failed");
+            toast.error(verificationData.message || "Payment verification failed");
             setProcessingPayment(false);
           }
         },
         prefill: {
           name: billingInfo.name,
-          email: billingInfo.email || user?.email || "",
+          email: billingInfo.email,
           contact: billingInfo.phone
         },
         notes: {
           plan: plan.name,
-          user_id: user?.id || 1
+          customer_email: billingInfo.email
         },
         theme: {
           color: "#5f57ff"
@@ -331,7 +358,7 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
           },
           onclose: function () {
             // Handle modal close
-            if (!processingPayment) {
+            if (processingPayment) {
               setProcessingPayment(false);
             }
           }
@@ -347,11 +374,17 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
         setProcessingPayment(false);
       });
 
+      // Set up payment success handler
+      razorpay.on('payment.success', function (response: any) {
+        // This will be handled by the handler function above
+        console.log("Payment success callback:", response);
+      });
+
       razorpay.open();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment error:", error);
-      toast.error("Payment processing failed");
+      toast.error("Payment processing failed: " + (error.message || "Unknown error"));
       setProcessingPayment(false);
     }
   };
@@ -376,7 +409,7 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
               type="tel"
             />
             <Input
-              label="Email Address"
+              label="Email Address *"
               value={billingInfo.email}
               onChange={(e) => handleBillingInfoChange('email', e.target.value)}
               type="email"
