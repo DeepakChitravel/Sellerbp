@@ -141,13 +141,19 @@ export default function EventForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-6">
+       
+
+{isEdit && eventId && (
+  <SeatBooking eventId={Number(eventId)} />
+)}
+
+
+ <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12">
             <EventTerms />
           </div>
         </div>
 
-        <SeatBooking />
 
         <div className="flex justify-end pt-10">
           <Button className="px-10" type="submit" disabled={loading}>
