@@ -1,3 +1,5 @@
+"use server";
+
 import { apiUrl } from "@/config";
 import {
   forgotPasswordData,
@@ -6,6 +8,7 @@ import {
   sendOtp as sendOtpType,
 } from "@/types";
 import axios from "axios";
+import { cookies } from "next/headers";
 
 const route = "/seller/auth";
 
@@ -21,12 +24,12 @@ export const sendOtp = async (options: sendOtpType) => {
     });
     return response.data;
   } catch (error: any) {
-    const err =
+    throw (
       error.response?.data || {
         success: false,
         message: "Server unreachable",
-      };
-    throw err;
+      }
+    );
   }
 };
 
@@ -43,29 +46,24 @@ export const registerUser = async (options: registerUserData) => {
 
     return response.data;
   } catch (error: any) {
-    const err =
+    throw (
       error.response?.data || {
         success: false,
         message: "Server unreachable",
-      };
-    throw err;
+      }
+    );
   }
 };
 
 /* -------------------------------
-   LOGIN USER  (🔥 FIXED PATH!)
+   LOGIN USER
 --------------------------------*/
 export const loginUser = async (data: loginUserData) => {
   try {
-    // FIXED: Correct backend route
-    const res = await axios.post(
-      `${apiUrl}/seller/auth/login.php`,
-      data,
-      {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      }
-    );
+    const res = await axios.post(`${apiUrl}/seller/auth/login.php`, data, {
+      headers: { "Content-Type": "application/json" },
+      withCredentials: true,
+    });
 
     return res.data;
   } catch (err: any) {
@@ -91,11 +89,58 @@ export const forgotPassword = async (options: forgotPasswordData) => {
 
     return response.data;
   } catch (error: any) {
-    const err =
+    throw (
       error.response?.data || {
         success: false,
         message: "Server unreachable",
-      };
-    throw err;
+      }
+    );
+  }
+};
+
+/* -------------------------------
+   GET CURRENT USER (🔥 IMPORTANT)
+--------------------------------*/
+export const currentUser = async () => {
+  const token = cookies().get("token")?.value;
+
+  if (!token) return null;
+
+  try {
+    const res = await fetch(`${apiUrl}/users/user-with-token.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ token }),
+    });
+
+    const raw = await res.text();
+    let json;
+
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      console.log("INVALID JSON RESPONSE:", raw);
+      return null;
+    }
+
+    if (!json.success || !json.data) return null;
+
+    const u = json.data;
+
+    return {
+      id: u.id,               // primary key
+      user_id: u.user_id,     // SELLER ID (important for subscription)
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      image: u.image,
+      siteName: u.site_name,
+      siteSlug: u.site_slug,
+      country: u.country,
+    };
+  } catch (err) {
+    console.log("currentUser error:", err);
+    return null;
   }
 };

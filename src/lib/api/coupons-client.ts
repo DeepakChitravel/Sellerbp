@@ -34,7 +34,17 @@ export const addCoupon = async (data: any) => {
     body, // ← THIS must contain JSON string
   });
 
-  const json = await res.json();
-  console.log("💡 PHP RESPONSE:", json);
-  return json;
+const text = await res.text();
+console.log("🔥 RAW RESPONSE FROM PHP:", text);
+
+let json;
+try {
+  json = JSON.parse(text);
+} catch (err) {
+  console.error("❌ JSON Parse Failed!", err);
+  throw new Error("PHP returned invalid JSON: " + text);
+}
+
+return json;
+
 };

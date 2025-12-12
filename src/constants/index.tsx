@@ -1,3 +1,5 @@
+export const withSlug = (slug: string, path: string) => `/${slug}${path}`;
+
 import {
   Home,
   CalendarTick,

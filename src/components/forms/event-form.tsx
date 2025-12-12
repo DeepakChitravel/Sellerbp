@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";   // ⭐ YOU FORGOT THIS
 
 import { eventSchema, EventFormData } from "./event-forms/schema";
 
@@ -24,7 +24,7 @@ interface EventFormProps {
   eventId?: number | string;
   eventData?: Partial<EventFormData> | null;
   isEdit?: boolean;
-  userId: number; // ⭐ required
+  userId: number;
 }
 
 /* ---------------- SAFE ARRAY ---------------- */
@@ -34,55 +34,66 @@ function safeArray(value: any) {
   try {
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) return parsed;
-  } catch (_) { }
-  if (typeof value === "string" && value.includes(",")) {
-    return value.split(",").map((v) => v.trim());
-  }
-  if (typeof value === "string") return [value.trim()];
-  return [];
+  } catch (_) {}
+  return typeof value === "string" ? [value] : [];
 }
 
-export default function EventForm({ eventData = null, isEdit = false, eventId, userId }: EventFormProps) {
+export default function EventForm({
+  eventData = null,
+  isEdit = false,
+  eventId,
+  userId,
+}: EventFormProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false); // ⭐ prevents double submit
+  const [loading, setLoading] = useState(false);
 
   const methods = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      title: eventData?.title || "",
-      description: eventData?.description || "",
-      date: eventData?.date || "",
-      organizer: eventData?.organizer || "",
-      category: eventData?.category || "",
-      info: eventData?.info || "",
-      comfort: eventData?.comfort || "",
-      things_to_know: safeArray(eventData?.things_to_know),
-      videos: safeArray(eventData?.videos),
-      logo: eventData?.logo || "",
-      banner: eventData?.banner || "",
-      country: eventData?.country || "",
-      state: eventData?.state || "",
-      city: eventData?.city || "",
-      pincode: eventData?.pincode || "",
-      address: eventData?.address || "",
-      map_link: eventData?.map_link || "",
-      terms: eventData?.terms || "",
-      seat_layout: eventData?.seat_layout || "",
+      title: "",
+      description: "",
+      date: "",
+      organizer: "",
+      category: "",
+      info: "",
+      comfort: "",
+      things_to_know: [],
+      videos: [],
+      logo: "",
+      banner: "",
+      country: "",
+      state: "",
+      city: "",
+      pincode: "",
+      address: "",
+      map_link: "",
+      terms: "",
+      seat_layout: "",
     },
   });
 
+  /* ---------------- LOAD EVENT INTO FORM ---------------- */
+  useEffect(() => {
+    if (eventData) {
+      const cleaned = {
+        ...eventData,
+        things_to_know: safeArray(eventData.things_to_know),
+        videos: safeArray(eventData.videos),
+      };
+
+      methods.reset(cleaned);
+
+      console.log("🔥 FORM LOADED WITH EVENT DATA:", cleaned);
+    }
+  }, [eventData, methods]);
+
   /* ---------------- SUBMIT ---------------- */
   const onSubmit = async (values: EventFormData) => {
-    if (loading) return; // ⛔ stop double submit
+    if (loading) return;
     setLoading(true);
 
     try {
-      const payload = {
-        ...values,
-        user_id: userId, // ⭐ important
-      };
-
-      console.log("PAYLOAD SENDING:", payload);
+      const payload = { ...values, user_id: userId };
 
       const response = isEdit
         ? await updateEvent(eventId as string, payload)
@@ -99,7 +110,6 @@ export default function EventForm({ eventData = null, isEdit = false, eventId, u
       if (!isEdit) {
         router.push(`/event?refresh=${Date.now()}`);
       }
-
     } catch (error: any) {
       toast.error(error.message || "Unexpected error!");
     }
@@ -119,7 +129,6 @@ export default function EventForm({ eventData = null, isEdit = false, eventId, u
         )}
         className="space-y-10"
       >
-
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-6">
             <EventDetails />
@@ -129,8 +138,6 @@ export default function EventForm({ eventData = null, isEdit = false, eventId, u
             <EventLocation />
             <EventBanner userId={userId} />
             <EventLogo userId={userId} />
-            {/* 👍 Now properly imported and working */}
-
           </div>
         </div>
 
@@ -147,7 +154,6 @@ export default function EventForm({ eventData = null, isEdit = false, eventId, u
             {loading ? "Saving..." : isEdit ? "Update Event" : "Create Event"}
           </Button>
         </div>
-
       </form>
     </FormProvider>
   );

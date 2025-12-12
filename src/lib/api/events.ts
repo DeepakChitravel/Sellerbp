@@ -15,12 +15,21 @@ export async function getAllEvents() {
 // GET A SINGLE EVENT
 export const getEvent = async (id: string | number) => {
   try {
-    const response = await axios.get(`${BASE_URL}/get.php?id=${id}`);
-    return response.data;
+    const url = `${BASE_URL}/get.php?id=${id}`;
+    console.log("🔍 Fetching single event:", url);
+
+    const res = await axios.get(url);
+
+    console.log("📥 Single event response:", res.data); // ⭐ OUTPUT HERE
+
+    return res.data;
   } catch (error: any) {
-    return { success: false, message: "Failed to fetch event." };
+    console.error("❌ Single event error:", error);
+    return null;
   }
 };
+
+
 
 // CREATE EVENT
 export const addEvent = async (data: any) => {
@@ -70,20 +79,28 @@ export async function uploadEventImage(file: File, type: string, userId: number)
   return await response.json();
 }
 
-
 export const deleteEvent = async (id: number) => {
+  console.log("🟡 DELETE STARTED: Event ID =", id);
+
   try {
-    const res = await axios.get(
-      `http://localhost/managerbp/public/seller/events/delete.php?id=${id}`,
-      { withCredentials: false }
-    );
+    const url = `http://localhost/managerbp/public/seller/events/delete.php?id=${id}`;
+    console.log("🌐 DELETE REQUEST URL:", url);
+
+    const res = await axios.get(url, { withCredentials: false });
+
+    console.log("🟢 DELETE RESPONSE:", res.data);
 
     return res.data;
   } catch (err: any) {
+    console.error("🔴 DELETE ERROR:", err);
     return {
       success: false,
       message: err?.response?.data?.message || "Delete failed",
+      error: err
     };
   }
 };
+
+
+
 

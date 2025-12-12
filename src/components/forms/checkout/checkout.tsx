@@ -27,6 +27,8 @@ interface CheckoutProps {
 }
 
 export default function Checkout({ plan, gst, user, currencySettings, companySettings }: CheckoutProps) {
+    console.log("CHECKOUT RECEIVED USER:", user);
+
     const defaultCurrency = currencySettings || { currency: 'INR', currency_symbol: '₹' };
     const defaultCompany = companySettings || { app_name: 'Book Pannu', address: '' };
 
@@ -294,7 +296,6 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
                 description: `Payment for ${plan.name}`,
                 order_id: order.id,
                 handler: async function (response: any) {
-                    // Verify payment on your server
                     const verificationResponse = await fetch(
                         "http://localhost/managerbp/public/seller/payment/verify-razorpay-payment.php",
                         {
@@ -306,6 +307,10 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_signature: response.razorpay_signature,
+
+                                // ✅ ADD THIS
+                                logged_in_user_id: user?.user_id,
+
                                 billing_data: {
                                     ...billingInfo,
                                     gstin: gstinNumber
@@ -325,6 +330,7 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
                     );
 
                     const verificationData = await verificationResponse.json();
+
 
                     if (verificationData.success) {
                         toast.success(`Payment successful! Invoice: ${verificationData.invoice_number}`);

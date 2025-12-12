@@ -6,8 +6,6 @@ import { cookies } from "next/headers";
 
 const route = "/users";
 
-
-
 export const currentUser = async () => {
   const token = cookies().get("token")?.value;
 
