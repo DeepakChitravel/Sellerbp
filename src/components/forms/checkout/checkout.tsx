@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { validateDiscount } from "@/lib/api/plans";
 import { getRazorpayCredentials } from "@/lib/api/razorpay";
 import { toast } from "sonner";
+import { COUNTRIES } from "@/constants";
 
 declare global {
     interface Window {
@@ -68,6 +69,10 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
         country: "India"
     });
 
+    // State for postal code lookup
+    const [postalCodeLoading, setPostalCodeLoading] = useState(false);
+    const [postalCodeError, setPostalCodeError] = useState("");
+
     // Load user data if available
     useEffect(() => {
         if (user) {
@@ -75,10 +80,107 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
                 ...prev,
                 name: user.name || "",
                 email: user.email || "",
-                phone: user.phone || ""
+                phone: user.phone || "",
+                country: user.country || "India"
             }));
         }
     }, [user]);
+
+    // State for country dropdown
+    const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+    const [countrySearch, setCountrySearch] = useState("");
+    const countryDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Filter countries based on search
+    const filteredCountries = COUNTRIES.filter(country =>
+        country.label.toLowerCase().includes(countrySearch.toLowerCase())
+    );
+
+    // Handle click outside to close dropdown
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+                setShowCountryDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Handle country selection
+    const handleCountrySelect = (countryName: string) => {
+        setBillingInfo(prev => ({
+            ...prev,
+            country: countryName
+        }));
+        setShowCountryDropdown(false);
+        setCountrySearch("");
+    };
+
+    // Handle postal code lookup (for Indian postal codes)
+    const handlePostalCodeLookup = async () => {
+        const postalCode = billingInfo.pin_code.trim();
+        
+        // Reset previous error
+        setPostalCodeError("");
+        
+        // Only lookup for Indian 6-digit postal codes
+        if (postalCode.length === 6 && /^\d{6}$/.test(postalCode)) {
+            setPostalCodeLoading(true);
+            try {
+                // Using postalpincode.in API for Indian postal codes
+                const response = await fetch(`https://api.postalpincode.in/pincode/${postalCode}`);
+                const data = await response.json();
+                
+                if (data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
+                    const postOffice = data[0].PostOffice[0];
+                    
+                    setBillingInfo(prev => ({
+                        ...prev,
+                        state: postOffice.State,
+                        city: postOffice.District,
+                        address_1: postOffice.Name, // Post office name as address
+                        country: "India" // Always set to India for Indian postal codes
+                    }));
+                    
+                    // No toast message - just silently update the fields
+                } else {
+                    // Show error message if no postal code found
+                    setPostalCodeError("No postal code found. Please enter a valid 6-digit Indian postal code.");
+                }
+            } catch (error) {
+                console.error("Error fetching postal code data:", error);
+                setPostalCodeError("Unable to fetch postal code details. Please enter address manually.");
+            } finally {
+                setPostalCodeLoading(false);
+            }
+        } else if (postalCode.length > 0) {
+            // Show error for invalid format
+            setPostalCodeError("Please enter a valid 6-digit postal code.");
+        }
+    };
+
+    // Trigger postal code lookup when pincode is entered
+    useEffect(() => {
+        if (billingInfo.pin_code.length === 6 && /^\d{6}$/.test(billingInfo.pin_code)) {
+            // Debounce the lookup
+            const timer = setTimeout(() => {
+                handlePostalCodeLookup();
+            }, 1000);
+            
+            return () => clearTimeout(timer);
+        } else if (billingInfo.pin_code.length > 0) {
+            // Clear fields if pincode is invalid
+            setBillingInfo(prev => ({
+                ...prev,
+                address_1: "",
+                state: "",
+                city: ""
+            }));
+            setPostalCodeError("");
+        }
+    }, [billingInfo.pin_code]);
 
     // Get GST percentage from API response
     const gstPercentage = gst?.gst_percentage || 18;
@@ -420,20 +522,56 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
                             onChange={(e) => handleBillingInfoChange('email', e.target.value)}
                             type="email"
                         />
-                        <Input
-                            label="Zip/Postal Code *"
-                            value={billingInfo.pin_code}
-                            onChange={(e) => handleBillingInfoChange('pin_code', e.target.value)}
-                        />
+                        
+                        {/* Postal Code with error message */}
+                        <div className="flex flex-col">
+                            <label className="text-sm font-medium mb-2 text-gray-700">Zip/Postal Code *</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="border border-gray-300 rounded-md px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    value={billingInfo.pin_code}
+                                    onChange={(e) => handleBillingInfoChange('pin_code', e.target.value)}
+                                    onBlur={handlePostalCodeLookup}
+                                    placeholder="Enter 6-digit postal code"
+                                    maxLength={6}
+                                />
+                                {postalCodeLoading && (
+                                    <div className="absolute right-3 top-3">
+                                        <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mt-1 text-xs text-gray-500">
+                                Enter 6-digit postal code for auto-fill address
+                            </div>
+                            {/* Postal Code Error Message */}
+                            {postalCodeError && (
+                                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                                    <p className="text-red-600 text-sm flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        {postalCodeError}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        
                         <Input
                             label="Address Line 1 *"
                             value={billingInfo.address_1}
                             onChange={(e) => handleBillingInfoChange('address_1', e.target.value)}
+                            placeholder="Address will auto-fill from postal code"
                         />
                         <Input
                             label="Address Line 2"
                             value={billingInfo.address_2}
                             onChange={(e) => handleBillingInfoChange('address_2', e.target.value)}
+                            placeholder="Apartment, suite, unit, building, floor, etc."
                         />
                         <Input
                             label="State *"
@@ -445,12 +583,70 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
                             value={billingInfo.city}
                             onChange={(e) => handleBillingInfoChange('city', e.target.value)}
                         />
-                        <Input
-                            label="Country"
-                            value={billingInfo.country}
-                            onChange={(e) => handleBillingInfoChange('country', e.target.value)}
-                            disabled
-                        />
+                        
+                        {/* Country Select with Dropdown Search */}
+                        <div className="flex flex-col" ref={countryDropdownRef}>
+                            <label className="text-sm font-medium mb-2 text-gray-700">Country *</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="border border-gray-300 rounded-md px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    value={billingInfo.country}
+                                    onClick={() => setShowCountryDropdown(true)}
+                                    onChange={(e) => {
+                                        setBillingInfo(prev => ({ ...prev, country: e.target.value }));
+                                        setShowCountryDropdown(true);
+                                        setCountrySearch(e.target.value);
+                                    }}
+                                    placeholder="Select country"
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute right-3 top-3 text-gray-500"
+                                    onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                                
+                                {/* Country Dropdown */}
+                                {showCountryDropdown && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                        {/* Search Input */}
+                                        <div className="sticky top-0 bg-white p-2 border-b">
+                                            <input
+                                                type="text"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Search countries..."
+                                                value={countrySearch}
+                                                onChange={(e) => setCountrySearch(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                autoFocus
+                                            />
+                                        </div>
+                                        
+                                        {/* Country List */}
+                                        <div className="py-1">
+                                            {filteredCountries.length > 0 ? (
+                                                filteredCountries.map((country) => (
+                                                    <button
+                                                        key={country.value}
+                                                        type="button"
+                                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                                                        onClick={() => handleCountrySelect(country.label)}
+                                                    >
+                                                        <span>{country.label}</span>
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-2 text-gray-500 text-sm">No countries found</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* GSTIN Section */}
@@ -682,7 +878,7 @@ export default function Checkout({ plan, gst, user, currencySettings, companySet
 }
 
 /* UI Helpers */
-function Input({ label, value, onChange, type = "text", disabled = false }: any) {
+function Input({ label, value, onChange, type = "text", disabled = false, placeholder = "", helperText = "", onBlur }: any) {
     return (
         <div className="flex flex-col">
             <label className="text-sm font-medium mb-2 text-gray-700">{label}</label>
@@ -692,7 +888,12 @@ function Input({ label, value, onChange, type = "text", disabled = false }: any)
                 value={value}
                 onChange={onChange}
                 disabled={disabled}
+                placeholder={placeholder}
+                onBlur={onBlur}
             />
+            {helperText && (
+                <div className="mt-1 text-xs text-gray-500">{helperText}</div>
+            )}
         </div>
     );
 }
