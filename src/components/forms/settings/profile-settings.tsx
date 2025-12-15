@@ -105,7 +105,7 @@ const ProfileSettings = ({ user }: Props) => {
     setIsLoading(false);
   };
 
-  console.log("PROFILE USER:", user);
+  // console.log("PROFILE USER:", user);
 
   return (
     <>

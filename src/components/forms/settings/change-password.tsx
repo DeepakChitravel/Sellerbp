@@ -1,4 +1,5 @@
 "use client";
+
 import FormInputs from "@/components/form-inputs";
 import { Button } from "@/components/ui/button";
 import { changePassword } from "@/lib/api/users";
@@ -18,9 +19,9 @@ interface Form {
 const ChangePassword = ({ user }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const [currentPassword, setCurrentPassword] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const inputFields: Form = {
     currentPassword: {
@@ -34,7 +35,7 @@ const ChangePassword = ({ user }: Props) => {
       type: "password",
       value: password,
       setValue: setPassword,
-      label: "Password",
+      label: "New Password",
       placeholder: "********",
       containerClassName: "md:col-span-6",
     },
@@ -49,27 +50,38 @@ const ChangePassword = ({ user }: Props) => {
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
-
-    if (password !== confirmPassword) {
-      toast.error("Password and Confirm password does not matched.");
-      setIsLoading(false);
+    // ✅ Validate before API call
+    if (!currentPassword || !password || !confirmPassword) {
+      toast.error("All fields are required");
       return;
     }
 
+    if (password !== confirmPassword) {
+      toast.error("Password and Confirm Password do not match");
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      const data = {
+      const response = await changePassword({
         currentPassword,
         password,
-      };
-
-      const response = await changePassword(data);
+      });
 
       handleToast(response);
+
+      // ✅ Clear inputs on success
+      if (response?.success) {
+        setCurrentPassword("");
+        setPassword("");
+        setConfirmPassword("");
+      }
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error?.message || "Something went wrong");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
@@ -77,7 +89,11 @@ const ChangePassword = ({ user }: Props) => {
       <FormInputs inputFields={inputFields} />
 
       <div className="flex items-center justify-end mt-6">
-        <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
+        <Button
+          onClick={handleSave}
+          disabled={isLoading}
+          isLoading={isLoading}
+        >
           Save Changes
         </Button>
       </div>

@@ -3,6 +3,7 @@ import { apiUrl } from "@/config";
 import { changePasswordData, updateUserData } from "@/types";
 import axios from "axios";
 import { cookies } from "next/headers";
+import { getCookie } from "cookies-next";
 
 const route = "/users";
 
@@ -42,8 +43,9 @@ console.log("🔥 FULL RAW USER RESPONSE =>", json);
       email: u.email,
       phone: u.phone,
       image: u.image,
-      siteName: u.site_name,
-      siteSlug: u.site_slug,
+  siteSlug: u.siteSlug ?? "",
+siteName: u.siteName ?? "",
+
       country: u.country,
     };
 
@@ -56,53 +58,77 @@ console.log("🔥 FULL RAW USER RESPONSE =>", json);
 
 
 // Update a user data
-export const updateUser = async (data: any) => {
+export const updateUser = async (data: {
+  user_id: number;
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  image?: File;
+}) => {
   const token = cookies().get("token")?.value;
+
+  const formData = new FormData();
+  formData.append("user_id", String(data.user_id));
+  formData.append("name", data.name);
+  formData.append("email", data.email);
+  formData.append("phone", data.phone);
+  formData.append("country", data.country);
+
+  if (data.image) {
+    formData.append("image", data.image); // 🔥 actual file
+  }
+
+  const response = await axios.post(
+    `${apiUrl}/seller/users/update-profile.php`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // ❌ DO NOT set Content-Type manually
+      },
+    }
+  );
+
+  return response.data;
+};
+
+
+
+// Change password
+
+
+export const changePassword = async (data: {
+  currentPassword: string;
+  password: string;
+}) => {
+  const token = getCookie("token");
+
+  if (!token) {
+    return { success: false, message: "Unauthorized (no token)" };
+  }
 
   try {
     const response = await axios.post(
-      `${apiUrl}/seller/users/update-profile.php`,
-      data,
+      `${apiUrl}/seller/users/change-password.php`,
+      {
+        currentPassword: data.currentPassword,
+        password: data.password,
+        token: token, // ✅ SEND TOKEN IN BODY
+      },
       {
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       }
     );
 
-    return {
-      success: response.data.success,
-      message: response.data.message,
-    };
-
+    return response.data;
   } catch (error: any) {
     return {
       success: false,
-      message: error?.response?.data?.message || "Update failed.",
+      message: error?.response?.data?.message || "Password update failed",
     };
   }
 };
 
-
-
-
-
-// Change password
-export const changePassword = async (data: changePasswordData) => {
-  const token = cookies().get("token")?.value;
-  const options = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  const url = `${apiUrl + route}/change-password`;
-
-  try {
-    const response = await axios.put(url, data, options);
-    return { success: true, message: response.data.message };
-  } catch (error: any) {
-    return { success: false, message: error.response.data.message };
-  }
-};

@@ -76,10 +76,19 @@ export default async function DashboardHome() {
 
         <div className="4xl:w-[30%]">
           <div className="grid gap-3" style={{ wordBreak: "break-all" }}>
-            <CopyLink text="Site Link" link={siteUrl + "/" + user.siteSlug} />
+<CopyLink
+  text="Site Link"
+  link={
+    user?.siteSlug
+      ? `${siteUrl}/${user.siteSlug}`
+      : "#"
+  }
+  disabled={!user?.siteSlug}
+/>
+
 
             <LinkCard
-              title={`${overviewData.newAppointments} New Appointments Received!`}
+title={`${overviewData.totalAppointments ?? 0} Appointments Received!`}
               icon={<Calendar />}
               link="/appointments"
             />

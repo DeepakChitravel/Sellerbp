@@ -56,9 +56,10 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
 
       const result = await res.json();
 
-      if (result.success) {
-        setValue(result.filename);
-      }
+    if (result.success) {
+  setValue(result.image); // "/uploads/sellers/50339/profile/..."
+}
+
     } catch (error) {
       console.error("Upload failed:", error);
     } finally {
@@ -71,9 +72,10 @@ export default function ProfileImage({ value, setValue, userId }: Props) {
   };
 
   // Build final URL from DB value
-  const finalImageUrl = value
-    ? `${uploadsUrl}/${value.replace("sellers/", "")}`
-    : "";
+const finalImageUrl = value
+  ? `${uploadsUrl}${value.replace("/uploads/sellers", "")}`
+  : "";
+
 
   return (
     <div className="bg-white rounded-2xl p-6 mt-6 shadow-sm border border-gray-100">

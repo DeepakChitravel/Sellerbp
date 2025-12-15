@@ -14,33 +14,33 @@ import { useRouter } from "next/navigation";
 const LoginForm = () => {
   const router = useRouter();
 
-  const [user, setUser] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
     try {
-      if (!user || !password) {
+      if (!phone || !password) {
         toast.error("Enter phone and password");
         return;
       }
 
-      const cleanPhone = user.replace(/^\+91/, "").trim();
+      const cleanPhone = phone.replace(/^\+91/, "").trim();
 
-      const userData = {
+      const response = await loginUser({
         phone: cleanPhone,
-        password: password,
-      };
+        password,
+      });
 
-      const response = await loginUser(userData);
+      console.log("LOGIN RESPONSE ===>", response);
 
-      console.log("LOGIN RESPONSE ===>", response); // ⭐ Correct logging
-
-      if (!response.success) {
-        toast.error(response.message);
+      if (!response?.success) {
+        toast.error(response?.message || "Login failed");
         return;
       }
 
-      // ⭐ Save token
+      /* ===============================
+         SAVE TOKEN
+      ================================ */
       if (response.token) {
         setCookie("token", response.token, {
           path: "/",
@@ -48,35 +48,49 @@ const LoginForm = () => {
         });
       }
 
-      // ⭐⭐ Save USER ID — but correct key depends on API response!
-      if (response.user?.id) {
-        setCookie("user_id", response.user.id, {
-          path: "/",
-          sameSite: "lax",
-        });
-      } else if (response.data?.user?.id) {
-        setCookie("user_id", response.data.user.id, {
-          path: "/",
-          sameSite: "lax",
-        });
-      } else if (response.data?.id) {
-        setCookie("user_id", response.data.id, {
-          path: "/",
-          sameSite: "lax",
-        });
-      } else {
-        console.error("❌ USER ID NOT FOUND IN LOGIN RESPONSE");
+      /* ===============================
+         🔥 NORMALIZE IDs (THIS FIXES YOUR ISSUE)
+      ================================ */
+      const id =
+        response.user?.id ??
+        response.data?.user?.id ??
+        response.data?.id;
+
+      const user_id =
+        response.user?.user_id ??
+        response.data?.user?.user_id ??
+        response.data?.user_id;
+
+      console.log("NORMALIZED IDS =>", { id, user_id });
+
+      if (!id || !user_id) {
+        console.error("❌ id or user_id missing after login", response);
+        toast.error("Login response missing user info");
+        return;
       }
 
-      // Redirect
-      if (response.data?.site_slug) {
-        router.push(`/${response.data.site_slug}`);
-      } else {
-        router.push("/");
-      }
+      setCookie("id", String(id), {
+        path: "/",
+        sameSite: "lax",
+      });
+
+      setCookie("user_id", String(user_id), {
+        path: "/",
+        sameSite: "lax",
+      });
+
+      /* ===============================
+         REDIRECT
+      ================================ */
+      const slug =
+        response.data?.site_slug ||
+        response.user?.site_slug;
+
+      router.push(slug ? `/${slug}` : "/");
 
     } catch (error: any) {
-      toast.error(error.message || "Login failed");
+      console.error("LOGIN ERROR:", error);
+      toast.error("Login failed");
     }
   };
 
@@ -86,17 +100,20 @@ const LoginForm = () => {
         <Label>Phone</Label>
         <PhoneInput
           placeholder="Phone Number"
-          value={user}
-          onChange={(value) => setUser(value)}
+          value={phone}
+          onChange={(value) => setPhone(value || "")}
           className="h-12 px-4 [&_input]:!text-base"
-          autoFocus={true}
+          autoFocus
         />
       </div>
 
       <div className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
           <Label>Password</Label>
-          <Link href="/forgot-password" className="text-center text-sm underline">
+          <Link
+            href="/forgot-password"
+            className="text-center text-sm underline"
+          >
             Forgot Password
           </Link>
         </div>
@@ -115,7 +132,10 @@ const LoginForm = () => {
       </Button>
 
       <div className="text-center text-sm">
-        Don&apos;t have an account? <Link href="/register" className="underline">Register</Link>
+        Don&apos;t have an account?{" "}
+        <Link href="/register" className="underline">
+          Register
+        </Link>
       </div>
     </div>
   );
