@@ -11,7 +11,7 @@ export default async function PlanPage({ searchParams }: { searchParams: { plan_
 
   // Get logged-in user 🔥
   const user = await currentUser();
-  console.log("🔥 USER FROM PAGE:", user);
+  //console.log("🔥 USER FROM PAGE:", user);
 
   if (!user) {
     return <div className="p-10 text-center text-red-600">User not logged in</div>;

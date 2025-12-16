@@ -40,7 +40,7 @@ const SIDEBAR_LINKS = [
   { label: "Event", href: "/event", icon: <CalendarTick /> },
   { label: "Services", href: "/services", icon: <TaskSquare /> },
   { label: "Coupons", href: "/coupons", icon: <DiscountShape /> },
-  { label: "Upgrade Plan", href: "/upgrade", icon: <Moneys /> },
+  { label: "Upgrade Plan", href: "/all-plans", icon: <Moneys /> },
   { label: "Plugins", href: "/plugins", icon: <Flash /> },
   { label: "Settings", href: "/settings", icon: <Setting2 /> },
   { label: "Website Setup", href: "/website-setup", icon: <MonitorMobbile /> },

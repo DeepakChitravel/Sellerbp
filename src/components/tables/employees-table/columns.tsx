@@ -177,18 +177,18 @@ export const columns: ColumnDef<Employee>[] = [
     },
   },
 
-  {
-    header: "Earnings",
-    cell: ({ row }) => {
-      const data = row.original;
+  // {
+  //   header: "Earnings",
+  //   cell: ({ row }) => {
+  //     const data = row.original;
 
-      if (!data.earnings || isNaN(Number(data.earnings))) {
-        return <span className="block text-center">-</span>;
-      }
+  //     if (!data.earnings || isNaN(Number(data.earnings))) {
+  //       return <span className="block text-center">-</span>;
+  //     }
 
-      return formatNumber(data.earnings);
-    },
-  },
+  //     return formatNumber(data.earnings);
+  //   },
+  // },
 
   {
     header: "Joined Date",

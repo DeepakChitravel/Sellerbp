@@ -263,7 +263,7 @@ export default function UpgradePlans({ initialPlans, initialCurrencySettings }) 
 
               {/* CTA Button */}
               <button
-                onClick={() => router.push(`/plan?plan_id=${p.id}`)}
+                onClick={() => router.push(`/checkout?plan_id=${p.id}`)}
                 className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-md hover:shadow-lg ${p.is_trial
                     ? "bg-white text-blue-700 hover:bg-gray-50"
                     : planType === "monthly"
