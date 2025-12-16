@@ -16,39 +16,37 @@ export interface BasicSettingsData {
   address?: string | null;
 }
 
-// Get settings
+/* ================= GET SETTINGS ================= */
 export const getBasicSettings = async () => {
   const token = cookies().get("token")?.value;
-  const user_id = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl}/seller/settings/basic-settings/get.php?user_id=${user_id}`;
+  const res = await axios.get(
+    `${apiUrl}/seller/settings/basic-settings/get.php`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
-  try {
-    const res = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return res.data;
-  } catch (err) {
-    console.error("Error fetching basic settings:", err);
-    return { success: false, data: null };
-  }
+  return res.data;
 };
 
-// Update settings (filename only)
+/* ================= UPDATE SETTINGS ================= */
 export const updateBasicSettings = async (data: BasicSettingsData) => {
   const token = cookies().get("token")?.value;
-  const user_id = cookies().get("user_id")?.value;
-
-  const url = `${apiUrl}/seller/settings/basic-settings/update.php?user_id=${user_id}`;
 
   try {
-    const res = await axios.post(url, data, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    const res = await axios.post(
+      `${apiUrl}/seller/settings/basic-settings/update.php`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     return res.data;
   } catch (error: any) {
@@ -60,58 +58,52 @@ export const updateBasicSettings = async (data: BasicSettingsData) => {
   }
 };
 
-// Upload logo
+/* ================= UPLOAD LOGO ================= */
 export const uploadLogo = async (file: File) => {
   const token = cookies().get("token")?.value;
-  const user_id = cookies().get("user_id")?.value;
 
   const formData = new FormData();
   formData.append("file", file);
 
-  const url = `${apiUrl}/seller/settings/upload-logo.php?user_id=${user_id}`;
-
   try {
-    const res = await axios.post(url, formData, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const res = await axios.post(
+      `${apiUrl}/seller/settings/upload-logo.php`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
-    return {
-      success: res.data.success,
-      filename: res.data.filename,  // IMPORTANT
-      message: res.data.message,
-    };
+    return res.data;
   } catch (err) {
     console.error("Error uploading logo:", err);
     return { success: false, message: "Upload failed" };
   }
 };
 
-// Upload favicon
+/* ================= UPLOAD FAVICON ================= */
 export const uploadFavicon = async (file: File) => {
   const token = cookies().get("token")?.value;
-  const user_id = cookies().get("user_id")?.value;
 
   const formData = new FormData();
   formData.append("file", file);
 
-  const url = `${apiUrl}/seller/settings/upload-favicon.php?user_id=${user_id}`;
-
   try {
-    const res = await axios.post(url, formData, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const res = await axios.post(
+      `${apiUrl}/seller/settings/upload-favicon.php`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
-    return {
-      success: res.data.success,
-      filename: res.data.filename,
-      message: res.data.message,
-    };
+    return res.data;
   } catch (err) {
     console.error("Error uploading favicon:", err);
     return { success: false, message: "Upload failed" };

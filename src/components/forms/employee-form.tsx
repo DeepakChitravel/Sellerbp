@@ -73,7 +73,8 @@ const handleSave = async () => {
     handleToast(response);
 
     if (response.success) {
-      router.push(`/employees?refresh=${Date.now()}`);
+router.replace("/employees");
+router.refresh();
     }
   } catch (error: any) {
     toast.error(error.message);

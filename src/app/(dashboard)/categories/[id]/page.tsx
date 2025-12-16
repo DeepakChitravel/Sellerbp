@@ -1,37 +1,66 @@
+export const dynamic = "force-dynamic"; // ✅ IMPORTANT FIX
+
 import CategoryForm from "@/components/forms/category-form";
 import { getCategory } from "@/lib/api/categories";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";   // ⭐ ADD THIS
+import { cookies } from "next/headers";
 
-const Category = async ({ params: { id } }: { params: { id: string } }) => {
-  // ⭐ GET USER ID FROM COOKIE
+type Props = {
+  params: {
+    id: string;
+  };
+};
+
+const CategoryPage = async ({ params }: Props) => {
+  const { id } = params;
+
+  // ✅ GET USER ID FROM COOKIE
   const userId = cookies().get("user_id")?.value || "";
 
   if (!userId) {
-    // optional: handle missing userId however you want
-    // return notFound();
+    // If user is not logged in
+    return notFound();
   }
 
-  let category = null;
+  // ===============================
+  // ADD CATEGORY
+  // ===============================
+  if (id === "add") {
+    return (
+      <>
+        <h1 className="text-2xl font-bold mb-5">Add Category</h1>
 
-  if (id !== "add") category = await getCategory(id);
+        <CategoryForm
+          categoryId="add"
+          categoryData={null}
+          isEdit={false}
+          userId={userId}
+        />
+      </>
+    );
+  }
 
-  if (id !== "add" && !category?.data) return notFound();
+  // ===============================
+  // EDIT CATEGORY
+  // ===============================
+  const category = await getCategory(id);
+
+  if (!category?.data) {
+    return notFound();
+  }
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-5">
-        {id === "add" ? "Add" : "Edit"} Category
-      </h1>
+      <h1 className="text-2xl font-bold mb-5">Edit Category</h1>
 
       <CategoryForm
         categoryId={id}
-        categoryData={id === "add" ? null : category.data}
-        isEdit={id !== "add"}
-        userId={userId}      // ⭐ PASS USER ID HERE
+        categoryData={category.data}
+        isEdit={true}
+        userId={userId}
       />
     </>
   );
 };
 
-export default Category;
+export default CategoryPage;

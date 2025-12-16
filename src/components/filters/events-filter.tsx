@@ -11,11 +11,13 @@ const EventsFilter = ({ data }: { data: any[] }) => {
 
   return (
     <div className="bg-white rounded-xl p-5 flex items-center justify-between flex-col sm:flex-row gap-x-6 gap-y-3">
+      {/* LEFT SIDE (Search + Filters) */}
       <div className="flex items-center flex-col sm:flex-row gap-x-6 gap-y-3 w-full sm:w-auto">
         <EventsSearch />
         <EventsFilterOptions categories={categories} />
       </div>
 
+      {/* RIGHT SIDE (Export) */}
       <div className="flex items-center gap-x-6 gap-y-3 w-full sm:w-auto">
         <EventsExport data={list} />
       </div>
@@ -24,4 +26,3 @@ const EventsFilter = ({ data }: { data: any[] }) => {
 };
 
 export default EventsFilter;
-

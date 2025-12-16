@@ -86,3 +86,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ---------------- React Quill Professional Styling ---------------- */
+
+.ql-toolbar {
+  border-radius: 8px 8px 0 0;
+}
+
+.ql-container {
+  min-height: 180px;
+  border-radius: 0 0 8px 8px;
+  font-size: 15px;
+}
+
+.ql-editor {
+  min-height: 160px;
+  padding: 14px;
+  line-height: 1.6;
+}
+
+/* Focus border */
+.ql-container.ql-snow {
+  border-color: #d1d5db; /* gray-300 */
+}
+
+.ql-container.ql-snow:focus-within {
+  border-color: #7c3aed; /* purple-600 */
+}

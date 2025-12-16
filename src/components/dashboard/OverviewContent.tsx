@@ -7,25 +7,24 @@ import {
   Chart,
 } from "iconsax-react";
 import { abbreviateNumber } from "@/lib/utils";
-
 import Stats from "@/components/cards/stats";
 import RevenueGraph from "@/components/charts/revenue-graph";
-import { getOverview, getRevenue } from "@/lib/api/analytics";
 import CopyLink from "@/components/cards/copy-link";
-import { currentUser } from "@/lib/api/users";
-import { siteUrl, uploadsUrl } from "@/config";
 import LinkCard from "@/components/cards/link-card";
 import Image from "next/image";
+import { siteUrl, uploadsUrl } from "@/config";
 
-const Home = async () => {
-  const user = await currentUser();
+interface Props {
+  user: any;
+  overviewData: any;
+  revenueData: any;
+}
 
-  // Default daysAgo (remove query param)
-  const daysAgo = "7";
-
-  const revenueData = await getRevenue(daysAgo);
-  const overviewData = await getOverview();
-
+export default function OverviewContent({
+  user,
+  overviewData,
+  revenueData,
+}: Props) {
   const overviewStats = [
     {
       value: abbreviateNumber(overviewData.totalRevenue),
@@ -65,7 +64,7 @@ const Home = async () => {
         <h1 className="text-2xl font-bold mb-5">Overview</h1>
 
         <div className="grid 4xl:grid-cols-5 lg:grid-cols-3 sm:grid-cols-2 gap-5">
-          {overviewStats.map((item, index: number) => (
+          {overviewStats.map((item, index) => (
             <Stats key={index} {...item} />
           ))}
         </div>
@@ -78,7 +77,7 @@ const Home = async () => {
 
         <div className="4xl:w-[30%]">
           <div className="grid gap-3" style={{ wordBreak: "break-all" }}>
-            <CopyLink text="Site Link" link={siteUrl + "/" + user?.siteSlug} />
+            <CopyLink text="Site Link" link={`${siteUrl}/${user.siteSlug}`} />
 
             <LinkCard
               title={`${overviewData.newAppointments} New Appointments Received!`}
@@ -110,6 +109,4 @@ const Home = async () => {
       </div>
     </div>
   );
-};
-
-export default Home;
+}

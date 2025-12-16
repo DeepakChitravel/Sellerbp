@@ -6,7 +6,17 @@ import "react-quill/dist/quill.snow.css";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
-export default function RichTextEditor({ name, label }: { name: string; label: string }) {
+interface RichTextEditorProps {
+  name: string;
+  label: string;
+  placeholder?: string;
+}
+
+export default function RichTextEditor({
+  name,
+  label,
+  placeholder = "Write here...",
+}: RichTextEditorProps) {
   const { watch, setValue } = useFormContext();
   const value = watch(name);
 
@@ -22,15 +32,19 @@ export default function RichTextEditor({ name, label }: { name: string; label: s
 
   return (
     <div className="mt-4">
-      <label className="font-medium mb-1 block">{label}</label>
+      <label className="mb-2 block text-sm font-medium text-gray-700">
+        {label}
+      </label>
 
-      <ReactQuill
-        theme="snow"
-        value={value || ""}
-        onChange={(v) => setValue(name, v)}
-        modules={modules}
-        className="bg-white rounded-md"
-      />
+      <div className="rounded-lg border border-gray-300 bg-white transition focus-within:border-purple-600">
+        <ReactQuill
+          theme="snow"
+          value={value || ""}
+          onChange={(v) => setValue(name, v, { shouldDirty: true })}
+          modules={modules}
+          placeholder={placeholder}
+        />
+      </div>
     </div>
   );
 }

@@ -22,30 +22,29 @@ const LeftSidebar = async () => {
         <div className="flex items-center justify-between gap-3 border-b border-white/10 mb-5 pb-5">
           {/* Logo */}
           <div className="flex items-center gap-3">
-<Image
-  src={
-    user?.siteSettings?.logo_url 
-      ? user.siteSettings.logo_url
-      : uploadsUrl + "/static/logo.png"
-  }
-  alt="Site Logo"
-  width={44}
-  height={44}
-  className="object-contain"
-/>
-
+            <Image
+              src={
+                user?.siteSettings?.logo_url
+                  ? user.siteSettings.logo_url
+                  : uploadsUrl + "/static/logo.png"
+              }
+              alt="Site Logo"
+              width={44}
+              height={44}
+              className="object-contain"
+            />
 
             <span className="font-semibold text-white text-lg 2xl:block hidden">
-              {user.siteName}
+              {user?.siteName}
             </span>
           </div>
 
           <div className="2xl:flex hidden">
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <Link
-                    href={siteUrl + "/" + user.siteSlug}
+                    href={`${siteUrl}/${user?.siteSlug}`}
                     target="_blank"
                     className="bg-white/10 text-white/80 w-9 h-9 rounded-sm flex items-center justify-center"
                   >
@@ -60,15 +59,15 @@ const LeftSidebar = async () => {
           </div>
         </div>
 
+        {/* ✅ NO SLUG, NO FUNCTION CALL */}
         <ul className="space-y-2">
-          {SIDEBAR_LINKS.map((item, index: number) => (
+          {SIDEBAR_LINKS.map((item, index) => (
             <li key={index}>
               <NavLink item={item} />
             </li>
           ))}
         </ul>
       </div>
-      
     </div>
   );
 };

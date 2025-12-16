@@ -1,21 +1,26 @@
 "use client";
 
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Filter } from "lucide-react";
 
 const EventsFilterOptions = ({ categories }: { categories: string[] }) => {
-  // Remove empty, null, undefined values
-  const cleanCategories = categories.filter((c) => c && c.trim() !== "");
+  const cleanCategories = categories.filter(Boolean);
 
   return (
     <Select>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Category" />
+      <SelectTrigger className="rounded-full bg-muted border-0 px-5 gap-2 w-auto">
+        <Filter className="w-4 h-4 text-muted-foreground" />
+        <SelectValue placeholder="Filter" />
       </SelectTrigger>
 
       <SelectContent>
-        {/* Valid non-empty default option */}
         <SelectItem value="all">All</SelectItem>
-
         {cleanCategories.map((cat) => (
           <SelectItem key={cat} value={cat}>
             {cat}

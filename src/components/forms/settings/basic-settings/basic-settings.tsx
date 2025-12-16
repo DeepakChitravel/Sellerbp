@@ -49,36 +49,34 @@ const BasicSettings = ({ initialData }: Props) => {
     }
   }, []);
 
-  const fetchSettings = async () => {
-    setFetching(true);
-    try {
-      const response = await getBasicSettings();
+const fetchSettings = async () => {
+  setFetching(true);
 
-      console.log("FULL API RESPONSE:", response);
-      console.log("response.data:", response.data);
-      console.log("response.data.user_id:", response.data?.user_id);
-      console.log("response.data.data:", response.data?.data);
-      console.log("response.data.data.user_id:", response.data?.data?.user_id);
+  try {
+    const response = await getBasicSettings();
+    console.log("🟢 BASIC SETTINGS RESPONSE:", response);
 
-      if (response.success && response.data) {
-        const d = response.data;
-        setUserId(d.user_id);
-        setLogo(d.logo || "");
-        setFavicon(d.favicon || "");
-        setEmail(d.email || "");
-        setPhone(d.phone || "");
-        setWhatsapp(d.whatsapp || "");
-        setCurrency(d.currency || "INR");
-        setCountry(d.country || "");
-        setStateValue(d.state || "");
-        setAddress(d.address || "");
-      }
-    } catch (error) {
-      console.error("Error fetching settings:", error);
-    } finally {
-      setFetching(false);
+    if (response?.success && response.data) {
+      const d = response.data;
+
+      setLogo(d.logo || "");
+      setFavicon(d.favicon || "");
+      setEmail(d.email || "");
+      setPhone(d.phone || "");
+      setWhatsapp(d.whatsapp || "");
+      setCurrency(d.currency || "INR");
+      setCountry(d.country || "");
+      setStateValue(d.state || "");
+      setAddress(d.address || "");
     }
-  };
+  } catch (err) {
+    console.error("❌ fetchSettings failed:", err);
+  } finally {
+    setFetching(false);
+  }
+};
+
+
 
   // Load currency options
   useEffect(() => {
@@ -174,38 +172,40 @@ const BasicSettings = ({ initialData }: Props) => {
     },
   };
 
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      const payload = {
-        user_id: userId,
-        logo,
-        favicon,
-        email,
-        phone,
-        whatsapp,
-        currency,
-        country,
-        state,
-        address,
-      };
-      const res = await updateBasicSettings(payload);
-      handleToast(res);
-      if (res.success) fetchSettings();
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to save settings");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const handleSave = async () => {
+  setIsLoading(true);
+  try {
+    const payload = {
+      logo,
+      favicon,
+      email,
+      phone,
+      whatsapp,
+      currency,
+      country,
+      state,
+      address,
+    };
 
-  if (fetching || !userId) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    const res = await updateBasicSettings(payload);
+    handleToast(res);
+
+    if (res.success) fetchSettings();
+  } catch (error: any) {
+    toast.error(error?.message || "Failed to save settings");
+  } finally {
+    setIsLoading(false);
   }
+};
+
+if (fetching) {
+  return (
+    <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  );
+}
+
 
   return (
     <div className="space-y-8">
@@ -226,15 +226,11 @@ const BasicSettings = ({ initialData }: Props) => {
           <p className="text-gray-600 text-sm mt-1">Make your brand shine with a beautiful logo</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {userId && (
-            <>
-              <LogoUpload value={logo} setValue={setLogo} userId={userId} />
-              <FaviconUpload value={favicon} setValue={setFavicon} userId={userId} />
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <LogoUpload value={logo} setValue={setLogo} />
+  <FaviconUpload value={favicon} setValue={setFavicon} />
+</div>
 
-            </>
-          )}
-        </div>
 
       </div>
 

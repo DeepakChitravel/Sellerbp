@@ -8,7 +8,6 @@ import { apiUrl } from "@/config";
 interface Props {
   value: string;
   setValue: (value: string) => void;
-  userId: number;
   metaTitle?: string;
   metaDescription?: string;
 }
@@ -16,7 +15,6 @@ interface Props {
 export default function SharingPreviewUpload({ 
   value, 
   setValue, 
-  userId,
   metaTitle = "Your Website Title",
   metaDescription = "Your website description appears here when shared..."
 }: Props) {
@@ -31,31 +29,37 @@ export default function SharingPreviewUpload({
     ? metaDescription.substring(0, 60) + "..."
     : metaDescription;
 
-  const handleFileSelect = async (file: File) => {
-    if (!userId) {
-      console.error("User ID missing — cannot upload sharing preview image.");
-      return;
-    }
+    
+const handleFileSelect = async (file: File) => {
+  setUploading(true);
 
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
+  const formData = new FormData();
+  formData.append("file", file);
 
-    try {
-      const res = await fetch(
-        `${apiUrl}/seller/settings/seo-settings/upload-sharing-preview.php?user_id=${userId}`,
-        { method: "POST", body: formData }
-      );
-      const result = await res.json();
-      if (result.success) {
-        setValue(result.filename);
+  try {
+    const res = await fetch(
+      `${apiUrl}/seller/settings/seo-settings/upload-sharing-preview.php`,
+      {
+        method: "POST",
+        credentials: "include", // IMPORTANT: sends auth cookies/token
+        body: formData,
       }
-    } catch (error) {
-      console.error("Upload failed:", error);
-    } finally {
-      setUploading(false);
+    );
+
+    const result = await res.json();
+
+    if (result.success) {
+      setValue(result.filename);
+    } else {
+      console.error("Upload error:", result.message);
     }
-  };
+  } catch (error) {
+    console.error("Upload failed:", error);
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

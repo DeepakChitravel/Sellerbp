@@ -22,7 +22,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
- DropdownMenuLabel,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -33,6 +33,45 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+/* ===============================
+   HELPERS
+================================ */
+const truncate = (text: string, limit = 25) =>
+  text?.length > limit ? text.slice(0, limit) + "…" : text;
+
+const safeFormatDate = (value?: string) => {
+  console.log("FORMAT INPUT =>", value);
+
+  if (!value) return "—";
+
+  const iso = value.includes(" ")
+    ? value.replace(" ", "T") + "Z"
+    : value;
+
+  console.log("ISO VALUE =>", iso);
+
+  const date = new Date(iso);
+
+  console.log("DATE OBJECT =>", date);
+
+  if (isNaN(date.getTime())) {
+    console.log("❌ INVALID DATE");
+    return "—";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+
+
+
+/* ===============================
+   ACTION MENU
+================================ */
 function Action({ categoryId }: { categoryId: string }) {
   const router = useRouter();
 
@@ -68,9 +107,9 @@ function Action({ categoryId }: { categoryId: string }) {
           <AlertDialog>
             <AlertDialogTrigger className="w-full">
               <button
-                className="relative flex cursor-default select-none items-center 
+                className="relative flex w-full cursor-default select-none items-center 
                 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors 
-                hover:bg-accent hover:text-accent-foreground text-red-600 w-full"
+                hover:bg-accent hover:text-accent-foreground text-red-600"
               >
                 <Trash variant="Bold" className="mr-2 h-4 w-4" />
                 Delete
@@ -99,67 +138,75 @@ function Action({ categoryId }: { categoryId: string }) {
   );
 }
 
+/* ===============================
+   TABLE COLUMNS
+================================ */
 export const columns: ColumnDef<Category>[] = [
   {
     header: "#",
     cell: ({ row }) => row.index + 1,
   },
-{
-  header: "Image",
-  cell: ({ row }) => {
-    const data = row.original;
-    const img = data.image;
 
-    // ❌ If image is null, undefined, empty, or missing extension — show placeholder
-    const isValid =
-      img &&
-      typeof img === "string" &&
-      img.includes("."); // ensures a real file is present
+  {
+    header: "Image",
+    cell: ({ row }) => {
+      const data = row.original;
+      const img = data.image;
 
-    if (!isValid) {
+      const isValid =
+        img &&
+        typeof img === "string" &&
+        img.includes(".");
+
+      if (!isValid) {
+        return (
+          <div className="w-[50px] h-[50px] rounded bg-gray-200 border flex items-center justify-center text-xs text-gray-500">
+            N/A
+          </div>
+        );
+      }
+
       return (
-        <div className="w-[50px] h-[50px] rounded bg-gray-200 border flex items-center justify-center text-xs text-gray-500">
-          N/A
-        </div>
+        <Image
+          src={img}
+          alt={data.name}
+          width={50}
+          height={50}
+          className="rounded object-cover border"
+          unoptimized
+        />
       );
-    }
-
-    // ✔ Safe to use <Image>
-    return (
-      <Image
-        src={img}
-        alt={data.name}
-        width={50}
-        height={50}
-        className="rounded object-cover border"
-        unoptimized
-      />
-    );
+    },
   },
+
+  {
+    header: "Category Name",
+    cell: ({ row }) => (
+      <span title={row.original.name}>
+        {truncate(row.original.name, 25)}
+      </span>
+    ),
+  },
+
+  {
+    header: "Category Slug",
+    cell: ({ row }) => (
+      <span title={row.original.slug}>
+        {truncate(row.original.slug, 25)}
+      </span>
+    ),
+  },
+
+{
+  header: "Created At",
+  cell: ({ row }) => safeFormatDate(row.original.createdAt),
 },
 
-  {
-    accessorKey: "name",
-    header: "Category Name",
-  },
-  {
-    accessorKey: "slug",
-    header: "Category Slug",
-  },
-  {
-    header: "Created At",
-    cell: ({ row }) => {
-      const data = row.original;
-      return formatDate(new Date(data.created_at));
-    },
-  },
+
   {
     header: "Action",
-    cell: ({ row }) => {
-      const data = row.original;
-
-      // ⭐ CORRECT VALUE — MUST USE categoryId, NOT category_id
-      return <Action categoryId={data.categoryId} />;
-    },
+    cell: ({ row }) => (
+      <Action categoryId={row.original.categoryId} />
+    ),
   },
 ];

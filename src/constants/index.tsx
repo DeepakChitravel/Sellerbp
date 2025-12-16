@@ -44,8 +44,10 @@ const SIDEBAR_LINKS = [
   { label: "Plugins", href: "/plugins", icon: <Flash /> },
   { label: "Settings", href: "/settings", icon: <Setting2 /> },
   { label: "Website Setup", href: "/website-setup", icon: <MonitorMobbile /> },
-
 ];
+
+
+
 
 const MY_ACCOUNT_DROPDOWN_OPTIONS = [
   {

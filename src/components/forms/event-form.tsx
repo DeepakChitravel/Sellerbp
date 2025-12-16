@@ -88,34 +88,33 @@ export default function EventForm({
   }, [eventData, methods]);
 
   /* ---------------- SUBMIT ---------------- */
-  const onSubmit = async (values: EventFormData) => {
-    if (loading) return;
-    setLoading(true);
+const onSubmit = async (values: EventFormData) => {
+  if (loading) return;
+  setLoading(true);
 
-    try {
-      const payload = { ...values, user_id: userId };
+  try {
+    const payload = { ...values, user_id: userId };
 
-      const response = isEdit
-        ? await updateEvent(eventId as string, payload)
-        : await addEvent(payload);
+    const response = isEdit
+      ? await updateEvent(eventId as string, payload)
+      : await addEvent(payload);
 
-      if (!response?.success) {
-        toast.error(response?.message || "Something went wrong.");
-        setLoading(false);
-        return;
-      }
-
-      toast.success(isEdit ? "Event updated successfully!" : "Event created successfully!");
-
-      if (!isEdit) {
-        router.push(`/event?refresh=${Date.now()}`);
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Unexpected error!");
+    if (!response?.success) {
+      toast.error(response?.message || "Something went wrong.");
+      return;
     }
 
+    toast.success(isEdit ? "Event updated successfully!" : "Event created successfully!");
+
+    if (!isEdit) {
+      router.push(`/event/edit/${response.eventId}`);
+    }
+  } catch (error: any) {
+    toast.error(error.message || "Unexpected error!");
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   return (
     <FormProvider {...methods}>
@@ -143,9 +142,20 @@ export default function EventForm({
 
        
 
-{isEdit && eventId && (
-  <SeatBooking eventId={Number(eventId)} />
+{eventId && !Number.isNaN(Number(eventId)) ? (
+  <SeatBooking
+    eventId={Number(eventId)}
+    savedLayout={methods.watch("seat_layout")}
+  />
+) : (
+  <div className="bg-yellow-50 border border-yellow-300 p-4 rounded-xl">
+    <p className="text-sm text-yellow-800">
+      👉 Save the event first to configure seat layout.
+    </p>
+  </div>
 )}
+
+
 
 
  <div className="grid grid-cols-12 gap-6">

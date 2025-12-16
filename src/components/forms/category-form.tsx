@@ -23,6 +23,18 @@ const [metaTitle, setMetaTitle] = useState(categoryData?.metaTitle || "");
 
 const [images, setImages] = useState<string>(categoryData?.image || "");
 
+const normalizeImagePath = (img: string) => {
+  if (!img) return "";
+
+  // If full URL → convert to relative path
+  if (img.startsWith("http")) {
+    const marker = "/uploads/";
+    const index = img.indexOf(marker);
+    return index !== -1 ? img.slice(index + marker.length) : img;
+  }
+
+  return img;
+};
 
 const handleSave = async () => {
   setIsLoading(true);
@@ -31,7 +43,7 @@ const handleSave = async () => {
     const data = {
       name,
       slug,
-      image: images,
+      image: normalizeImagePath(images), // ⭐ FIX HERE
       metaTitle,
       metaDescription,
     };
@@ -42,12 +54,16 @@ const handleSave = async () => {
       ? await addCategory(data)
       : await updateCategory(categoryId, data);
 
-    console.log("CATEGORY FORM → RESPONSE:", response);
-
     handleToast(response);
 
-    if (!isEdit && response.success)
-      router.push(`/categories?${Math.random()}`);
+   if (response.success) {
+    
+if (response.success) {
+  router.replace("/categories"); // prevents cache reuse
+  router.refresh();              // forces fresh server fetch
+}
+}
+
   } catch (error: any) {
     toast.error(error.message);
   }
