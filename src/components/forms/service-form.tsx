@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import ServiceInformation from "./service-forms/service-information";
 import ServiceImage from "./service-forms/service-image";
@@ -17,57 +18,68 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const router = useRouter();
   const { userData } = useCurrentUser();
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Basic fields
-  const [name, setName] = useState<string>(serviceData?.name);
-  const [slug, setSlug] = useState<string>(serviceData?.slug);
-  const [amount, setAmount] = useState<string>(serviceData?.amount);
-  const [previousAmount, setPreviousAmount] = useState<string>(serviceData?.previousAmount);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showGst, setShowGst] = useState(false);
+
+  // ----------------------------
+  // BASIC FIELDS
+  // ----------------------------
+  const [name, setName] = useState(serviceData?.name || "");
+  const [slug, setSlug] = useState(serviceData?.slug || "");
+  const [amount, setAmount] = useState(serviceData?.amount || "");
+  const [previousAmount, setPreviousAmount] = useState(serviceData?.previousAmount || "");
+  const [description, setDescription] = useState(serviceData?.description || "");
 
   const [categoryId, setCategoryId] = useState<string | undefined>(
     serviceData?.categoryId ? serviceData.categoryId.toString() : undefined
   );
 
-  const [timeSlotInterval, setTimeSlotInterval] = useState<string>(serviceData?.timeSlotInterval);
-  const [intervalType, setIntervalType] = useState<string>(
+  const [timeSlotInterval, setTimeSlotInterval] = useState(
+    serviceData?.timeSlotInterval || ""
+  );
+  const [intervalType, setIntervalType] = useState(
     serviceData?.intervalType || "minutes"
   );
 
-  const [description, setDescription] = useState<string>(serviceData?.description);
-  const [gstPercentage, setGstPercentage] = useState<string | number>(
-    serviceData?.gstPercentage?.toString()
+  const [gstPercentage, setGstPercentage] = useState<string | number | null>(
+    serviceData?.gstPercentage?.toString() || null
   );
-  const [status, setStatus] = useState<boolean>(serviceData?.status);
+
+  const [status, setStatus] = useState<boolean>(!!serviceData?.status);
 
   // ----------------------------
-  // ⭐ MAIN IMAGE (store raw DB path)
+  // MAIN IMAGE
   // ----------------------------
-const [image, setImage] = useState<string>(
-  serviceData?.image?.startsWith("/") 
-    ? serviceData.image 
-    : "/" + serviceData?.image || ""
-);
+  const [image, setImage] = useState<string>(
+    serviceData?.image || ""
+  );
 
   // ----------------------------
-  // ⭐ ADDITIONAL IMAGES (always raw paths)
+  // ADDITIONAL IMAGES
   // ----------------------------
   const [additionalImages, setAdditionalImages] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!serviceData?.additionalImages) {
-      setAdditionalImages([]);
-      return;
+    if (serviceData?.additionalImages) {
+      setAdditionalImages(serviceData.additionalImages.map(i => i.image));
     }
-
-    // backend gives: [{ image: "uploads/sellers/..." }]
-    const arr = serviceData.additionalImages.map((item) => item.image);
-
-    setAdditionalImages(arr);
   }, [serviceData]);
 
-  const [metaTitle, setMetaTitle] = useState<string>(serviceData?.metaTitle);
-  const [metaDescription, setMetaDescription] = useState<string>(serviceData?.metaDescription);
+  // ----------------------------
+  // SEO
+  // ----------------------------
+  const [metaTitle, setMetaTitle] = useState(serviceData?.metaTitle || "");
+  const [metaDescription, setMetaDescription] = useState(serviceData?.metaDescription || "");
+
+  // ----------------------------
+  // ✅ GST VISIBILITY FIX
+  // ----------------------------
+  useEffect(() => {
+    if (userData?.siteSettings?.[0]?.gstNumber) {
+      setShowGst(true);
+    }
+  }, [userData]);
 
   // ----------------------------
   // SAVE HANDLER
@@ -81,7 +93,7 @@ const [image, setImage] = useState<string>(
         slug,
         amount,
         previousAmount,
-        image, // raw relative path
+        image,
         categoryId: categoryId ? parseInt(categoryId) : null,
         timeSlotInterval,
         intervalType,
@@ -89,8 +101,8 @@ const [image, setImage] = useState<string>(
         gstPercentage,
         metaTitle,
         metaDescription,
-        status,
-        additionalImages, // raw list of relative paths
+        status: status ? 1 : 0,
+        additionalImages,
       };
 
       const response = !isEdit
@@ -100,7 +112,7 @@ const [image, setImage] = useState<string>(
       handleToast(response);
 
       if (!isEdit && response.success) {
-        router.push(`/services?${Math.floor(Math.random() * 100)}`);
+        router.push("/services");
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -133,28 +145,18 @@ const [image, setImage] = useState<string>(
 
         <div className="lg:col-span-5 col-span-12">
           <div className="grid gap-5">
-
-            {/* ⭐ Main Image */}
             <ServiceImage
-              images={{
-                value: image,
-                setValue: (v: string) => setImage(v), // MUST be raw path
-              }}
+              images={{ value: image, setValue: setImage }}
             />
 
-            {/* ⭐ Additional Images */}
             <AdditionalImages
-              images={{
-                value: additionalImages,
-                setValue: (arr: string[]) => setAdditionalImages(arr),
-              }}
+              images={{ value: additionalImages, setValue: setAdditionalImages }}
             />
 
-            {userData?.siteSettings?.[0]?.gstNumber && (
-              <ServiceGst
-                gstPercentage={{ value: gstPercentage, setValue: setGstPercentage }}
-              />
-            )}
+  <ServiceGst
+  gstPercentage={{ value: gstPercentage, setValue: setGstPercentage }}
+/>
+
           </div>
         </div>
       </div>

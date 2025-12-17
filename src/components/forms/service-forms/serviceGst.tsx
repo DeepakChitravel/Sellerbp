@@ -1,28 +1,27 @@
-import { InputField, FormValueProps } from "@/types";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { GST_PERCENTAGES } from "@/constants";
+"use client";
+
+import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
 import FormInputs from "@/components/form-inputs";
+import { GST_PERCENTAGES } from "@/constants";
+import { InputField, FormValueProps } from "@/types";
 
 interface Form {
   [key: string]: InputField;
 }
 
 const ServiceGst = ({ gstPercentage }: FormValueProps) => {
-  const [isDisplayed, setIsDisplayed] = useState<boolean>(
-    gstPercentage.value ? true : false
+  const [isDisplayed, setIsDisplayed] = useState(false);
+
+  // 🔁 Sync GST visibility with existing value (edit mode fix)
+useEffect(() => {
+  setIsDisplayed(
+    gstPercentage.value !== null &&
+    gstPercentage.value !== "" &&
+    gstPercentage.value !== undefined
   );
+}, [gstPercentage.value]);
+
 
   const inputFields: Form = {
     gstPercentage: {
@@ -36,12 +35,13 @@ const ServiceGst = ({ gstPercentage }: FormValueProps) => {
     },
   };
 
-  const handleSwitch = () => {
-    isDisplayed === true &&
-      gstPercentage.setValue &&
-      gstPercentage.setValue(null);
+  const handleSwitch = (checked: boolean) => {
+    setIsDisplayed(checked);
 
-    setIsDisplayed(!isDisplayed);
+    // If GST is turned off, clear value
+    if (!checked) {
+      gstPercentage.setValue(null);
+    }
   };
 
   return (
@@ -51,8 +51,8 @@ const ServiceGst = ({ gstPercentage }: FormValueProps) => {
           <h3 className="font-medium">GST</h3>
 
           <Switch
-            onClick={handleSwitch}
-            defaultChecked={gstPercentage.value ? true : false}
+            checked={isDisplayed}
+            onCheckedChange={handleSwitch}
           />
         </div>
 

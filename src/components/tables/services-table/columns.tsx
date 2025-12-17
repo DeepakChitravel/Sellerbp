@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDate, formatNumber } from "@/lib/utils";
+import { formatNumber } from "@/lib/utils";
 import { Service } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
@@ -34,24 +34,40 @@ import Link from "next/link";
 import { deleteService } from "@/lib/api/services";
 import getSymbolFromCurrency from "currency-symbol-map";
 
+/* --------------------------------
+   Helpers
+--------------------------------- */
 
-// ⭐ UNIVERSAL getSrc FIXED — only ONE version
-const getSrc = (path: string) => {
+// Image src helper
+const getSrc = (path?: string) => {
   if (!path) return "/placeholder-image.jpg";
 
-  // If backend returned a full URL (starting with http)
   if (path.startsWith("http://") || path.startsWith("https://")) {
     return path;
   }
 
-  // Otherwise treat path as relative to uploads folder
-  return `http://localhost/managerbp/public/uploads/${path}`;
+  // ✅ SAME LOGIC AS EMPLOYEES
+  return `http://localhost/managerbp/public${path}`;
 };
 
 
+// Date formatter → 12 Dec 2025
+const formatPrettyDate = (dateStr?: string) => {
+  if (!dateStr) return "-";
 
-// ⭐ CLEANED ACTION BUTTON
-function Action({ id, serviceId }: { id: number; serviceId: string }) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+/* --------------------------------
+   Action menu
+--------------------------------- */
+
+function Action({ serviceId }: { serviceId: string }) {
   const router = useRouter();
 
   const handleDelete = async () => {
@@ -75,7 +91,6 @@ function Action({ id, serviceId }: { id: number; serviceId: string }) {
       <DropdownMenuContent align="end" className="w-[200px]">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuGroup>
-
           <Link href={`/services/${serviceId}`}>
             <DropdownMenuItem className="text-blue-600">
               <Edit variant="Bold" className="mr-2 h-4 w-4" />
@@ -84,7 +99,7 @@ function Action({ id, serviceId }: { id: number; serviceId: string }) {
           </Link>
 
           <AlertDialog>
-            <AlertDialogTrigger className="w-full">
+            <AlertDialogTrigger asChild>
               <button className="flex w-full items-center px-2 py-1.5 text-sm text-red-600 hover:bg-accent rounded">
                 <Trash variant="Bold" className="mr-2 h-4 w-4" />
                 Delete
@@ -107,17 +122,16 @@ function Action({ id, serviceId }: { id: number; serviceId: string }) {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
+/* --------------------------------
+   Table Columns
+--------------------------------- */
 
-
-
-// ⭐ TABLE COLUMNS FIXED
 export const columns: ColumnDef<Service>[] = [
   {
     header: "#",
@@ -129,15 +143,21 @@ export const columns: ColumnDef<Service>[] = [
     cell: ({ row }) => {
       const service = row.original;
 
+      if (!service.image) {
+        return (
+          <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-semibold">
+            {service.name?.charAt(0).toUpperCase()}
+          </div>
+        );
+      }
+
       return (
-        <Image
-          src={getSrc(service.image)}
-          alt={service.name}
-          width={50}
-          height={50}
-          className="rounded object-cover"
-          unoptimized
-        />
+       <img
+  src={getSrc(service.image)}
+  alt={service.name}
+  className="w-12 h-12 rounded-full object-cover"
+/>
+
       );
     },
   },
@@ -159,17 +179,16 @@ export const columns: ColumnDef<Service>[] = [
     header: "Amount",
     cell: ({ row }) => {
       const data = row.original;
-
       const currency = data?.user?.siteSettings?.[0]?.currency || "INR";
       const symbol = getSymbolFromCurrency(currency);
 
       return (
         <>
-          <span>{symbol + formatNumber(parseInt(data.amount))}</span>
+          <span>{symbol + formatNumber(Number(data.amount))}</span>
 
           {data.previousAmount && (
-            <small className="line-through text-gray-500">
-              {symbol + formatNumber(parseInt(data.previousAmount))}
+            <small className="block line-through text-gray-500">
+              {symbol + formatNumber(Number(data.previousAmount))}
             </small>
           )}
         </>
@@ -180,20 +199,14 @@ export const columns: ColumnDef<Service>[] = [
   {
     header: "Created At",
     cell: ({ row }) => {
-      const data = row.original;
-
-      // ⭐ FIX: Only show date, not time
-      const onlyDate = data.created_at?.split(" ")[0] || "";
-
-      return onlyDate || "-";
+      return formatPrettyDate(row.original.created_at);
     },
   },
 
   {
     header: "Action",
-    cell: ({ row }) => {
-      const data = row.original;
-      return <Action id={data.id} serviceId={data.service_id} />;
-    },
+    cell: ({ row }) => (
+      <Action serviceId={row.original.service_id} />
+    ),
   },
 ];
