@@ -77,6 +77,8 @@ const LoginForm = () => {
 
       // replace = no back to login
 router.replace("/");
+router.refresh();
+
 
     } catch (error) {
       console.error("LOGIN ERROR:", error);

@@ -36,18 +36,22 @@ console.log("🔥 FULL RAW USER RESPONSE =>", json);
     const u = json.data;
 
     // ⭐ NORMALIZE THE USER OBJECT HERE
-    return {
-      id: u.id,                 // DB primary key
-      user_id: u.user_id,       // SELLER ID (68294)
-      name: u.name,
-      email: u.email,
-      phone: u.phone,
-      image: u.image,
-  siteSlug: u.siteSlug ?? "",
-siteName: u.siteName ?? "",
+return {
+  id: u.id,
+  user_id: u.user_id,
+  name: u.name,
+  email: u.email,
+  phone: u.phone,
+  image: u.image,
 
-      country: u.country,
-    };
+  siteSlug: u.site_slug ?? "",
+  siteName: u.site_name ?? "",
+
+  country: u.country,
+
+  // 🔥 THIS IS THE KEY FIX
+  service_type_id: Number(u.service_type_id),
+};
 
   } catch (err) {
     console.log("currentUser ERROR:", err);

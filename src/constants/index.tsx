@@ -27,6 +27,9 @@ import {
   Element,
   Menu,
   Document,
+  Calendar2,
+  CalendarAdd,
+  CalendarEdit
 } from "iconsax-react";
 
 const SIDEBAR_LINKS = [
@@ -38,13 +41,34 @@ const SIDEBAR_LINKS = [
   { label: "Categories", href: "/categories", icon: <Grid2 /> },
   { label: "Employees", href: "/employees", icon: <Profile2User /> },
   { label: "Event", href: "/event", icon: <CalendarTick /> },
-  { label: "Services", href: "/services", icon: <TaskSquare /> },
+
+  // 🔐 SERVICE TYPE BASED (IMPORTANT)
+  {
+    label: "Appointment Settings",
+    href: "/hot-opts",
+    icon: <Calendar2 />,
+    serviceType: 2, // HOTEL
+  },
+  {
+    label: "Appointment Settings",
+    href: "/oth-opts",
+    icon: <CalendarAdd />,
+    serviceType: 3, // OTHER
+  },
+  {
+    label: "Appointment Settings",
+    href: "/hos-opts",
+    icon: <CalendarEdit />,
+    serviceType: 1, // HOSPITAL
+  },
+
   { label: "Coupons", href: "/coupons", icon: <DiscountShape /> },
   { label: "Upgrade Plan", href: "/all-plans", icon: <Moneys /> },
   { label: "Plugins", href: "/plugins", icon: <Flash /> },
   { label: "Settings", href: "/settings", icon: <Setting2 /> },
   { label: "Website Setup", href: "/website-setup", icon: <MonitorMobbile /> },
 ];
+
 
 
 

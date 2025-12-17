@@ -1,6 +1,4 @@
 import { ExternalLink } from "lucide-react";
-import { Award } from "iconsax-react";
-import { SIDEBAR_LINKS } from "../../constants";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -9,24 +7,35 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
 import NavLink from "./nav-link";
+import { SIDEBAR_LINKS } from "../../constants";
 import { currentUser } from "@/lib/api/users";
 import { siteUrl, uploadsUrl } from "@/config";
 
 const LeftSidebar = async () => {
   const user = await currentUser();
 
+  // 🔐 FILTER SIDEBAR BASED ON SERVICE TYPE
+  const filteredLinks = SIDEBAR_LINKS.filter((item: any) => {
+    // always show normal links
+    if (!item.serviceType) return true;
+
+    // show only matching service type
+    return item.serviceType === user?.service_type_id;
+  });
+
   return (
     <div className="bg-secondary text-white py-5 2xl:px-5 h-full flex justify-between flex-col items-center 2xl:items-stretch">
       <div>
+        {/* HEADER */}
         <div className="flex items-center justify-between gap-3 border-b border-white/10 mb-5 pb-5">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <Image
               src={
                 user?.siteSettings?.logo_url
                   ? user.siteSettings.logo_url
-                  : uploadsUrl + "/static/logo.png"
+                  : `${uploadsUrl}/static/logo.png`
               }
               alt="Site Logo"
               width={44}
@@ -59,9 +68,9 @@ const LeftSidebar = async () => {
           </div>
         </div>
 
-        {/* ✅ NO SLUG, NO FUNCTION CALL */}
+        {/* SIDEBAR LINKS */}
         <ul className="space-y-2">
-          {SIDEBAR_LINKS.map((item, index) => (
+          {filteredLinks.map((item, index) => (
             <li key={index}>
               <NavLink item={item} />
             </li>

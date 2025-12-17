@@ -24,6 +24,7 @@ const RegisterForm = () => {
   const [country, setCountry] = useState<string>("IN");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+const [serviceTypeId, setServiceTypeId] = useState<number | null>(null);
 
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
@@ -82,6 +83,7 @@ const handleRegisterUser = async () => {
       phone: cleanPhone,
       country,
       siteName,
+      serviceTypeId,
       password,
       otp: "111111",   // DEV OTP
     };
@@ -113,14 +115,16 @@ const handleRegisterUser = async () => {
         />
       )}
 
-      {step === 3 && (
-        <Step3
-          siteName={{ value: siteName, setValue: setSiteName }}
-          country={{ value: country, setValue: setCountry }}
-          email={{ value: email, setValue: setEmail }}
-          password={{ value: password, setValue: setPassword }}
-        />
-      )}
+   {step === 3 && (
+  <Step3
+    siteName={{ value: siteName, setValue: setSiteName }}
+    country={{ value: country, setValue: setCountry }}
+    email={{ value: email, setValue: setEmail }}
+    password={{ value: password, setValue: setPassword }}
+    serviceTypeId={{ value: serviceTypeId, setValue: setServiceTypeId }}
+  />
+)}
+
 
       <div className="grid gap-2">
         <Button className="w-full h-12 text-base" onClick={handleSubmit}>

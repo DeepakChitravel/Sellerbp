@@ -103,7 +103,6 @@ export const forgotPassword = async (options: forgotPasswordData) => {
 --------------------------------*/
 export const currentUser = async () => {
   const token = cookies().get("token")?.value;
-
   if (!token) return null;
 
   try {
@@ -112,6 +111,7 @@ export const currentUser = async () => {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ token }),
+      cache: "no-store", // 🚨 THIS FIXES EVERYTHING
     });
 
     const raw = await res.text();
@@ -129,8 +129,8 @@ export const currentUser = async () => {
     const u = json.data;
 
     return {
-      id: u.id,               // primary key
-      user_id: u.user_id,     // SELLER ID (important for subscription)
+      id: u.id,
+      user_id: u.user_id,
       name: u.name,
       email: u.email,
       phone: u.phone,
@@ -138,9 +138,12 @@ export const currentUser = async () => {
       siteName: u.site_name,
       siteSlug: u.site_slug,
       country: u.country,
+      service_type_id: u.service_type_id,
     };
   } catch (err) {
     console.log("currentUser error:", err);
     return null;
   }
 };
+
+
