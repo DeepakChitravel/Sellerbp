@@ -345,7 +345,6 @@ export type siteSettings = {
   saturdayStarts: string;
   saturdayEnds: string;
 };
-
 export type Category = {
   id: number;
   categoryId: string;
@@ -356,7 +355,17 @@ export type Category = {
   metaTitle: string;
   metaDescription: string;
   createdAt: Date;
+
+  // ⭐ add this new optional field
+  doctorDetails?: {
+    doctorName?: string;
+    specialization?: string;
+    qualification?: string;
+    experience?: string;
+    regNumber?: string;
+  };
 };
+
 
 export type AdditionalImage = {
   id: number;

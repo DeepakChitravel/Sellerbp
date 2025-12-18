@@ -17,7 +17,7 @@ const Service = async ({ params: { id } }: { params: { id: string } }) => {
   return (
     <>
       <h1 className="text-2xl font-bold mb-5">
-        {id === "add" ? "Add" : "Edit"} Service
+        {id === "add" ? "Add" : "Edit"} Appointments
       </h1>
 
       <ServiceForm

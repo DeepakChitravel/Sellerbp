@@ -21,11 +21,11 @@ const Services = async ({
   return (
     <>
       <div className="flex items-center justify-between gap-5 mb-5">
-        <h1 className="text-2xl font-bold">Services</h1>
+        <h1 className="text-2xl font-bold">Doctor Appointment</h1>
 
         <Link href="/hos-opts/add">
           <Button variant="success">
-            <span className="mobile_l:block hidden">Add Service</span>
+            <span className="mobile_l:block hidden">Add Appointments</span>
             <span className="mobile_l:hidden block">
               <Add />
             </span>

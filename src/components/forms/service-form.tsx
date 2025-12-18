@@ -14,6 +14,7 @@ import { ServiceFormProps } from "@/types";
 import AdditionalImages from "./service-forms/additional-images";
 import ServiceGst from "./service-forms/serviceGst";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import WeeklyAppointment from "./service-forms/weekly-appointment";
 
 const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const router = useRouter();
@@ -22,14 +23,13 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showGst, setShowGst] = useState(false);
 
-  // ----------------------------
-  // BASIC FIELDS
-  // ----------------------------
+  // fields
   const [name, setName] = useState(serviceData?.name || "");
   const [slug, setSlug] = useState(serviceData?.slug || "");
   const [amount, setAmount] = useState(serviceData?.amount || "");
   const [previousAmount, setPreviousAmount] = useState(serviceData?.previousAmount || "");
   const [description, setDescription] = useState(serviceData?.description || "");
+  const [weeklySchedule, setWeeklySchedule] = useState({});
 
   const [categoryId, setCategoryId] = useState<string | undefined>(
     serviceData?.categoryId ? serviceData.categoryId.toString() : undefined
@@ -38,6 +38,7 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const [timeSlotInterval, setTimeSlotInterval] = useState(
     serviceData?.timeSlotInterval || ""
   );
+
   const [intervalType, setIntervalType] = useState(
     serviceData?.intervalType || "minutes"
   );
@@ -48,17 +49,12 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
 
   const [status, setStatus] = useState<boolean>(!!serviceData?.status);
 
-  // ----------------------------
-  // MAIN IMAGE
-  // ----------------------------
-  const [image, setImage] = useState<string>(
-    serviceData?.image || ""
-  );
+  const [image, setImage] = useState(serviceData?.image || "");
 
-  // ----------------------------
-  // ADDITIONAL IMAGES
-  // ----------------------------
   const [additionalImages, setAdditionalImages] = useState<string[]>([]);
+
+  const [metaTitle, setMetaTitle] = useState(serviceData?.metaTitle || "");
+  const [metaDescription, setMetaDescription] = useState(serviceData?.metaDescription || "");
 
   useEffect(() => {
     if (serviceData?.additionalImages) {
@@ -66,24 +62,12 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
     }
   }, [serviceData]);
 
-  // ----------------------------
-  // SEO
-  // ----------------------------
-  const [metaTitle, setMetaTitle] = useState(serviceData?.metaTitle || "");
-  const [metaDescription, setMetaDescription] = useState(serviceData?.metaDescription || "");
-
-  // ----------------------------
-  // ✅ GST VISIBILITY FIX
-  // ----------------------------
   useEffect(() => {
     if (userData?.siteSettings?.[0]?.gstNumber) {
       setShowGst(true);
     }
   }, [userData]);
 
-  // ----------------------------
-  // SAVE HANDLER
-  // ----------------------------
   const handleSave = async () => {
     setIsLoading(true);
 
@@ -103,6 +87,7 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
         metaDescription,
         status: status ? 1 : 0,
         additionalImages,
+        weeklySchedule, // include weekly schedule 👍
       };
 
       const response = !isEdit
@@ -121,53 +106,67 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
     setIsLoading(false);
   };
 
-  return (
-    <>
-      <div className="grid grid-cols-12 gap-5">
-        <div className="lg:col-span-7 col-span-12 grid gap-5">
-          <ServiceInformation
-            name={{ value: name, setValue: setName }}
-            slug={{ value: slug, setValue: setSlug }}
-            amount={{ value: amount, setValue: setAmount }}
-            previousAmount={{ value: previousAmount, setValue: setPreviousAmount }}
-            description={{ value: description, setValue: setDescription }}
-            categoryId={{ value: categoryId, setValue: setCategoryId }}
-            timeSlotInterval={{ value: timeSlotInterval, setValue: setTimeSlotInterval }}
-            intervalType={{ value: intervalType, setValue: setIntervalType }}
-            status={{ value: status, setValue: setStatus }}
-          />
+return (
+  <>
+  <div className="grid grid-cols-12 gap-5 pb-32">
 
-          <ServiceSEO
-            metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
-            metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
-          />
-        </div>
+      {/* LEFT PANEL */}
+      <div className="lg:col-span-7 col-span-12 grid gap-5">
 
-        <div className="lg:col-span-5 col-span-12">
-          <div className="grid gap-5">
-            <ServiceImage
-              images={{ value: image, setValue: setImage }}
-            />
+        <ServiceInformation
+          name={{ value: name, setValue: setName }}
+          slug={{ value: slug, setValue: setSlug }}
+          amount={{ value: amount, setValue: setAmount }}
+          previousAmount={{ value: previousAmount, setValue: setPreviousAmount }}
+          description={{ value: description, setValue: setDescription }}
+          categoryId={{ value: categoryId, setValue: setCategoryId }}
+          timeSlotInterval={{ value: timeSlotInterval, setValue: setTimeSlotInterval }}
+          intervalType={{ value: intervalType, setValue: setIntervalType }}
+          status={{ value: status, setValue: setStatus }}
+        />
 
-            <AdditionalImages
-              images={{ value: additionalImages, setValue: setAdditionalImages }}
-            />
-
-  <ServiceGst
-  gstPercentage={{ value: gstPercentage, setValue: setGstPercentage }}
-/>
-
-          </div>
-        </div>
+        {/* WEEKLY SCHEDULE HERE */}
+        <WeeklyAppointment
+          value={weeklySchedule}
+          onChange={setWeeklySchedule}
+        />
       </div>
 
-      <Sticky>
-        <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
-          Save
-        </Button>
-      </Sticky>
-    </>
-  );
+      {/* RIGHT PANEL */}
+      <div className="lg:col-span-5 col-span-12 grid gap-5">
+
+        {/* SEO moved to right */}
+     
+
+        <ServiceImage
+          images={{ value: image, setValue: setImage }}
+        />
+
+        <AdditionalImages
+          images={{ value: additionalImages, setValue: setAdditionalImages }}
+        />
+
+        <ServiceGst
+          gstPercentage={{ value: gstPercentage, setValue: setGstPercentage }}
+        />
+
+           <ServiceSEO
+          metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
+          metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
+        />
+
+      </div>
+
+    </div>
+
+    <Sticky>
+      <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
+        Save
+      </Button>
+    </Sticky>
+  </>
+);
+
 };
 
 export default ServiceForm;

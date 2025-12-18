@@ -69,10 +69,6 @@ const SIDEBAR_LINKS = [
   { label: "Website Setup", href: "/website-setup", icon: <MonitorMobbile /> },
 ];
 
-
-
-
-
 const MY_ACCOUNT_DROPDOWN_OPTIONS = [
   {
     label: "Profile",
