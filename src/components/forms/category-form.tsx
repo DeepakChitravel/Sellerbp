@@ -22,44 +22,66 @@ const CategoryForm = ({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
-  const [name, setName] = useState<string>(categoryData?.name || "");
-  const [slug, setSlug] = useState<string>(categoryData?.slug || "");
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
 
-  const [metaTitle, setMetaTitle] = useState(categoryData?.metaTitle || "");
-  const [metaDescription, setMetaDescription] = useState<string>(
-    categoryData?.metaDescription || ""
-  );
+  const [slugLocked, setSlugLocked] = useState(false); // ⭐ avoid overwrite slug when user edits
 
-  const [images, setImages] = useState<string>(categoryData?.image || "");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [images, setImages] = useState("");
 
-  // Doctor fields
   const [doctorName, setDoctorName] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [qualification, setQualification] = useState("");
   const [experience, setExperience] = useState("");
   const [regNumber, setRegNumber] = useState("");
 
-  // ⭐ FIX — hydrate doctor data when editing
+  // load existing values when editing
   useEffect(() => {
-if (categoryData?.doctorDetails) {
-  setDoctorName(categoryData.doctorDetails.doctorName || "");
-  setSpecialization(categoryData.doctorDetails.specialization || "");
-  setQualification(categoryData.doctorDetails.qualification || "");
-  setExperience(categoryData.doctorDetails.experience || "");
-  setRegNumber(categoryData.doctorDetails.regNumber || "");
-}
+    if (!categoryData) return;
 
+    setName(categoryData.name || "");
+    setSlug(categoryData.slug || "");
+    setMetaTitle(categoryData.metaTitle || "");
+    setMetaDescription(categoryData.metaDescription || "");
+    setImages(categoryData.image || "");
+
+    if (categoryData.doctorDetails) {
+      setDoctorName(categoryData.doctorDetails.doctorName || "");
+      setSpecialization(categoryData.doctorDetails.specialization || "");
+      setQualification(categoryData.doctorDetails.qualification || "");
+      setExperience(categoryData.doctorDetails.experience || "");
+      setRegNumber(categoryData.doctorDetails.regNumber || "");
+    }
   }, [categoryData]);
+
+  // auto slug sync – but allow manual override
+  useEffect(() => {
+    if (slugLocked || !name.trim()) return;
+
+    const generated = name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "");
+
+    setSlug(generated);
+  }, [name, slugLocked]);
+
+  // when user enters slug manually → lock
+  const handleSlugChange = (val: string) => {
+    setSlugLocked(true);
+    setSlug(val);
+  };
 
   const normalizeImagePath = (img: string) => {
     if (!img) return "";
-
     if (img.startsWith("http")) {
       const marker = "/uploads/";
       const index = img.indexOf(marker);
       return index !== -1 ? img.slice(index + marker.length) : img;
     }
-
     return img;
   };
 
@@ -67,7 +89,7 @@ if (categoryData?.doctorDetails) {
     setIsLoading(true);
 
     try {
-      const data = {
+      const payload = {
         name,
         slug,
         image: normalizeImagePath(images),
@@ -82,18 +104,18 @@ if (categoryData?.doctorDetails) {
         },
       };
 
-      const response = !isEdit
-        ? await addCategory(data)
-        : await updateCategory(categoryId, data);
+      const resp = isEdit
+        ? await updateCategory(categoryId, payload)
+        : await addCategory(payload);
 
-      handleToast(response);
+      handleToast(resp);
 
-      if (response.success) {
+      if (resp.success) {
         router.replace("/categories");
         router.refresh();
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (err: any) {
+      toast.error(err.message);
     }
 
     setIsLoading(false);
@@ -102,12 +124,11 @@ if (categoryData?.doctorDetails) {
   return (
     <>
       <div className="grid grid-cols-12 gap-5 pb-32">
-
-        {/* LEFT side */}
         <div className="lg:col-span-7 col-span-12 grid gap-5">
+
           <CategoryInformation
             name={{ value: name, setValue: setName }}
-            slug={{ value: slug, setValue: setSlug }}
+            slug={{ value: slug, setValue: handleSlugChange }} // ⭐ override here
           />
 
           <DoctorInformation
@@ -117,21 +138,16 @@ if (categoryData?.doctorDetails) {
             experience={{ value: experience, setValue: setExperience }}
             regNumber={{ value: regNumber, setValue: setRegNumber }}
           />
+
         </div>
 
-        {/* RIGHT side */}
         <div className="lg:col-span-5 col-span-12 grid gap-5">
-          <CategoryImage
-            images={{ value: images, setValue: setImages }}
-            userId={userId}
-          />
-
+          <CategoryImage images={{ value: images, setValue: setImages }} userId={userId} />
           <CategorySEO
             metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
             metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
           />
         </div>
-
       </div>
 
       <Sticky>

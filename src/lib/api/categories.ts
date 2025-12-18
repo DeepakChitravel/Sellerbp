@@ -50,9 +50,32 @@
         },
       });
 
-      if (response.data.records) {
-        response.data.records = snakeToCamel(response.data.records);
-      }
+if (response.data.records) {
+  const rows = snakeToCamel(response.data.records);
+
+  response.data.records = rows.map((row: any) => {
+    const doctor = {
+      doctorName: row.doctorName || "",
+      specialization: row.specialization || "",
+      qualification: row.qualification || "",
+      experience: row.experience || "",
+      regNumber: row.regNumber || "",
+    };
+
+    // remove flat columns
+    delete row.doctorName;
+    delete row.specialization;
+    delete row.qualification;
+    delete row.experience;
+    delete row.regNumber;
+
+    return {
+      ...row,
+      doctorDetails: doctor,
+    };
+  });
+}
+
 
       return response.data;
     } catch (err) {

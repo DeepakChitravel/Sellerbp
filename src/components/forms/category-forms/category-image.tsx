@@ -48,7 +48,7 @@ const CategoryImage = ({ images, userId }: Props) => {
 
   return (
     <div className="bg-white rounded-xl p-5">
-      <h3 className="font-medium text-lg">Category Image</h3>
+      <h3 className="font-medium text-lg">Doctor Image</h3>
 
       {!hasImage && (
         <label className="block border border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer">

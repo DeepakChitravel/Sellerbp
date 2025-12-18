@@ -197,11 +197,19 @@ export const columns: ColumnDef<Category>[] = [
     ),
   },
 
-{
-  header: "Created At",
-  cell: ({ row }) => safeFormatDate(row.original.createdAt),
-},
-
+  // ⭐ NEW doctor columns
+  {
+    header: "Doctor Name",
+    cell: ({ row }) => row.original.doctorDetails?.doctorName ?? "—",
+  },
+  {
+    header: "Specialization",
+    cell: ({ row }) => row.original.doctorDetails?.specialization ?? "—",
+  },
+  {
+    header: "Qualification",
+    cell: ({ row }) => row.original.doctorDetails?.qualification ?? "—",
+  },
 
   {
     header: "Action",
@@ -210,3 +218,4 @@ export const columns: ColumnDef<Category>[] = [
     ),
   },
 ];
+

@@ -1,4 +1,4 @@
-import ServiceForm from "@/components/forms/service-form";
+import ServiceForm from "@/components/forms/appointment-form";
 import { getService } from "@/lib/api/services";
 import { notFound } from "next/navigation";
 

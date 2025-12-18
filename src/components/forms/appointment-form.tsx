@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ServiceInformation from "./service-forms/service-information";
-import ServiceImage from "./service-forms/service-image";
-import ServiceSEO from "./service-forms/service-seo";
+import ServiceInformation from "./Appointment-forms/Appointment-information";
+import ServiceImage from "./Appointment-forms/service-image";
+import ServiceSEO from "./Appointment-forms/service-seo";
 import Sticky from "../sticky";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
@@ -11,10 +11,10 @@ import { addService, updateService } from "@/lib/api/services";
 import { handleToast } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ServiceFormProps } from "@/types";
-import AdditionalImages from "./service-forms/additional-images";
-import ServiceGst from "./service-forms/serviceGst";
+import AdditionalImages from "./Appointment-forms/additional-images";
+import ServiceGst from "./Appointment-forms/serviceGst";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import WeeklyAppointment from "./service-forms/weekly-appointment";
+import WeeklyAppointment from "./Appointment-forms/weekly-appointment";
 
 const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const router = useRouter();
@@ -22,6 +22,10 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [showGst, setShowGst] = useState(false);
+const [specialization, setSpecialization] = useState("");
+const [qualification, setQualification] = useState("");
+const [experience, setExperience] = useState("");
+const [doctorImage, setDoctorImage] = useState("");
 
   // fields
   const [name, setName] = useState(serviceData?.name || "");
@@ -113,17 +117,22 @@ return (
       {/* LEFT PANEL */}
       <div className="lg:col-span-7 col-span-12 grid gap-5">
 
-        <ServiceInformation
-          name={{ value: name, setValue: setName }}
-          slug={{ value: slug, setValue: setSlug }}
-          amount={{ value: amount, setValue: setAmount }}
-          previousAmount={{ value: previousAmount, setValue: setPreviousAmount }}
-          description={{ value: description, setValue: setDescription }}
-          categoryId={{ value: categoryId, setValue: setCategoryId }}
-          timeSlotInterval={{ value: timeSlotInterval, setValue: setTimeSlotInterval }}
-          intervalType={{ value: intervalType, setValue: setIntervalType }}
-          status={{ value: status, setValue: setStatus }}
-        />
+   <ServiceInformation
+    name={{value:name,setValue:setName}}
+    slug={{value:slug,setValue:setSlug}}
+    amount={{value:amount,setValue:setAmount}}
+    categoryId={{value:categoryId,setValue:setCategoryId}}
+    description={{value:description,setValue:setDescription}}
+    timeSlotInterval={{value:timeSlotInterval,setValue:setTimeSlotInterval}}
+    intervalType={{value:intervalType,setValue:setIntervalType}}
+    status={{value:status,setValue:setStatus}}
+
+    specialization={{value:specialization,setValue:setSpecialization}}
+    qualification={{value:qualification,setValue:setQualification}}
+    experience={{value:experience,setValue:setExperience}}
+    doctorImage={{value:doctorImage,setValue:setDoctorImage}}
+/>
+
 
         {/* WEEKLY SCHEDULE HERE */}
         <WeeklyAppointment
