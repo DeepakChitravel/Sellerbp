@@ -1,4 +1,4 @@
-import AvailableDays from "@/components/forms/settings/available-days";
+import AvailableDays from "@/components/forms/oth-opts/available-days";
 import { currentUser } from "@/lib/api/users";
 
 const SettingsAvailableDays = async () => {

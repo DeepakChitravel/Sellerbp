@@ -39,7 +39,7 @@ export const getBusinessHours = async () => {
     return { success: false, message: "User not authenticated" };
   }
 
-  const url = `${apiUrl}/seller/settings/available-days/get.php`;
+  const url = `${apiUrl}/seller/oth-opts/get.php`;
 
   try {
     const response = await axios.get(url, {
@@ -70,7 +70,7 @@ export const updateBusinessHours = async (data: BusinessHoursData) => {
     return { success: false, message: "User not authenticated" };
   }
 
-  const url = `${apiUrl}/seller/settings/available-days/update.php`;
+  const url = `${apiUrl}/seller/oth-opts/update.php`;
 
   // Add user_id to data
   const requestData = { ...data, user_id };
