@@ -51,6 +51,7 @@
     "react-drag-drop-files": "^2.3.10",
     "react-draggable": "^4.5.0",
     "react-hook-form": "^7.68.0",
+    "react-hot-toast": "^2.6.0",
     "react-phone-number-input": "^3.3.12",
     "react-qr-code": "^2.0.12",
     "react-quill": "^2.0.0",
