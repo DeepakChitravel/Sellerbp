@@ -15,6 +15,8 @@ interface Form {
   [key: string]: InputField;
 }
 
+
+
 const CategoryInformation = ({ name, slug }: FormValueProps) => {
   const inputFields: Form = {
     name: {
@@ -37,6 +39,9 @@ const CategoryInformation = ({ name, slug }: FormValueProps) => {
       ),
     },
   };
+
+
+  
 
   return (
     <div className="bg-white rounded-xl p-5">
