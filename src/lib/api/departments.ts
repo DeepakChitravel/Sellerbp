@@ -37,7 +37,7 @@ export const getAllDepartments = async (params: departmentsParams) => {
   const token = cookies().get("token")?.value;
   const user_id = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl}/seller/departments/get.php`;
+  const url = `${apiUrl}/seller/oth-opts/get.php`;
 
   try {
     const response = await axios.get(url, {
@@ -47,11 +47,25 @@ export const getAllDepartments = async (params: departmentsParams) => {
         limit: params.limit ?? 10,
         page: params.page ?? 1,
         q: params.q ?? "",
+        type: "departments", // Add this to specify departments
       },
     });
 
     if (response.data.records) {
-      response.data.records = snakeToCamel(response.data.records);
+      const rows = snakeToCamel(response.data.records);
+
+      response.data.records = rows.map((row: any) => {
+        // Remove doctor-related fields if they exist
+        delete row.doctorName;
+        delete row.specialization;
+        delete row.qualification;
+        delete row.experience;
+        delete row.regNumber;
+
+        return {
+          ...row,
+        };
+      });
     }
 
     return response.data;
@@ -66,11 +80,14 @@ export const getAllDepartments = async (params: departmentsParams) => {
 export const getDepartment = async (departmentId: string) => {
   const token = cookies().get("token")?.value;
 
-  const url = `${apiUrl}/seller/departments/single.php?department_id=${departmentId}`;
+  const url = `${apiUrl}/seller/oth-opts/single.php?department_id=${departmentId}`;
 
   try {
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` },
+      params: {
+        type: "departments", // Add this to specify departments
+      },
     });
 
     if (!response.data.success) return false;
@@ -89,9 +106,12 @@ export const getDepartment = async (departmentId: string) => {
 export const addDepartment = async (data: departmentData) => {
   const token = cookies().get("token")?.value;
 
-  const url = `${apiUrl}/seller/departments/create.php`;
+  const url = `${apiUrl}/seller/oth-opts/create.php`;
 
-  const formatted = camelToSnake(data); // convert ALL fields
+  const formatted = {
+    ...camelToSnake(data),
+    type: "departments", // Add this to specify departments
+  };
 
   try {
     const response = await axios.post(
@@ -121,11 +141,12 @@ export const updateDepartment = async (departmentId: string, data: departmentDat
   const token = cookies().get("token")?.value;
   const user_id = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl}/seller/departments/update.php?department_id=${departmentId}`;
+  const url = `${apiUrl}/seller/oth-opts/update.php?department_id=${departmentId}`;
 
   const formatted = {
     ...camelToSnake(data),
     user_id, // needed for backend
+    type: "departments", // Add this to specify departments
   };
 
   console.log("UPDATE API → sending data:", formatted);
@@ -161,11 +182,14 @@ export const updateDepartment = async (departmentId: string, data: departmentDat
 export const deleteDepartment = async (departmentId: string) => {
   const token = cookies().get("token")?.value;
 
-  const url = `${apiUrl}/seller/departments/delete.php?department_id=${departmentId}`;
+  const url = `${apiUrl}/seller/oth-opts/delete.php?department_id=${departmentId}`;
 
   try {
     const response = await axios.delete(url, {
       headers: { Authorization: `Bearer ${token}` },
+      params: {
+        type: "departments", // Add this to specify departments
+      },
     });
 
     return response.data;

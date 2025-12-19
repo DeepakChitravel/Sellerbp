@@ -1,50 +1,43 @@
 import { InputField, FormValueProps } from "@/types";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import FormInputs from "@/components/form-inputs";
 
 interface Form {
   [key: string]: InputField;
 }
 
-const ServicesInformation = ({ name, slug }: FormValueProps) => {
+const DepartmentInformation = ({ name, type, slug }: FormValueProps) => {
   const inputFields: Form = {
     name: {
       type: "text",
       value: name.value,
       setValue: name.setValue,
-      placeholder: "Enter services name",
-      label: "Services Name",
+      placeholder: "Enter department name",
+      label: "Department Name",
       required: true,
+    },
+    type: {
+      type: "text",
+      value: type.value,
+      setValue: type.setValue,
+      placeholder: "Enter department type",
+      label: "Department Type (optional)",
     },
     slug: {
       type: "text",
       value: slug.value,
       setValue: slug.setValue,
-      placeholder: "Enter services slug",
-      label: (
-        <>
-          Services Slug <small className="text-black/50">(optional)</small>
-        </>
-      ),
+      placeholder: "Enter department slug",
+      label: "Department Slug (optional)",
     },
   };
 
   return (
     <div className="bg-white rounded-xl p-5">
       <div className="mb-9 space-y-1.5">
-        <h3 className="font-medium">Services Information</h3>
+        <h3 className="font-medium">Department Information</h3>
         <p className="text-black/50 text-sm font-medium">
-          Easily input essential details like name, slug, and more to showcase
-          your services.
+          Easily input essential details like name, type and slug to showcase
+          your department.
         </p>
       </div>
 
@@ -53,4 +46,4 @@ const ServicesInformation = ({ name, slug }: FormValueProps) => {
   );
 };
 
-export default ServicesInformation;
+export default DepartmentInformation;

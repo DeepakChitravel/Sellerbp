@@ -1,120 +1,140 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import DepartmentInformation from "./department-form/department-information";
+import DepartmentImage from "./department-form/department-image";
+import DepartmentSEO from "./department-form/department-seo";
+import Sticky from "../sticky";
+import { Button } from "../ui/button";
+import { toast } from "sonner";
+import { addDepartment, updateDepartment } from "@/lib/api/departments";
+import { handleToast } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { DepartmentFormProps } from "@/types";
 
-interface DepartmentFormValues {
-  name: string;
-  slug: string;
-  description: string;
-  metaTitle: string;
-  metaDescription: string;
-  keywords: string;
-  image?: File | null;
-}
+const DepartmentForm = ({
+  departmentId,
+  departmentData,
+  isEdit,
+  userId,
+}: DepartmentFormProps) => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
-export default function DepartmentForm({
-  department,
-  onSubmit,
-}: {
-  department?: any;
-  onSubmit?: (data: DepartmentFormValues) => void;
-}) {
-  const [preview, setPreview] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [type, setType] = useState("");
+  const [slug, setSlug] = useState("");
 
-  const { register, handleSubmit } = useForm<DepartmentFormValues>({
-    defaultValues: department ?? {},
-  });
+  const [slugLocked, setSlugLocked] = useState(false); // ⭐ avoid overwrite slug when user edits
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [images, setImages] = useState("");
 
-    const previewUrl = URL.createObjectURL(file);
-    setPreview(previewUrl);
+  // load existing values when editing
+  useEffect(() => {
+    if (!departmentData) return;
+
+    setName(departmentData.name || "");
+    setType(departmentData.type || "");
+    setSlug(departmentData.slug || "");
+    setMetaTitle(departmentData.metaTitle || "");
+    setMetaDescription(departmentData.metaDescription || "");
+    setImages(departmentData.image || "");
+  }, [departmentData]);
+
+  // auto slug sync – but allow manual override
+  useEffect(() => {
+    if (slugLocked || !name.trim()) return;
+
+    const generated = name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "");
+
+    setSlug(generated);
+  }, [name, slugLocked]);
+
+  // when user enters slug manually → lock
+  const handleSlugChange = (val: string) => {
+    setSlugLocked(true);
+    setSlug(val);
+  };
+
+  const normalizeImagePath = (img: string) => {
+    if (!img) return "";
+    if (img.startsWith("http")) {
+      const marker = "/uploads/";
+      const index = img.indexOf(marker);
+      return index !== -1 ? img.slice(index + marker.length) : img;
+    }
+    return img;
+  };
+
+  const handleSave = async () => {
+    setIsLoading(true);
+
+    try {
+      const payload = {
+        name,
+        type,
+        slug,
+        image: normalizeImagePath(images),
+        metaTitle,
+        metaDescription,
+      };
+
+      const resp = isEdit
+        ? await updateDepartment(departmentId, payload)
+        : await addDepartment(payload);
+
+      handleToast(resp);
+
+      if (resp.success) {
+        router.replace("/departments");
+        router.refresh();
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+
+    setIsLoading(false);
   };
 
   return (
-    <form
-      className="space-y-6"
-      onSubmit={handleSubmit((data) => {
-        console.log("Form submitted:", data);
-        onSubmit?.(data);
-      })}
-    >
-      {/* Department Information */}
-      <div className="border p-4 rounded-md space-y-4">
-        <h2 className="text-lg font-semibold">Department Info</h2>
-
-        <input
-          type="text"
-          placeholder="Name"
-          {...register("name")}
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          type="text"
-          placeholder="Slug"
-          {...register("slug")}
-          className="w-full border p-2 rounded"
-        />
-
-        <textarea
-          placeholder="Description"
-          {...register("description")}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      {/* SEO Section */}
-      <div className="border p-4 rounded-md space-y-4">
-        <h2 className="text-lg font-semibold">SEO</h2>
-
-        <input
-          type="text"
-          placeholder="Meta Title"
-          {...register("metaTitle")}
-          className="w-full border p-2 rounded"
-        />
-
-        <textarea
-          placeholder="Meta Description"
-          {...register("metaDescription")}
-          className="w-full border p-2 rounded"
-        />
-
-        <input
-          type="text"
-          placeholder="Keywords (comma separated)"
-          {...register("keywords")}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-
-      {/* Image Upload */}
-      <div className="border p-4 rounded-md space-y-4">
-        <h2 className="text-lg font-semibold">Department Image</h2>
-
-        <input
-          type="file"
-          accept="image/*"
-          {...register("image")}
-          onChange={handleImageChange}
-        />
-
-        {preview && (
-          <img
-            src={preview}
-            alt="Preview"
-            className="h-32 w-32 rounded object-cover"
+    <>
+      <div className="grid grid-cols-12 gap-5 pb-32">
+        <div className="lg:col-span-7 col-span-12 grid gap-5">
+          <DepartmentInformation
+            name={{ value: name, setValue: setName }}
+            type={{ value: type, setValue: setType }}
+            slug={{ value: slug, setValue: handleSlugChange }} // ⭐ override here
           />
-        )}
+        </div>
+
+        <div className="lg:col-span-5 col-span-12 grid gap-5">
+          <DepartmentImage
+            images={{ value: images, setValue: setImages }}
+            userId={userId}
+          />
+          <DepartmentSEO
+            metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
+            metaDescription={{
+              value: metaDescription,
+              setValue: setMetaDescription
+            }}
+          />
+        </div>
       </div>
 
-      <button type="submit" className="bg-black text-white px-4 py-2 rounded">
-        Save Department
-      </button>
-    </form>
+      <Sticky>
+        <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
+          Save
+        </Button>
+      </Sticky>
+    </>
   );
-}
+};
+
+export default DepartmentForm;

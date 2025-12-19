@@ -123,6 +123,28 @@ export interface CategoryFormProps {
 
 }
 
+//For Department
+
+export type Department = {
+  id: number;
+  departmentId: string;
+  userId: number;
+  name: string;
+  type?: string;
+  slug?: string;
+  image?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+export interface DepartmentFormProps {
+  departmentId: string;
+  departmentData: Department;
+  isEdit: boolean;
+  userId: string;
+}
+
 export interface ServiceFormProps {
   serviceId: string;
   serviceData: Service;
@@ -208,6 +230,7 @@ export type Appointment = {
   customerId: number;
   serviceId: number;
   employeeId: number;
+  departmentId?: number; // Add this if appointments can be for departments
   name: string;
   phone: string;
   email: string;
@@ -382,6 +405,7 @@ export type Service = {
   amount: string;
   previous_amount: string;
   image: string;
+  department_id?: number | null; // Add this if services can belong to departments
   category_id: number | null;
   time_slot_interval: string;
   interval_type: string;
@@ -433,6 +457,21 @@ export type categoryData = {
   image: string;
   metaTitle: string;
   metaDescription: string;
+};
+
+export type departmentsParams = {
+  limit?: number;
+  page?: number;
+  q?: string;
+};
+
+export type departmentData = {
+  name: string;
+  type?: string;
+  slug?: string;
+  image?: string;
+  metaTitle?: string;
+  metaDescription?: string;
 };
 
 export type servicesParams = {

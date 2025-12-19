@@ -2,7 +2,7 @@ import DepartmentsFilter from "@/components/filters/department-filter";
 import { DataTable } from "@/components/tables/department-tabel/data-table";
 import { columns } from "@/components/tables/department-tabel/columns";
 import { getAllDepartments } from "@/lib/api/departments";
-//import { departmentsParams } from "@/types";
+import { departmentsParams } from "@/types";
 import { Add } from "iconsax-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
