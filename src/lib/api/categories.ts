@@ -185,6 +185,28 @@ export const updateCategory = async (categoryId: string, data: categoryData) => 
 
 
 
+export const addDoctor = async (data: any) => {
+  const token = cookies().get("token")?.value;
+
+  const formatted = camelToSnake(data);
+
+  const url = `${apiUrl}/seller/doctors/create.php`;
+
+  try {
+    const response = await axios.post(
+      url,
+      {
+        ...formatted,
+        token,
+      },
+      { headers: { "Content-Type": "application/json" }}
+    );
+
+    return response.data;
+  } catch (err:any) {
+    return err.response?.data || { success:false };
+  }
+};
 
 
   /* -------------------------------------------------------

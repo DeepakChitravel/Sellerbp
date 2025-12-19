@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ServiceInformation from "./Appointment-forms/Appointment-information";
-import ServiceImage from "./Appointment-forms/service-image";
-import ServiceSEO from "./Appointment-forms/service-seo";
+import ServiceInformation from "./appointment-forms/appointment-information";
+import ServiceImage from "./appointment-forms/service-image";
+import ServiceSEO from "./appointment-forms/service-seo";
 import Sticky from "../sticky";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
@@ -11,10 +11,10 @@ import { addService, updateService } from "@/lib/api/services";
 import { handleToast } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ServiceFormProps } from "@/types";
-import AdditionalImages from "./Appointment-forms/additional-images";
-import ServiceGst from "./Appointment-forms/serviceGst";
+import AdditionalImages from "./appointment-forms/additional-images";
+import ServiceGst from "./appointment-forms/serviceGst";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import WeeklyAppointment from "./Appointment-forms/weekly-appointment";
+import WeeklyAppointment from "./appointment-forms/weekly-appointment";
 
 const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const router = useRouter();
@@ -151,9 +151,7 @@ return (
           images={{ value: image, setValue: setImage }}
         />
 
-        <AdditionalImages
-          images={{ value: additionalImages, setValue: setAdditionalImages }}
-        />
+  
 
         <ServiceGst
           gstPercentage={{ value: gstPercentage, setValue: setGstPercentage }}

@@ -9,6 +9,7 @@ interface DoctorInfoProps {
   qualification: FormValueProps;
   experience: FormValueProps;
   regNumber: FormValueProps;
+  uploadSlot?: React.ReactNode;
 }
 
 const DoctorInformation = ({
@@ -17,61 +18,87 @@ const DoctorInformation = ({
   qualification,
   experience,
   regNumber,
+  uploadSlot,
 }: DoctorInfoProps) => {
 
-  const inputFields: Record<string, InputField> = {
-    doctor_name: {
-      type: "text",
-      value: doctorName.value || "",
-      setValue: doctorName.setValue,
-      placeholder: "Enter doctor name",
-      label: "Doctor Name",
-      required: true,
-    },
-    specialization: {
-      type: "text",
-      value: specialization.value || "",
-      setValue: specialization.setValue,
-      placeholder: "Ex. Dermatology, Pediatrics",
-      label: "Specialization",
-      required: true,
-    },
-    qualification: {
-      type: "text",
-      value: qualification.value || "",
-      setValue: qualification.setValue,
-      placeholder: "Ex. MBBS, MD",
-      label: "Qualification",
-      required: true,
-    },
-    experience: {
-      type: "number",
-      value: experience.value || "",
-      setValue: experience.setValue,
-      placeholder: "Years of experience",
-      label: "Experience (Years)",
-      required: true,
-    },
-    reg_number: {
-      type: "text",
-      value: regNumber.value || "",
-      setValue: regNumber.setValue,
-      placeholder: "Doctor registration number",
-      label: "Registration Number",
-      required: true,
-    },
-  };
-
   return (
-    <div className="bg-white rounded-xl p-5">
-      <div className="mb-9 space-y-1.5">
-        <h3 className="font-medium">Doctor Information</h3>
-        <p className="text-black/50 text-sm font-medium">
-          Add essential doctor details.
-        </p>
+    <div className="bg-white rounded-xl p-5 space-y-6">
+
+      <h3 className="font-medium text-lg">Doctor Information</h3>
+
+      {/* Row 1: doctor name + qualification */}
+      <div className="grid grid-cols-2 gap-4">
+        <FormInputs
+          inputFields={{
+            doctor_name: {
+              type: "text",
+              value: doctorName.value,
+              setValue: doctorName.setValue,
+              label: "Doctor Name",
+              placeholder: "Enter doctor name",
+              required: true,  // required
+            },
+          }}
+        />
+
+        <FormInputs
+          inputFields={{
+            qualification: {
+              type: "text",
+              value: qualification.value,
+              setValue: qualification.setValue,
+              label: "Qualification",
+              placeholder: "Ex: MBBS, MD",
+              required: true, // required
+            },
+          }}
+        />
       </div>
 
-      <FormInputs inputFields={inputFields} />
+      {/* Row 2: specialization + optional experience */}
+      <div className="grid grid-cols-2 gap-4">
+        <FormInputs
+          inputFields={{
+            specialization: {
+              type: "text",
+              value: specialization.value,
+              setValue: specialization.setValue,
+              label: "Specialization",
+              placeholder: "Ex: Dermatology",
+              required: true, // required
+            },
+          }}
+        />
+
+        <FormInputs
+          inputFields={{
+            experience: {
+              type: "number",
+              value: experience.value,
+              setValue: experience.setValue,
+              label: "Experience (Years)",
+              placeholder: "Years of experience",
+              required: false, // now optional 👌
+            },
+          }}
+        />
+      </div>
+
+      {/* Row 3: optional reg number */}
+      <FormInputs
+        inputFields={{
+          reg_number: {
+            type: "text",
+            value: regNumber.value,
+            setValue: regNumber.setValue,
+            label: "Registration Number",
+            placeholder: "Doctor registration number",
+            required: false, // optional 👌
+          },
+        }}
+      />
+
+      {uploadSlot && <div>{uploadSlot}</div>}
     </div>
   );
 };

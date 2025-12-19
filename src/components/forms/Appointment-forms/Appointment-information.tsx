@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { InputField, FormValueProps, Option } from "@/types";
 import FormInputs from "@/components/form-inputs";
-import { getAllDoctors } from "@/lib/api/doctors";   // ⭐ new import
+import { getAllDoctors } from "@/lib/api/doctors";
 
 interface Form {
   [key: string]: InputField;
@@ -12,7 +12,7 @@ const AppointmentInformation = ({
   slug,
   amount,
   previousAmount,
-  categoryId, // this becomes doctorId instead
+  categoryId, // doctorId
   description,
   timeSlotInterval,
   intervalType,
@@ -20,54 +20,51 @@ const AppointmentInformation = ({
   specialization,
   qualification,
   experience,
-  doctorImage,
 }: FormValueProps) => {
 
   const [doctorOptions, setDoctorOptions] = useState<Option[]>([]);
 
-  // store full object
+  // store full doctor object
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
 
-useEffect(() => {
-  async function loadDoctors() {
-    const list = await getAllDoctors();
+  useEffect(() => {
+    async function loadDoctors() {
+      const list = await getAllDoctors();
 
-    setDoctorOptions(
-      list.map((doc:any) => ({
-        label: doc.doctor_name,     // from DB
-        value: doc.id.toString(),
-        full: doc,                  // full doctor object
-      }))
-    );
-  }
+      setDoctorOptions(
+        list.map((doc: any) => ({
+          label: doc.doctor_name,
+          value: doc.id.toString(),
+          full: doc, 
+        }))
+      );
+    }
 
-  loadDoctors();
-}, []);
+    loadDoctors();
+  }, []);
 
+  const handleDoctorSelect = (doctorId: string) => {
+    const doc = doctorOptions.find(d => d.value === doctorId);
 
-const handleDoctorSelect = (doctorId: string) => {
-  const doc = doctorOptions.find(d => d.value === doctorId);
+    if (doc) {
+      specialization.setValue(doc.full.specialization ?? "");
+      qualification.setValue(doc.full.qualification ?? "");
+      experience.setValue(doc.full.experience?.toString() ?? "");
 
-  if (doc) {
-    specialization.setValue(doc.full.specialization ?? "");
-    qualification.setValue(doc.full.qualification ?? "");
-    experience.setValue(doc.full.experience?.toString() ?? "");
-    doctorImage.setValue(doc.full.image ?? "");
-    // regNumber.setValue(doc.full.reg_number ?? "");   // if needed
+      // ⭐ auto slug from doctor name + specialization
+      const autoSlug = `${doc.full.doctor_name}-${doc.full.specialization}`
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
 
-    setSelectedDoctor(doc.full);
-  }
+      slug.setValue(autoSlug);
+      setSelectedDoctor(doc.full);
+    }
 
-  categoryId.setValue(doctorId); // rename later for clarity
-};
-
+    categoryId.setValue(doctorId);
+  };
 
   const inputFields: Form = {
-
-
- 
-
-    // ✔ doctor dropdown (replacing category)
     doctor: {
       type: "select",
       value: categoryId.value,
@@ -98,24 +95,17 @@ const handleDoctorSelect = (doctorId: string) => {
       label: "Experience (auto)",
     },
 
-    doctorImage: {
-      type: "text",
-      value: doctorImage.value,
-      setValue: doctorImage.setValue,
-      label: "Doctor Image (auto)",
-    },
-       slug: {
+    slug: {
       type: "text",
       value: slug.value,
       setValue: slug.setValue,
-      label: "Slug",
+      label: "Slug (auto)",
     },
   };
 
   return (
     <div className="bg-white rounded-xl p-5">
       <h3 className="font-medium mb-4">Appointment Information</h3>
-
       <FormInputs inputFields={inputFields} />
     </div>
   );

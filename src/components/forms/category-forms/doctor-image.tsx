@@ -5,13 +5,11 @@ import { useState } from "react";
 import { X } from "lucide-react";
 
 interface Props {
-  images: { value: string; setValue: (v: string) => void };
+  doctorImage: { value: string; setValue: (v: string) => void };
   userId: string;
 }
 
-const CategoryImage = ({ images, userId }: Props) => {
-  console.log("EDIT MODE → images.value =", images.value);
-
+const DoctorImage = ({ doctorImage, userId }: Props) => {
   const [isUploading, setIsUploading] = useState(false);
 
   const handleUpload = async (e: any) => {
@@ -24,7 +22,7 @@ const CategoryImage = ({ images, userId }: Props) => {
     formData.append("file", file);
 
     const res = await fetch(
-      `http://localhost/managerbp/public/seller/categories/upload.php?user_id=${userId}`,
+      `http://localhost/managerbp/public/seller/doctors/upload.php?user_id=${userId}`,
       {
         method: "POST",
         body: formData,
@@ -35,16 +33,15 @@ const CategoryImage = ({ images, userId }: Props) => {
     setIsUploading(false);
 
     if (result.success) {
-      images.setValue(result.filename);
+      doctorImage.setValue(result.filename);
     }
   };
 
-  const hasImage = !!images.value;
+  const hasImage = !!doctorImage.value;
 
-  // 🟢 FIX: Detect full URL vs relative
-  const imgSrc = images.value.startsWith("http")
-    ? images.value
-    : `http://localhost/managerbp/public/uploads/${images.value}`;
+  const imgSrc = doctorImage.value.startsWith("http")
+    ? doctorImage.value
+    : `http://localhost/managerbp/public/uploads/doctors/${doctorImage.value}`;
 
   return (
     <div className="bg-white rounded-xl p-5">
@@ -61,7 +58,7 @@ const CategoryImage = ({ images, userId }: Props) => {
       {hasImage && (
         <div className="relative w-[160px] mt-4">
           <button
-            onClick={() => images.setValue("")}
+            onClick={() => doctorImage.setValue("")}
             className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow"
           >
             <X size={14} />
@@ -71,7 +68,7 @@ const CategoryImage = ({ images, userId }: Props) => {
             src={imgSrc}
             width={160}
             height={160}
-            alt="Category"
+            alt="Doctor"
             className="rounded-lg object-cover border"
             unoptimized
           />
@@ -81,4 +78,4 @@ const CategoryImage = ({ images, userId }: Props) => {
   );
 };
 
-export default CategoryImage;
+export default DoctorImage;

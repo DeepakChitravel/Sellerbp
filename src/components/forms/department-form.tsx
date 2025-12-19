@@ -92,7 +92,7 @@ const DepartmentForm = ({
       handleToast(resp);
 
       if (resp.success) {
-        router.replace("/departments");
+        router.replace("/department");
         router.refresh();
       }
     } catch (err: any) {

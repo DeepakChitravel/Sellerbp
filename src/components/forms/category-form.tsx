@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 import CategoryInformation from "./category-forms/category-information";
-import CategoryImage from "./category-forms/category-image";
+import DoctorImage from "./category-forms/doctor-image";
 import CategorySEO from "./category-forms/category-seo";
 import Sticky from "../sticky";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { addCategory, updateCategory } from "@/lib/api/categories";
-import { handleToast } from "@/lib/utils";
+import { addDoctor } from "@/lib/api/doctors";   // ⭐ important import
 import { useRouter } from "next/navigation";
-import { CategoryFormProps } from "@/types";
 import DoctorInformation from "./category-forms/doctor-information";
+import { CategoryFormProps } from "@/types";
 
 const CategoryForm = ({
   categoryId,
@@ -19,17 +19,18 @@ const CategoryForm = ({
   isEdit,
   userId,
 }: CategoryFormProps) => {
+
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-
-  const [slugLocked, setSlugLocked] = useState(false); // ⭐ avoid overwrite slug when user edits
+  const [slugLocked, setSlugLocked] = useState(false);
 
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
-  const [images, setImages] = useState("");
+
+  const [doctorImage, setDoctorImage] = useState("");
 
   const [doctorName, setDoctorName] = useState("");
   const [specialization, setSpecialization] = useState("");
@@ -37,7 +38,7 @@ const CategoryForm = ({
   const [experience, setExperience] = useState("");
   const [regNumber, setRegNumber] = useState("");
 
-  // load existing values when editing
+  // populate values on edit
   useEffect(() => {
     if (!categoryData) return;
 
@@ -45,7 +46,6 @@ const CategoryForm = ({
     setSlug(categoryData.slug || "");
     setMetaTitle(categoryData.metaTitle || "");
     setMetaDescription(categoryData.metaDescription || "");
-    setImages(categoryData.image || "");
 
     if (categoryData.doctorDetails) {
       setDoctorName(categoryData.doctorDetails.doctorName || "");
@@ -53,10 +53,12 @@ const CategoryForm = ({
       setQualification(categoryData.doctorDetails.qualification || "");
       setExperience(categoryData.doctorDetails.experience || "");
       setRegNumber(categoryData.doctorDetails.regNumber || "");
+      setDoctorImage(categoryData.doctorDetails.doctorImage || "");
     }
   }, [categoryData]);
 
-  // auto slug sync – but allow manual override
+
+  // auto slug generator unless locked
   useEffect(() => {
     if (slugLocked || !name.trim()) return;
 
@@ -69,51 +71,64 @@ const CategoryForm = ({
     setSlug(generated);
   }, [name, slugLocked]);
 
-  // when user enters slug manually → lock
   const handleSlugChange = (val: string) => {
     setSlugLocked(true);
     setSlug(val);
   };
 
-  const normalizeImagePath = (img: string) => {
-    if (!img) return "";
-    if (img.startsWith("http")) {
-      const marker = "/uploads/";
-      const index = img.indexOf(marker);
-      return index !== -1 ? img.slice(index + marker.length) : img;
-    }
-    return img;
-  };
 
   const handleSave = async () => {
     setIsLoading(true);
 
     try {
-      const payload = {
+
+      // 1️⃣ Save category first
+      const categoryPayload = {
         name,
         slug,
-        image: normalizeImagePath(images),
         metaTitle,
         metaDescription,
-        doctorDetails: {
-          doctorName,
+      };
+
+      const categoryResp = isEdit
+        ? await updateCategory(categoryId, categoryPayload)
+        : await addCategory(categoryPayload);
+
+      if (!categoryResp.success) {
+        toast.error("Category save failed");
+        setIsLoading(false);
+        return;
+      }
+
+      const newCategoryId = isEdit ? categoryId : categoryResp.category_id;
+
+
+      // 2️⃣ Save doctor second — only if doctor name exists
+      if (doctorName.trim()) {
+
+        const doctorPayload = {
+          doctor_name: doctorName,
           specialization,
           qualification,
           experience,
-          regNumber,
-        },
-      };
+          reg_number: regNumber,
+          doctor_image: doctorImage,   // uploaded file path
+          category_id: newCategoryId,
+        };
 
-      const resp = isEdit
-        ? await updateCategory(categoryId, payload)
-        : await addCategory(payload);
+        const doctorResp = await addDoctor(doctorPayload);
 
-      handleToast(resp);
-
-      if (resp.success) {
-        router.replace("/categories");
-        router.refresh();
+        if (!doctorResp.success) {
+          toast.error("Doctor create failed");
+          setIsLoading(false);
+          return;
+        }
       }
+
+      toast.success("Saved successfully");
+      router.replace("/categories");
+      router.refresh();
+
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -121,42 +136,54 @@ const CategoryForm = ({
     setIsLoading(false);
   };
 
-  return (
-    <>
-      <div className="grid grid-cols-12 gap-5 pb-32">
-        <div className="lg:col-span-7 col-span-12 grid gap-5">
 
-          <CategoryInformation
-            name={{ value: name, setValue: setName }}
-            slug={{ value: slug, setValue: handleSlugChange }} // ⭐ override here
-          />
+ return (
+  <>
+    <div className="grid grid-cols-12 gap-5 pb-32">
 
-          <DoctorInformation
-            doctorName={{ value: doctorName, setValue: setDoctorName }}
-            specialization={{ value: specialization, setValue: setSpecialization }}
-            qualification={{ value: qualification, setValue: setQualification }}
-            experience={{ value: experience, setValue: setExperience }}
-            regNumber={{ value: regNumber, setValue: setRegNumber }}
-          />
+      {/* LEFT SIDE */}
+      <div className="lg:col-span-7 col-span-12 grid gap-5">
 
-        </div>
+        <CategoryInformation
+          name={{ value: name, setValue: setName }}
+          slug={{ value: slug, setValue: handleSlugChange }}
+        />
 
-        <div className="lg:col-span-5 col-span-12 grid gap-5">
-          <CategoryImage images={{ value: images, setValue: setImages }} userId={userId} />
-          <CategorySEO
-            metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
-            metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
-          />
-        </div>
+        <DoctorInformation
+          doctorName={{ value: doctorName, setValue: setDoctorName }}
+          specialization={{ value: specialization, setValue: setSpecialization }}
+          qualification={{ value: qualification, setValue: setQualification }}
+          experience={{ value: experience, setValue: setExperience }}
+          regNumber={{ value: regNumber, setValue: setRegNumber }}
+        />
+        
       </div>
 
-      <Sticky>
-        <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
-          Save
-        </Button>
-      </Sticky>
-    </>
-  );
+      {/* RIGHT SIDE */}
+      <div className="lg:col-span-5 col-span-12 grid gap-5">
+
+        {/* doctor image moved here */}
+        <DoctorImage
+          doctorImage={{ value: doctorImage, setValue: setDoctorImage }}
+          userId={userId}
+        />
+
+        <CategorySEO
+          metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
+          metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
+        />
+
+      </div>
+    </div>
+
+    <Sticky>
+      <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
+        Save
+      </Button>
+    </Sticky>
+  </>
+);
+
 };
 
 export default CategoryForm;

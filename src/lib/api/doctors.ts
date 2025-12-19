@@ -4,15 +4,35 @@ import axios from "axios";
 import { cookies } from "next/headers";
 import { apiUrl } from "@/config";
 
-export const getAllDoctors = async () => {
+// converts camelCase to snake_case recursively
+const camelToSnake = (obj: any): any => {
+  if (typeof obj !== "object" || obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(camelToSnake);
+
+  const newObj: any = {};
+  for (const key in obj) {
+    newObj[key.replace(/([A-Z])/g, "_$1").toLowerCase()] = camelToSnake(obj[key]);
+  }
+  return newObj;
+};
+
+export const addDoctor = async (data: any) => {
   const token = cookies().get("token")?.value;
-  const userId = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl}/seller/doctors/get.php?user_id=${userId}`;
+  const formatted = camelToSnake(data);
 
-  const res = await axios.get(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    const res = await axios.post(
+      `${apiUrl}/seller/doctors/create.php`,
+      { ...formatted, token },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
-  return res.data.records ?? [];
+    return res.data;
+  } catch (err: any) {
+    console.log("ADD DOCTOR ERROR:", err.response?.data);
+    return { success: false, message: "Doctor create failed" };
+  }
 };
