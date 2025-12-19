@@ -1,7 +1,7 @@
 import DepartmentsFilter from "@/components/filters/department-filter";
 import { DataTable } from "@/components/tables/department-tabel/data-table";
 import { columns } from "@/components/tables/department-tabel/columns";
-import { getAllDepartments } from "@/lib/api/department";
+import { getAllDepartments } from "@/lib/api/departments";
 //import { departmentsParams } from "@/types";
 import { Add } from "iconsax-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ const Departments = async ({
         <h1 className="text-2xl font-bold">Departments</h1>
 
         {/* ✅ NO SLUG */}
-        <Link href="/departments/add">
+        <Link href="/department/add">
           <Button variant="success">
             <span className="mobile_l:block hidden">Add Department</span>
             <span className="mobile_l:hidden block">

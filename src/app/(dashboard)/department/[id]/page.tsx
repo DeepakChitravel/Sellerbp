@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"; // ✅ IMPORTANT FIX
 
 import DepartmentForm from "@/components/forms/department-form";
-import { getDepartment } from "@/lib/api/department";
+import { getDepartment } from "@/lib/api/departments";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 
