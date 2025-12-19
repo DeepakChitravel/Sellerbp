@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { InputField, FormValueProps, Option } from "@/types";
 import FormInputs from "@/components/form-inputs";
-import { getAllDoctors } from "@/lib/api/doctors";
 
 interface Form {
   [key: string]: InputField;

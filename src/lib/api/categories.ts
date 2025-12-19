@@ -33,55 +33,45 @@
   /* -------------------------------------------------------
     GET ALL CATEGORIES
   -------------------------------------------------------- */
-  export const getAllCategories = async (params: categoriesParams) => {
-    const token = cookies().get("token")?.value;
-    const user_id = cookies().get("user_id")?.value;
+export const getAllCategories = async (params) => {
+  const token = cookies().get("token")?.value;
+  const userId = cookies().get("user_id")?.value;
 
-    const url = `${apiUrl}/seller/categories/get.php`;
+  const url = `${apiUrl}/seller/categories/get.php`;
 
-    try {
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          user_id,
-          limit: params.limit ?? 10,
-          page: params.page ?? 1,
-          q: params.q ?? "",
-        },
-      });
-
-if (response.data.records) {
-  const rows = snakeToCamel(response.data.records);
-
-  response.data.records = rows.map((row: any) => {
-    const doctor = {
-      doctorName: row.doctorName || "",
-      specialization: row.specialization || "",
-      qualification: row.qualification || "",
-      experience: row.experience || "",
-      regNumber: row.regNumber || "",
-    };
-
-    // remove flat columns
-    delete row.doctorName;
-    delete row.specialization;
-    delete row.qualification;
-    delete row.experience;
-    delete row.regNumber;
-
-    return {
-      ...row,
-      doctorDetails: doctor,
-    };
+  const res = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: {
+      user_id: userId,
+      limit: params.limit ?? 10,
+      page: params.page ?? 1,
+      q: params.q ?? "",
+    },
   });
-}
+
+  const rows = (res.data.records || []).map((r) => ({
+    id: r.id,
+    categoryId: r.category_id,
+    name: r.name,
+    slug: r.slug,
+    metaTitle: r.meta_title,
+    metaDescription: r.meta_description,
+    createdAt: r.created_at,
+
+    doctorDetails: {
+      doctorName: r.doctor_name,
+      specialization: r.specialization,
+      qualification: r.qualification,
+      experience: r.experience,
+      regNumber: r.reg_number,
+      doctorImage: r.doctor_image,
+    },
+  }));
+
+  return { ...res.data, records: rows };
+};
 
 
-      return response.data;
-    } catch (err) {
-      return { success: false, records: [] };
-    }
-  };
 
   /* -------------------------------------------------------
     GET SINGLE CATEGORY
@@ -109,33 +99,38 @@ if (response.data.records) {
   /* -------------------------------------------------------
     CREATE CATEGORY
   -------------------------------------------------------- */
-  export const addCategory = async (data: categoryData) => {
-    const token = cookies().get("token")?.value;
+export const addCategory = async (data) => {
+  const token = cookies().get("token")?.value;
 
-    const url = `${apiUrl}/seller/categories/create.php`;
+  const url = `${apiUrl}/seller/categories/create.php`;
 
-    const formatted = camelToSnake(data); // convert ALL fields
+  const formatted = camelToSnake(data);
 
-    try {
-      const response = await axios.post(
-        url,
-        {
-          ...formatted,
-          token, // MUST send this
+  console.log("🚀 SENDING TO CATEGORY CREATE:", formatted);
+
+  try {
+    const response = await axios.post(
+      url,
+      {
+        ...formatted,
+        token,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      }
+    );
 
-      return response.data;
-    } catch (err: any) {
-      console.log("CATEGORY CREATE ERROR →", err.response?.data);
-      return err.response?.data || { success: false, message: "Create failed" };
-    }
-  };
+    console.log("🔥 CATEGORY CREATE RESPONSE:", response.data);
+
+    return response.data;
+  } catch (err: any) {
+    console.log("💣 CATEGORY CREATE ERROR RESPONSE:", err.response?.data);
+    return err.response?.data || { success: false };
+  }
+};
+
 
 
 

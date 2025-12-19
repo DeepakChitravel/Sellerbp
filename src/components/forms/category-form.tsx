@@ -89,6 +89,7 @@ const CategoryForm = ({
         metaTitle,
         metaDescription,
       };
+console.log("sending category payload:", categoryPayload);
 
       const categoryResp = isEdit
         ? await updateCategory(categoryId, categoryPayload)
@@ -100,21 +101,24 @@ const CategoryForm = ({
         return;
       }
 
-      const newCategoryId = isEdit ? categoryId : categoryResp.category_id;
+const newCategoryId = isEdit ? categoryId : categoryResp.category_id;
 
 
       // 2️⃣ Save doctor second — only if doctor name exists
       if (doctorName.trim()) {
 
-        const doctorPayload = {
-          doctor_name: doctorName,
-          specialization,
-          qualification,
-          experience,
-          reg_number: regNumber,
-          doctor_image: doctorImage,   // uploaded file path
-          category_id: newCategoryId,
-        };
+const doctorPayload = {
+  doctor_name: doctorName,
+  specialization,
+  qualification,
+  experience,
+  reg_number: regNumber,
+doctor_image: doctorImage,  // FIX
+  category_id: newCategoryId,
+};
+
+console.log("📌 doctorPayload:", doctorPayload);
+
 
         const doctorResp = await addDoctor(doctorPayload);
 

@@ -39,9 +39,11 @@ const DoctorImage = ({ doctorImage, userId }: Props) => {
 
   const hasImage = !!doctorImage.value;
 
-  const imgSrc = doctorImage.value.startsWith("http")
+const imgSrc =
+  doctorImage.value.startsWith("http")
     ? doctorImage.value
-    : `http://localhost/managerbp/public/uploads/doctors/${doctorImage.value}`;
+    : `http://localhost/managerbp/public/uploads/${doctorImage.value}`;
+
 
   return (
     <div className="bg-white rounded-xl p-5">
