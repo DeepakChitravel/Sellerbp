@@ -43,7 +43,9 @@ const CategoryPage = async ({ params }: Props) => {
   // ===============================
   // EDIT CATEGORY
   // ===============================
-  const category = await getCategory(id);
+console.log("category id received:", id);
+const category = await getCategory(id);
+console.log("returned category:", category);
 
   if (!category?.data) {
     return notFound();
