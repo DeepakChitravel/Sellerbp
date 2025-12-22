@@ -158,7 +158,9 @@ const DepartmentInformation = ({
       return;
     }
 
-    // Clear values for additional type
+    setActiveTypeFields(prev => prev.filter(field => field.index !== index));
+    
+    // Clear values for the removed field
     const setters: any = {
       1: { name: type1Name?.setValue, amount: type1Amount?.setValue },
       2: { name: type2Name?.setValue, amount: type2Amount?.setValue },
@@ -191,68 +193,61 @@ const DepartmentInformation = ({
       setters[index].name?.("");
       setters[index].amount?.("");
     }
-
-    setActiveTypeFields(prev => prev.filter(field => field.index !== index));
   };
 
   // Helper to get field value and setter
-const getFieldProps = (index:number, fieldType:'name'|'amount') => {
-  let prop;
+  const getFieldProps = (index: number, fieldType: 'name' | 'amount') => {
+    let prop;
 
-  if (index === 0) {
-    prop = fieldType === "name" ? typeMainName : typeMainAmount;
-  } else {
-    const props:any = {
-      1:{name:type1Name, amount:type1Amount},
-      2:{name:type2Name, amount:type2Amount},
-      3:{name:type3Name, amount:type3Amount},
-      4:{name:type4Name, amount:type4Amount},
-      5:{name:type5Name, amount:type5Amount},
-      6:{name:type6Name, amount:type6Amount},
-      7:{name:type7Name, amount:type7Amount},
-      8:{name:type8Name, amount:type8Amount},
-      9:{name:type9Name, amount:type9Amount},
-      10:{name:type10Name, amount:type10Amount},
-      11:{name:type11Name, amount:type11Amount},
-      12:{name:type12Name, amount:type12Amount},
-      13:{name:type13Name, amount:type13Amount},
-      14:{name:type14Name, amount:type14Amount},
-      15:{name:type15Name, amount:type15Amount},
-      16:{name:type16Name, amount:type16Amount},
-      17:{name:type17Name, amount:type17Amount},
-      18:{name:type18Name, amount:type18Amount},
-      19:{name:type19Name, amount:type19Amount},
-      20:{name:type20Name, amount:type20Amount},
-      21:{name:type21Name, amount:type21Amount},
-      22:{name:type22Name, amount:type22Amount},
-      23:{name:type23Name, amount:type23Amount},
-      24:{name:type24Name, amount:type24Amount},
-      25:{name:type25Name, amount:type25Amount},
-    };
+    if (index === 0) {
+      prop = fieldType === "name" ? typeMainName : typeMainAmount;
+    } else {
+      const props: any = {
+        1: { name: type1Name, amount: type1Amount },
+        2: { name: type2Name, amount: type2Amount },
+        3: { name: type3Name, amount: type3Amount },
+        4: { name: type4Name, amount: type4Amount },
+        5: { name: type5Name, amount: type5Amount },
+        6: { name: type6Name, amount: type6Amount },
+        7: { name: type7Name, amount: type7Amount },
+        8: { name: type8Name, amount: type8Amount },
+        9: { name: type9Name, amount: type9Amount },
+        10: { name: type10Name, amount: type10Amount },
+        11: { name: type11Name, amount: type11Amount },
+        12: { name: type12Name, amount: type12Amount },
+        13: { name: type13Name, amount: type13Amount },
+        14: { name: type14Name, amount: type14Amount },
+        15: { name: type15Name, amount: type15Amount },
+        16: { name: type16Name, amount: type16Amount },
+        17: { name: type17Name, amount: type17Amount },
+        18: { name: type18Name, amount: type18Amount },
+        19: { name: type19Name, amount: type19Amount },
+        20: { name: type20Name, amount: type20Amount },
+        21: { name: type21Name, amount: type21Amount },
+        22: { name: type22Name, amount: type22Amount },
+        23: { name: type23Name, amount: type23Amount },
+        24: { name: type24Name, amount: type24Amount },
+        25: { name: type25Name, amount: type25Amount },
+      };
 
-    prop = props[index]?.[fieldType];
-  }
-
-  return {
-    value: prop?.value ?? "",
-    setValue:(v:string)=>{
-      if (prop?.setValue) {
-        prop.setValue(v);
-      } else {
-        console.warn(
-          `⚠️ missing setter for type field index=${index} field=${fieldType}`
-        );
-      }
+      prop = props[index]?.[fieldType];
     }
-  };
-};
 
+    return {
+      value: prop?.value ?? "",
+      setValue: (v: string) => {
+        if (prop?.setValue) {
+          prop.setValue(v);
+        }
+      }
+    };
+  };
 
   const inputFields: Form = {
     name: {
       type: "text",
       value: name?.value || "",
-      setValue: name?.setValue || (() => {}),
+      setValue: name?.setValue || (() => { }),
       placeholder: "Enter department name",
       label: "Department Name",
       required: true,
@@ -260,7 +255,7 @@ const getFieldProps = (index:number, fieldType:'name'|'amount') => {
     slug: {
       type: "text",
       value: slug?.value || "",
-      setValue: slug?.setValue || (() => {}),
+      setValue: slug?.setValue || (() => { }),
       placeholder: "Enter department slug",
       label: "Department Slug (optional)",
     },
@@ -285,7 +280,7 @@ const getFieldProps = (index:number, fieldType:'name'|'amount') => {
             {activeTypeFields.filter(f => f.index > 0).length}/25 additional types
           </span>
         </div>
-        
+
         <p className="text-sm text-gray-600 mb-6">
           Configure types with names and amounts. <strong>Main type is required.</strong> Add up to 25 additional types.
         </p>
@@ -295,15 +290,14 @@ const getFieldProps = (index:number, fieldType:'name'|'amount') => {
           {activeTypeFields.map((field) => {
             const nameProps = getFieldProps(field.index, 'name');
             const amountProps = getFieldProps(field.index, 'amount');
-            
+
             return (
-              <div 
-                key={field.id} 
-                className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg relative border ${
-                  field.index === 0 
-                    ? 'bg-blue-50 border-blue-100' 
+              <div
+                key={field.id}
+                className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg relative border ${field.index === 0
+                    ? 'bg-blue-50 border-blue-100'
                     : 'bg-gray-50 border-gray-200'
-                }`}
+                  }`}
               >
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -318,11 +312,6 @@ const getFieldProps = (index:number, fieldType:'name'|'amount') => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required={field.index === 0}
                   />
-                  {nameProps.value && !amountProps.value && (
-                    <p className="text-red-500 text-xs mt-1">
-                      Please enter amount for this type
-                    </p>
-                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -331,29 +320,13 @@ const getFieldProps = (index:number, fieldType:'name'|'amount') => {
                   </label>
                   <div className="flex gap-2">
                     <input
-                      type="text"
+                      type="number"
+                      step="0.01"
                       value={amountProps.value}
-               onChange={(e) => {
-  const value = e.target.value;
-
-  console.log("💬 typing:", value);
-  console.log("🧪 index:", field.index);
-  console.log("🧪 amount setter exists:", !!amountProps.setValue);
-
-  if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
-
-    try {
-      amountProps.setValue(value);
-      console.log("✔ state update ok");
-    } catch (err) {
-      console.error("❌ state update failed!", err);
-    }
-
-  } else {
-    console.warn("⚠ blocked character:", value);
-  }
-}}
-
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        amountProps.setValue(value);
+                      }}
                       placeholder={field.index === 0 ? "Enter amount (required)" : "Enter amount"}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required={field.index === 0}
@@ -369,11 +342,6 @@ const getFieldProps = (index:number, fieldType:'name'|'amount') => {
                       </button>
                     )}
                   </div>
-                  {amountProps.value && !nameProps.value && (
-                    <p className="text-red-500 text-xs mt-1">
-                      Please enter name for this type
-                    </p>
-                  )}
                 </div>
               </div>
             );
@@ -389,19 +357,6 @@ const getFieldProps = (index:number, fieldType:'name'|'amount') => {
               <Plus size={20} />
               Add Additional Type Field
             </button>
-          )}
-
-          {/* Validation Summary */}
-          {activeTypeFields.some(field => {
-            const nameProps = getFieldProps(field.index, 'name');
-            const amountProps = getFieldProps(field.index, 'amount');
-            return (nameProps.value && !amountProps.value) || (amountProps.value && !nameProps.value);
-          }) && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-yellow-700 text-sm font-medium">
-                ⚠️ Please fill both name and amount for all types you've started.
-              </p>
-            </div>
           )}
         </div>
       </div>

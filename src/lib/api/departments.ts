@@ -5,31 +5,6 @@ import { departmentData, departmentsParams } from "@/types";
 import axios from "axios";
 import { cookies } from "next/headers";
 
-// camelCase → snake_case
-const camelToSnake = (obj: any): any => {
-  if (typeof obj !== "object" || obj === null) return obj;
-  if (Array.isArray(obj)) return obj.map(camelToSnake);
-
-  const newObj: any = {};
-  for (const key in obj) {
-    newObj[key.replace(/([A-Z])/g, "_$1").toLowerCase()] = camelToSnake(obj[key]);
-  }
-  return newObj;
-};
-
-// snake_case → camelCase
-const snakeToCamel = (obj: any): any => {
-  if (typeof obj !== "object" || obj === null) return obj;
-  if (Array.isArray(obj)) return obj.map(snakeToCamel);
-
-  const newObj: any = {};
-  for (const key in obj) {
-    const camel = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-    newObj[camel] = snakeToCamel(obj[key]);
-  }
-  return newObj;
-};
-
 /* -------------------------------------------------------
   GET ALL DEPARTMENTS
 -------------------------------------------------------- */
@@ -37,40 +12,29 @@ export const getAllDepartments = async (params: departmentsParams) => {
   const token = cookies().get("token")?.value;
   const user_id = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl}/seller/oth-opts/get.php`;
+  if (!user_id) {
+    return { totalPages: 1, totalRecords: 0, records: [] };
+  }
 
   try {
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      params: {
-        user_id,
-        limit: params.limit ?? 10,
-        page: params.page ?? 1,
-        q: params.q ?? "",
-        type: "departments", // Add this to specify departments
-      },
-    });
-
-    if (response.data.records) {
-      const rows = snakeToCamel(response.data.records);
-
-      response.data.records = rows.map((row: any) => {
-        // Remove doctor-related fields if they exist
-        delete row.doctorName;
-        delete row.specialization;
-        delete row.qualification;
-        delete row.experience;
-        delete row.regNumber;
-
-        return {
-          ...row,
-        };
-      });
-    }
+    const response = await axios.get(
+      `${apiUrl}/seller/oth-opts/get.php`,
+      {
+        params: {
+          user_id,
+          limit: params.limit ?? 10,
+          page: params.page ?? 1,
+          q: params.q ?? "",
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     return response.data;
-  } catch (err) {
-    return { success: false, records: [] };
+  } catch {
+    return { totalPages: 1, totalRecords: 0, records: [] };
   }
 };
 
@@ -78,101 +42,105 @@ export const getAllDepartments = async (params: departmentsParams) => {
   GET SINGLE DEPARTMENT
 -------------------------------------------------------- */
 export const getDepartment = async (departmentId: string) => {
-  const token = cookies().get("token")?.value;
-
-  const url = `${apiUrl}/seller/oth-opts/single.php?department_id=${departmentId}`;
-
   try {
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      params: {
-        type: "departments", // Add this to specify departments
-      },
-    });
+    const response = await axios.get(
+      `${apiUrl}/seller/oth-opts/single.php?department_id=${departmentId}`
+    );
 
-    if (!response.data.success) return false;
+    if (!response.data?.success) return false;
 
-    let data = snakeToCamel(response.data.data);
-
-    return { ...response.data, data };
-  } catch (err) {
+    return response.data;
+  } catch {
     return false;
   }
 };
 
 /* -------------------------------------------------------
-  CREATE DEPARTMENT
+  ADD DEPARTMENT
 -------------------------------------------------------- */
 export const addDepartment = async (data: departmentData) => {
   const token = cookies().get("token")?.value;
 
-  const url = `${apiUrl}/seller/oth-opts/create.php`;
-
-  const formatted = {
-    ...camelToSnake(data),
-    type: "departments", // Add this to specify departments
+  // Prepare data object
+  const finalData: any = {
+    token,
+    name: data.name,
+    slug: data.slug || null,
+    image: data.image || null,
+    meta_title: data.metaTitle || null,
+    meta_description: data.metaDescription || null,
+    type_main_name: data.typeMainName || null,
+    type_main_amount: data.typeMainAmount || null,
   };
+
+  // Add all type fields
+  for (let i = 1; i <= 25; i++) {
+    const nameKey = `type${i}Name` as keyof departmentData;
+    const amountKey = `type${i}Amount` as keyof departmentData;
+    
+    finalData[`type_${i}_name`] = data[nameKey] || null;
+    finalData[`type_${i}_amount`] = data[amountKey] || null;
+  }
+
+  console.log("SENDING DATA TO CREATE:", finalData);
 
   try {
     const response = await axios.post(
-      url,
-      {
-        ...formatted,
-        token, // MUST send this
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      `${apiUrl}/seller/oth-opts/create.php`,
+      finalData,
+      { headers: { "Content-Type": "application/json" } }
     );
 
     return response.data;
-  } catch (err: any) {
-    console.log("DEPARTMENT CREATE ERROR →", err.response?.data);
-    return err.response?.data || { success: false, message: "Create failed" };
+  } catch (error: any) {
+    console.error("Add Department Error:", error.response?.data || error.message);
+    return error.response?.data || { success: false, message: "Add failed" };
   }
 };
 
 /* -------------------------------------------------------
   UPDATE DEPARTMENT
 -------------------------------------------------------- */
-export const updateDepartment = async (departmentId: string, data: departmentData) => {
+export const updateDepartment = async (
+  departmentId: string,
+  data: departmentData
+) => {
   const token = cookies().get("token")?.value;
-  const user_id = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl}/seller/oth-opts/update.php?department_id=${departmentId}`;
-
-  const formatted = {
-    ...camelToSnake(data),
-    user_id, // needed for backend
-    type: "departments", // Add this to specify departments
+  // Prepare data object
+  const finalData: any = {
+    token,
+    name: data.name,
+    slug: data.slug || null,
+    image: data.image || null,
+    meta_title: data.metaTitle || null,
+    meta_description: data.metaDescription || null,
+    type_main_name: data.typeMainName || null,
+    type_main_amount: data.typeMainAmount || null,
   };
 
-  console.log("UPDATE API → sending data:", formatted);
+  // Add all type fields
+  for (let i = 1; i <= 25; i++) {
+    const nameKey = `type${i}Name` as keyof departmentData;
+    const amountKey = `type${i}Amount` as keyof departmentData;
+    
+    finalData[`type_${i}_name`] = data[nameKey] || null;
+    finalData[`type_${i}_amount`] = data[amountKey] || null;
+  }
+
+  console.log("SENDING DATA TO UPDATE:", finalData);
 
   try {
     const response = await axios.post(
-      url,
-      {
-        ...formatted,
-        token,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        withCredentials: true,
-      }
+      `${apiUrl}/seller/oth-opts/update.php?department_id=${departmentId}`,
+      finalData,
+      { headers: { "Content-Type": "application/json" } }
     );
 
-    console.log("UPDATE API → response:", response.data);
-
     return response.data;
-  } catch (err: any) {
-    console.log("UPDATE API → ERROR:", err.response?.data);
-    return err.response?.data || { success: false, message: "Update failed" };
+  } catch (error: any) {
+    console.error("Update Department Error:", error.response?.data || error.message);
+    return error.response?.data || { success: false, message: "Update failed" };
   }
 };
 
@@ -182,18 +150,19 @@ export const updateDepartment = async (departmentId: string, data: departmentDat
 export const deleteDepartment = async (departmentId: string) => {
   const token = cookies().get("token")?.value;
 
-  const url = `${apiUrl}/seller/oth-opts/delete.php?department_id=${departmentId}`;
-
   try {
-    const response = await axios.delete(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      params: {
-        type: "departments", // Add this to specify departments
-      },
-    });
+    const response = await axios.delete(
+      `${apiUrl}/seller/oth-opts/delete.php?department_id=${departmentId}`,
+      { 
+        headers: { 
+          Authorization: `Bearer ${token}` 
+        } 
+      }
+    );
 
     return response.data;
-  } catch (err: any) {
-    return err.response?.data || { success: false, message: "Delete failed" };
+  } catch (error: any) {
+    console.error("Delete Department Error:", error.response?.data || error.message);
+    return error.response?.data || { success: false, message: "Delete failed" };
   }
 };

@@ -125,9 +125,88 @@ export interface CategoryFormProps {
 
 //For Department
 
+
+
+export type Department = {
+  id: number;
+  departmentId: string;
+  userId: number;
+  name: string;
+  slug?: string;
+  image?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  
+  // Main type fields
+  typeMainName?: string;
+  typeMainAmount?: number | string;
+  
+  // Additional type fields (1-25)
+  type1Name?: string;
+  type1Amount?: number | string;
+  type2Name?: string;
+  type2Amount?: number | string;
+  type3Name?: string;
+  type3Amount?: number | string;
+  type4Name?: string;
+  type4Amount?: number | string;
+  type5Name?: string;
+  type5Amount?: number | string;
+  type6Name?: string;
+  type6Amount?: number | string;
+  type7Name?: string;
+  type7Amount?: number | string;
+  type8Name?: string;
+  type8Amount?: number | string;
+  type9Name?: string;
+  type9Amount?: number | string;
+  type10Name?: string;
+  type10Amount?: number | string;
+  type11Name?: string;
+  type11Amount?: number | string;
+  type12Name?: string;
+  type12Amount?: number | string;
+  type13Name?: string;
+  type13Amount?: number | string;
+  type14Name?: string;
+  type14Amount?: number | string;
+  type15Name?: string;
+  type15Amount?: number | string;
+  type16Name?: string;
+  type16Amount?: number | string;
+  type17Name?: string;
+  type17Amount?: number | string;
+  type18Name?: string;
+  type18Amount?: number | string;
+  type19Name?: string;
+  type19Amount?: number | string;
+  type20Name?: string;
+  type20Amount?: number | string;
+  type21Name?: string;
+  type21Amount?: number | string;
+  type22Name?: string;
+  type22Amount?: number | string;
+  type23Name?: string;
+  type23Amount?: number | string;
+  type24Name?: string;
+  type24Amount?: number | string;
+  type25Name?: string;
+  type25Amount?: number | string;
+  
+  createdAt: string;
+  updatedAt?: string;
+};
+
+
+export interface DepartmentFormProps {
+  departmentId: string;
+  departmentData: Department;
+  isEdit: boolean;
+  userId: string;
+}
+
 export interface DepartmentTypeFormProps {
   name: { value: string; setValue: (v: string) => void };
-  type?: { value: string; setValue: (v: string) => void }; // optional
   slug: { value: string; setValue: (v: string) => void };
   typeMainName: { value: string; setValue: (v: string) => void };
   typeMainAmount: { value: string; setValue: (v: string) => void };
@@ -181,27 +260,6 @@ export interface DepartmentTypeFormProps {
   type24Amount?: { value: string; setValue: (v: string) => void };
   type25Name?: { value: string; setValue: (v: string) => void };
   type25Amount?: { value: string; setValue: (v: string) => void };
-}
-
-
-export type Department = {
-  id: number;
-  departmentId: string;
-  userId: number;
-  name: string;
-  type?: string;
-  slug?: string;
-  image?: string;
-  metaTitle?: string;
-  metaDescription?: string;
-  createdAt: string;
-  updatedAt?: string;
-};
-export interface DepartmentFormProps {
-  departmentId: string;
-  departmentData: Department;
-  isEdit: boolean;
-  userId: string;
 }
 
 export interface ServiceFormProps {
@@ -526,64 +584,64 @@ export type departmentsParams = {
 
 export interface departmentData {
   name: string;
-  type?: string;
   slug?: string;
   image?: string;
   metaTitle?: string;
   metaDescription?: string;
   typeMainName?: string;
-  typeMainAmount?: number;
+  typeMainAmount?: number | string;
   type1Name?: string;
-  type1Amount?: number;
+  type1Amount?: number | string;
   type2Name?: string;
-  type2Amount?: number;
+  type2Amount?: number | string;
   type3Name?: string;
-  type3Amount?: number;
+  type3Amount?: number | string;
   type4Name?: string;
-  type4Amount?: number;
+  type4Amount?: number | string;
   type5Name?: string;
-  type5Amount?: number;
+  type5Amount?: number | string;
   type6Name?: string;
-  type6Amount?: number;
+  type6Amount?: number | string;
   type7Name?: string;
-  type7Amount?: number;
+  type7Amount?: number | string;
   type8Name?: string;
-  type8Amount?: number;
+  type8Amount?: number | string;
   type9Name?: string;
-  type9Amount?: number;
+  type9Amount?: number | string;
   type10Name?: string;
-  type10Amount?: number;
+  type10Amount?: number | string;
   type11Name?: string;
-  type11Amount?: number;
+  type11Amount?: number | string;
   type12Name?: string;
-  type12Amount?: number;
+  type12Amount?: number | string;
   type13Name?: string;
-  type13Amount?: number;
+  type13Amount?: number | string;
   type14Name?: string;
-  type14Amount?: number;
+  type14Amount?: number | string;
   type15Name?: string;
-  type15Amount?: number;
+  type15Amount?: number | string;
   type16Name?: string;
-  type16Amount?: number;
+  type16Amount?: number | string;
   type17Name?: string;
-  type17Amount?: number;
+  type17Amount?: number | string;
   type18Name?: string;
-  type18Amount?: number;
+  type18Amount?: number | string;
   type19Name?: string;
-  type19Amount?: number;
+  type19Amount?: number | string;
   type20Name?: string;
-  type20Amount?: number;
+  type20Amount?: number | string;
   type21Name?: string;
-  type21Amount?: number;
+  type21Amount?: number | string;
   type22Name?: string;
-  type22Amount?: number;
+  type22Amount?: number | string;
   type23Name?: string;
-  type23Amount?: number;
+  type23Amount?: number | string;
   type24Name?: string;
-  type24Amount?: number;
+  type24Amount?: number | string;
   type25Name?: string;
-  type25Amount?: number;
+  type25Amount?: number | string;
 }
+
 export type servicesParams = {
   limit?: number;
   page?: number;
