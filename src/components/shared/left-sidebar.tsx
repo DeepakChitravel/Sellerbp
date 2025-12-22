@@ -21,20 +21,21 @@ const LeftSidebar = async () => {
 const filteredLinks = SIDEBAR_LINKS.filter((item: any) => {
   const serviceType = user?.service_type_id;
 
-  // HIDE DEPARTMENT unless service type = OTHER (3)
-  if (
-    item.label === "Department" &&
-    serviceType !== 3
-  ) {
+  // hide department unless OTHER (3)
+  if (item.label === "Department" && serviceType !== 3) {
     return false;
   }
 
-  // existing service-type-aware links
+  // hide categories for HOTEL (2) and OTHER (3)
+  if (item.label === "Categories" && (serviceType === 2 || serviceType === 3)) {
+    return false;
+  }
+
+  // existing serviceType specific links stay
   if (!item.serviceType) return true;
 
   return item.serviceType === serviceType;
 });
-
 
 
   return (

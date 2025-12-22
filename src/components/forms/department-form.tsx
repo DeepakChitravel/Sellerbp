@@ -24,10 +24,22 @@ const DepartmentForm = ({
   const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [slug, setSlug] = useState("");
+  const [slugLocked, setSlugLocked] = useState(false);
 
-  const [slugLocked, setSlugLocked] = useState(false); // ⭐ avoid overwrite slug when user edits
-const [typeMainName, setTypeMainName] = useState("");
-const [typeMainAmount, setTypeMainAmount] = useState("");
+  // -------------------------
+  // store type fields 0–25
+  // -------------------------
+  const [types, setTypes] = useState(
+    Array.from({ length: 26 }, () => ({ name: "", amount: "" }))
+  );
+
+  const updateType = (index: number, key: "name" | "amount", value: string) => {
+    setTypes((prev) => {
+      const arr = [...prev];
+      arr[index] = { ...arr[index], [key]: value };
+      return arr;
+    });
+  };
 
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -43,22 +55,33 @@ const [typeMainAmount, setTypeMainAmount] = useState("");
     setMetaTitle(departmentData.metaTitle || "");
     setMetaDescription(departmentData.metaDescription || "");
     setImages(departmentData.image || "");
+
+    // Load existing type values if editing
+    const newTypes = [...types];
+
+    newTypes[0].name = departmentData.typeMainName || "";
+    newTypes[0].amount = departmentData.typeMainAmount || "";
+
+    for (let i = 1; i <= 25; i++) {
+      newTypes[i].name = departmentData[`type_${i}_name`] || "";
+      newTypes[i].amount = departmentData[`type_${i}_amount`] || "";
+    }
+
+    setTypes(newTypes);
+    
   }, [departmentData]);
 
-  // auto slug sync – but allow manual override
+  // auto slug sync
   useEffect(() => {
     if (slugLocked || !name.trim()) return;
-
     const generated = name
       .toLowerCase()
       .trim()
       .replace(/\s+/g, "-")
       .replace(/[^\w\-]+/g, "");
-
     setSlug(generated);
   }, [name, slugLocked]);
 
-  // when user enters slug manually → lock
   const handleSlugChange = (val: string) => {
     setSlugLocked(true);
     setSlug(val);
@@ -85,6 +108,7 @@ const [typeMainAmount, setTypeMainAmount] = useState("");
         image: normalizeImagePath(images),
         metaTitle,
         metaDescription,
+        types, // send all types together 
       };
 
       const resp = isEdit
@@ -108,15 +132,28 @@ const [typeMainAmount, setTypeMainAmount] = useState("");
     <>
       <div className="grid grid-cols-12 gap-5 pb-32">
         <div className="lg:col-span-7 col-span-12 grid gap-5">
-   <DepartmentInformation
-  name={{ value:name, setValue:setName }}
-  type={{ value:type, setValue:setType }}
-  slug={{ value:slug, setValue:handleSlugChange }}
+          <DepartmentInformation
+            name={{ value: name, setValue: setName }}
+            type={{ value: type, setValue: setType }}
+            slug={{ value: slug, setValue: handleSlugChange }}
 
-  typeMainName={{ value:typeMainName, setValue:setTypeMainName }}
-  typeMainAmount={{ value:typeMainAmount, setValue:setTypeMainAmount }}
-/>
+            // type main
+            typeMainName={{ value: types[0].name, setValue:(v)=>updateType(0,"name",v) }}
+            typeMainAmount={{ value: types[0].amount, setValue:(v)=>updateType(0,"amount",v) }}
 
+            {...Array.from({ length: 25 }).reduce((acc, _, i) => {
+              const index = i + 1;
+              acc[`type${index}Name`] = {
+                value: types[index]?.name ?? "",
+                setValue: (v: string) => updateType(index, "name", v)
+              };
+              acc[`type${index}Amount`] = {
+                value: types[index]?.amount ?? "",
+                setValue: (v: string) => updateType(index, "amount", v)
+              };
+              return acc;
+            }, {})}
+          />
         </div>
 
         <div className="lg:col-span-5 col-span-12 grid gap-5">
@@ -128,7 +165,7 @@ const [typeMainAmount, setTypeMainAmount] = useState("");
             metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
             metaDescription={{
               value: metaDescription,
-              setValue: setMetaDescription
+              setValue: setMetaDescription,
             }}
           />
         </div>

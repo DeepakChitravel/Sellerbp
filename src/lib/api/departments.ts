@@ -18,7 +18,7 @@ export const getAllDepartments = async (params: departmentsParams) => {
 
   try {
     const response = await axios.get(
-      `${apiUrl}/seller/oth-opts/get.php`,
+      `${apiUrl}/seller/departments/get.php`,
       {
         params: {
           user_id,
@@ -44,7 +44,7 @@ export const getAllDepartments = async (params: departmentsParams) => {
 export const getDepartment = async (departmentId: string) => {
   try {
     const response = await axios.get(
-      `${apiUrl}/seller/oth-opts/single.php?department_id=${departmentId}`
+      `${apiUrl}/seller/departments/single.php?department_id=${departmentId}`
     );
 
     if (!response.data?.success) return false;
@@ -86,7 +86,7 @@ export const addDepartment = async (data: departmentData) => {
 
   try {
     const response = await axios.post(
-      `${apiUrl}/seller/oth-opts/create.php`,
+      `${apiUrl}/seller/departments/create.php`,
       finalData,
       { headers: { "Content-Type": "application/json" } }
     );
@@ -132,7 +132,7 @@ export const updateDepartment = async (
 
   try {
     const response = await axios.post(
-      `${apiUrl}/seller/oth-opts/update.php?department_id=${departmentId}`,
+      `${apiUrl}/seller/departments/update.php?department_id=${departmentId}`,
       finalData,
       { headers: { "Content-Type": "application/json" } }
     );
@@ -152,7 +152,7 @@ export const deleteDepartment = async (departmentId: string) => {
 
   try {
     const response = await axios.delete(
-      `${apiUrl}/seller/oth-opts/delete.php?department_id=${departmentId}`,
+      `${apiUrl}/seller/departments/delete.php?department_id=${departmentId}`,
       { 
         headers: { 
           Authorization: `Bearer ${token}` 
