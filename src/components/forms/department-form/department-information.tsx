@@ -196,48 +196,57 @@ const DepartmentInformation = ({
   };
 
   // Helper to get field value and setter
-  const getFieldProps = (index: number, fieldType: 'name' | 'amount') => {
-    if (index === 0) {
-      return {
-        value: typeMainName?.value || "",
-        setValue: fieldType === 'name' ? typeMainName?.setValue : typeMainAmount?.setValue
-      };
+const getFieldProps = (index:number, fieldType:'name'|'amount') => {
+  let prop;
+
+  if (index === 0) {
+    prop = fieldType === "name" ? typeMainName : typeMainAmount;
+  } else {
+    const props:any = {
+      1:{name:type1Name, amount:type1Amount},
+      2:{name:type2Name, amount:type2Amount},
+      3:{name:type3Name, amount:type3Amount},
+      4:{name:type4Name, amount:type4Amount},
+      5:{name:type5Name, amount:type5Amount},
+      6:{name:type6Name, amount:type6Amount},
+      7:{name:type7Name, amount:type7Amount},
+      8:{name:type8Name, amount:type8Amount},
+      9:{name:type9Name, amount:type9Amount},
+      10:{name:type10Name, amount:type10Amount},
+      11:{name:type11Name, amount:type11Amount},
+      12:{name:type12Name, amount:type12Amount},
+      13:{name:type13Name, amount:type13Amount},
+      14:{name:type14Name, amount:type14Amount},
+      15:{name:type15Name, amount:type15Amount},
+      16:{name:type16Name, amount:type16Amount},
+      17:{name:type17Name, amount:type17Amount},
+      18:{name:type18Name, amount:type18Amount},
+      19:{name:type19Name, amount:type19Amount},
+      20:{name:type20Name, amount:type20Amount},
+      21:{name:type21Name, amount:type21Amount},
+      22:{name:type22Name, amount:type22Amount},
+      23:{name:type23Name, amount:type23Amount},
+      24:{name:type24Name, amount:type24Amount},
+      25:{name:type25Name, amount:type25Amount},
+    };
+
+    prop = props[index]?.[fieldType];
+  }
+
+  return {
+    value: prop?.value ?? "",
+    setValue:(v:string)=>{
+      if (prop?.setValue) {
+        prop.setValue(v);
+      } else {
+        console.warn(
+          `⚠️ missing setter for type field index=${index} field=${fieldType}`
+        );
+      }
     }
-
-    const props: any = {
-      1: { name: type1Name, amount: type1Amount },
-      2: { name: type2Name, amount: type2Amount },
-      3: { name: type3Name, amount: type3Amount },
-      4: { name: type4Name, amount: type4Amount },
-      5: { name: type5Name, amount: type5Amount },
-      6: { name: type6Name, amount: type6Amount },
-      7: { name: type7Name, amount: type7Amount },
-      8: { name: type8Name, amount: type8Amount },
-      9: { name: type9Name, amount: type9Amount },
-      10: { name: type10Name, amount: type10Amount },
-      11: { name: type11Name, amount: type11Amount },
-      12: { name: type12Name, amount: type12Amount },
-      13: { name: type13Name, amount: type13Amount },
-      14: { name: type14Name, amount: type14Amount },
-      15: { name: type15Name, amount: type15Amount },
-      16: { name: type16Name, amount: type16Amount },
-      17: { name: type17Name, amount: type17Amount },
-      18: { name: type18Name, amount: type18Amount },
-      19: { name: type19Name, amount: type19Amount },
-      20: { name: type20Name, amount: type20Amount },
-      21: { name: type21Name, amount: type21Amount },
-      22: { name: type22Name, amount: type22Amount },
-      23: { name: type23Name, amount: type23Amount },
-      24: { name: type24Name, amount: type24Amount },
-      25: { name: type25Name, amount: type25Amount }
-    };
-
-    const prop = props[index]?.[fieldType];
-    return {
-      value: prop?.value || "",
-      setValue: prop?.setValue || (() => {})
-    };
   };
+};
+
 
   const inputFields: Form = {
     name: {
@@ -324,13 +333,27 @@ const DepartmentInformation = ({
                     <input
                       type="text"
                       value={amountProps.value}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Only allow numbers and decimal point
-                        if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
-                          amountProps.setValue?.(value);
-                        }
-                      }}
+               onChange={(e) => {
+  const value = e.target.value;
+
+  console.log("💬 typing:", value);
+  console.log("🧪 index:", field.index);
+  console.log("🧪 amount setter exists:", !!amountProps.setValue);
+
+  if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+
+    try {
+      amountProps.setValue(value);
+      console.log("✔ state update ok");
+    } catch (err) {
+      console.error("❌ state update failed!", err);
+    }
+
+  } else {
+    console.warn("⚠ blocked character:", value);
+  }
+}}
+
                       placeholder={field.index === 0 ? "Enter amount (required)" : "Enter amount"}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required={field.index === 0}

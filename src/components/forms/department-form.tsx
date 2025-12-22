@@ -26,6 +26,8 @@ const DepartmentForm = ({
   const [slug, setSlug] = useState("");
 
   const [slugLocked, setSlugLocked] = useState(false); // ⭐ avoid overwrite slug when user edits
+const [typeMainName, setTypeMainName] = useState("");
+const [typeMainAmount, setTypeMainAmount] = useState("");
 
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -106,11 +108,15 @@ const DepartmentForm = ({
     <>
       <div className="grid grid-cols-12 gap-5 pb-32">
         <div className="lg:col-span-7 col-span-12 grid gap-5">
-          <DepartmentInformation
-            name={{ value: name, setValue: setName }}
-            type={{ value: type, setValue: setType }}
-            slug={{ value: slug, setValue: handleSlugChange }} // ⭐ override here
-          />
+   <DepartmentInformation
+  name={{ value:name, setValue:setName }}
+  type={{ value:type, setValue:setType }}
+  slug={{ value:slug, setValue:handleSlugChange }}
+
+  typeMainName={{ value:typeMainName, setValue:setTypeMainName }}
+  typeMainAmount={{ value:typeMainAmount, setValue:setTypeMainAmount }}
+/>
+
         </div>
 
         <div className="lg:col-span-5 col-span-12 grid gap-5">
