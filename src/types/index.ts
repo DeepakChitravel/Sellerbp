@@ -125,6 +125,65 @@ export interface CategoryFormProps {
 
 //For Department
 
+export interface DepartmentTypeFormProps {
+  name: { value: string; setValue: (v: string) => void };
+  type?: { value: string; setValue: (v: string) => void }; // optional
+  slug: { value: string; setValue: (v: string) => void };
+  typeMainName: { value: string; setValue: (v: string) => void };
+  typeMainAmount: { value: string; setValue: (v: string) => void };
+  type1Name?: { value: string; setValue: (v: string) => void };
+  type1Amount?: { value: string; setValue: (v: string) => void };
+  type2Name?: { value: string; setValue: (v: string) => void };
+  type2Amount?: { value: string; setValue: (v: string) => void };
+  type3Name?: { value: string; setValue: (v: string) => void };
+  type3Amount?: { value: string; setValue: (v: string) => void };
+  type4Name?: { value: string; setValue: (v: string) => void };
+  type4Amount?: { value: string; setValue: (v: string) => void };
+  type5Name?: { value: string; setValue: (v: string) => void };
+  type5Amount?: { value: string; setValue: (v: string) => void };
+  type6Name?: { value: string; setValue: (v: string) => void };
+  type6Amount?: { value: string; setValue: (v: string) => void };
+  type7Name?: { value: string; setValue: (v: string) => void };
+  type7Amount?: { value: string; setValue: (v: string) => void };
+  type8Name?: { value: string; setValue: (v: string) => void };
+  type8Amount?: { value: string; setValue: (v: string) => void };
+  type9Name?: { value: string; setValue: (v: string) => void };
+  type9Amount?: { value: string; setValue: (v: string) => void };
+  type10Name?: { value: string; setValue: (v: string) => void };
+  type10Amount?: { value: string; setValue: (v: string) => void };
+  type11Name?: { value: string; setValue: (v: string) => void };
+  type11Amount?: { value: string; setValue: (v: string) => void };
+  type12Name?: { value: string; setValue: (v: string) => void };
+  type12Amount?: { value: string; setValue: (v: string) => void };
+  type13Name?: { value: string; setValue: (v: string) => void };
+  type13Amount?: { value: string; setValue: (v: string) => void };
+  type14Name?: { value: string; setValue: (v: string) => void };
+  type14Amount?: { value: string; setValue: (v: string) => void };
+  type15Name?: { value: string; setValue: (v: string) => void };
+  type15Amount?: { value: string; setValue: (v: string) => void };
+  type16Name?: { value: string; setValue: (v: string) => void };
+  type16Amount?: { value: string; setValue: (v: string) => void };
+  type17Name?: { value: string; setValue: (v: string) => void };
+  type17Amount?: { value: string; setValue: (v: string) => void };
+  type18Name?: { value: string; setValue: (v: string) => void };
+  type18Amount?: { value: string; setValue: (v: string) => void };
+  type19Name?: { value: string; setValue: (v: string) => void };
+  type19Amount?: { value: string; setValue: (v: string) => void };
+  type20Name?: { value: string; setValue: (v: string) => void };
+  type20Amount?: { value: string; setValue: (v: string) => void };
+  type21Name?: { value: string; setValue: (v: string) => void };
+  type21Amount?: { value: string; setValue: (v: string) => void };
+  type22Name?: { value: string; setValue: (v: string) => void };
+  type22Amount?: { value: string; setValue: (v: string) => void };
+  type23Name?: { value: string; setValue: (v: string) => void };
+  type23Amount?: { value: string; setValue: (v: string) => void };
+  type24Name?: { value: string; setValue: (v: string) => void };
+  type24Amount?: { value: string; setValue: (v: string) => void };
+  type25Name?: { value: string; setValue: (v: string) => void };
+  type25Amount?: { value: string; setValue: (v: string) => void };
+}
+
+
 export type Department = {
   id: number;
   departmentId: string;
@@ -465,15 +524,66 @@ export type departmentsParams = {
   q?: string;
 };
 
-export type departmentData = {
+export interface departmentData {
   name: string;
   type?: string;
   slug?: string;
   image?: string;
   metaTitle?: string;
   metaDescription?: string;
-};
-
+  typeMainName?: string;
+  typeMainAmount?: number;
+  type1Name?: string;
+  type1Amount?: number;
+  type2Name?: string;
+  type2Amount?: number;
+  type3Name?: string;
+  type3Amount?: number;
+  type4Name?: string;
+  type4Amount?: number;
+  type5Name?: string;
+  type5Amount?: number;
+  type6Name?: string;
+  type6Amount?: number;
+  type7Name?: string;
+  type7Amount?: number;
+  type8Name?: string;
+  type8Amount?: number;
+  type9Name?: string;
+  type9Amount?: number;
+  type10Name?: string;
+  type10Amount?: number;
+  type11Name?: string;
+  type11Amount?: number;
+  type12Name?: string;
+  type12Amount?: number;
+  type13Name?: string;
+  type13Amount?: number;
+  type14Name?: string;
+  type14Amount?: number;
+  type15Name?: string;
+  type15Amount?: number;
+  type16Name?: string;
+  type16Amount?: number;
+  type17Name?: string;
+  type17Amount?: number;
+  type18Name?: string;
+  type18Amount?: number;
+  type19Name?: string;
+  type19Amount?: number;
+  type20Name?: string;
+  type20Amount?: number;
+  type21Name?: string;
+  type21Amount?: number;
+  type22Name?: string;
+  type22Amount?: number;
+  type23Name?: string;
+  type23Amount?: number;
+  type24Name?: string;
+  type24Amount?: number;
+  type25Name?: string;
+  type25Amount?: number;
+}
 export type servicesParams = {
   limit?: number;
   page?: number;
