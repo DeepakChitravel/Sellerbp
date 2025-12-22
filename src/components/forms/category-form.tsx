@@ -13,12 +13,7 @@ import DoctorInformation from "./category-forms/doctor-information";
 import { CategoryFormProps } from "@/types";
 import { addDoctor, updateDoctor } from "@/lib/api/doctors";
 
-const CategoryForm = ({
-  categoryId,
-  categoryData,
-  isEdit,
-  userId,
-}: CategoryFormProps) => {
+const CategoryForm = ({ categoryId, categoryData, isEdit, userId }: CategoryFormProps) => {
 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +33,7 @@ const CategoryForm = ({
   const [experience, setExperience] = useState("");
   const [regNumber, setRegNumber] = useState("");
 
-  // populate values on edit
+  // fill when editing
   useEffect(() => {
     if (!categoryData) return;
 
@@ -58,7 +53,7 @@ const CategoryForm = ({
   }, [categoryData]);
 
 
-  // auto slug generator unless locked
+  // slug auto update
   useEffect(() => {
     if (slugLocked || !name.trim()) return;
 
@@ -71,6 +66,7 @@ const CategoryForm = ({
     setSlug(generated);
   }, [name, slugLocked]);
 
+
   const handleSlugChange = (val: string) => {
     setSlugLocked(true);
     setSlug(val);
@@ -81,57 +77,86 @@ const CategoryForm = ({
     setIsLoading(true);
 
     try {
+      /* ----------------- VALIDATION ------------------ */
 
-      // 1️⃣ Save category first
+      if (!name.trim()) {
+        toast.error("Category name required");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!doctorName.trim()) {
+        toast.error("Doctor name required");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!specialization.trim()) {
+        toast.error("Doctor specialization required");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!qualification.trim()) {
+        toast.error("Doctor qualification required");
+        setIsLoading(false);
+        return;
+      }
+
+
+
+      /* ---------- 1️⃣ Save Category first ---------- */
+
       const categoryPayload = {
         name,
         slug,
         metaTitle,
         metaDescription,
       };
-console.log("sending category payload:", categoryPayload);
 
       const categoryResp = isEdit
         ? await updateCategory(categoryId, categoryPayload)
         : await addCategory(categoryPayload);
 
       if (!categoryResp.success) {
-        toast.error("Category save failed");
+        toast.error("Failed saving category");
         setIsLoading(false);
         return;
       }
 
-const newCategoryId = isEdit ? categoryId : categoryResp.category_id;
+const newCategoryId = isEdit
+  ? categoryId                // already numeric
+  : categoryResp.id;          // numeric from backend
 
-
-      // 2️⃣ Save doctor second — only if doctor name exists
-      if (doctorName.trim()) {
+      /* ---------- 2️⃣ Save doctor second ---------- */
 
 const doctorPayload = {
+  user_id: userId,         // ⭐ MUST BE PRESENT
   doctor_name: doctorName,
   specialization,
   qualification,
   experience,
   reg_number: regNumber,
-doctor_image: doctorImage,  // FIX
+  doctor_image: doctorImage,
   category_id: newCategoryId,
 };
-
-console.log("📌 doctorPayload:", doctorPayload);
 
 
 const doctorResp = isEdit
   ? await updateDoctor(categoryId, doctorPayload)
   : await addDoctor(doctorPayload);
 
-        if (!doctorResp.success) {
-          toast.error("Doctor create failed");
-          setIsLoading(false);
-          return;
-        }
-      }
+console.log("🔥 doctor response:", doctorResp);   // add
 
-      toast.success("Saved successfully");
+if (!doctorResp.success) {
+  console.error("❌ doctor save failed:", doctorResp.error || doctorResp.message);
+  toast.error(doctorResp.error || "Doctor save failed");
+  setIsLoading(false);
+  return;
+}
+
+
+      toast.success("Category + Doctor saved");
       router.replace("/categories");
       router.refresh();
 
@@ -143,53 +168,51 @@ const doctorResp = isEdit
   };
 
 
- return (
-  <>
-    <div className="grid grid-cols-12 gap-5 pb-32">
+  return (
+    <>
+      <div className="grid grid-cols-12 gap-5 pb-32">
 
-      {/* LEFT SIDE */}
-      <div className="lg:col-span-7 col-span-12 grid gap-5">
+        {/* LEFT */}
+        <div className="lg:col-span-7 col-span-12 grid gap-5">
 
-        <CategoryInformation
-          name={{ value: name, setValue: setName }}
-          slug={{ value: slug, setValue: handleSlugChange }}
-        />
+          <CategoryInformation
+            name={{ value: name, setValue: setName }}
+            slug={{ value: slug, setValue: handleSlugChange }}
+          />
 
-        <DoctorInformation
-          doctorName={{ value: doctorName, setValue: setDoctorName }}
-          specialization={{ value: specialization, setValue: setSpecialization }}
-          qualification={{ value: qualification, setValue: setQualification }}
-          experience={{ value: experience, setValue: setExperience }}
-          regNumber={{ value: regNumber, setValue: setRegNumber }}
-        />
-        
+          <DoctorInformation
+            doctorName={{ value: doctorName, setValue: setDoctorName }}
+            specialization={{ value: specialization, setValue: setSpecialization }}
+            qualification={{ value: qualification, setValue: setQualification }}
+            experience={{ value: experience, setValue: setExperience }}
+            regNumber={{ value: regNumber, setValue: setRegNumber }}
+          />
+
+        </div>
+
+        {/* RIGHT */}
+        <div className="lg:col-span-5 col-span-12 grid gap-5">
+
+          <DoctorImage
+            doctorImage={{ value: doctorImage, setValue: setDoctorImage }}
+            userId={userId}
+          />
+
+          <CategorySEO
+            metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
+            metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
+          />
+
+        </div>
       </div>
 
-      {/* RIGHT SIDE */}
-      <div className="lg:col-span-5 col-span-12 grid gap-5">
-
-        {/* doctor image moved here */}
-        <DoctorImage
-          doctorImage={{ value: doctorImage, setValue: setDoctorImage }}
-          userId={userId}
-        />
-
-        <CategorySEO
-          metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
-          metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
-        />
-
-      </div>
-    </div>
-
-    <Sticky>
-      <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
-        Save
-      </Button>
-    </Sticky>
-  </>
-);
-
+      <Sticky>
+        <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
+          Save
+        </Button>
+      </Sticky>
+    </>
+  );
 };
 
 export default CategoryForm;

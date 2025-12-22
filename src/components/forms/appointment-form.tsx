@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import ServiceInformation from "./appointment-forms/appointment-information";
-import ServiceImage from "./appointment-forms/service-image";
 import ServiceSEO from "./appointment-forms/service-seo";
 import Sticky from "../sticky";
 import { Button } from "../ui/button";
@@ -11,10 +10,19 @@ import { addService, updateService } from "@/lib/api/services";
 import { handleToast } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ServiceFormProps } from "@/types";
-import AdditionalImages from "./appointment-forms/additional-images";
 import ServiceGst from "./appointment-forms/serviceGst";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import WeeklyAppointment from "./appointment-forms/weekly-appointment";
+import DoctorLocation from "./appointment-forms/doctor-location";
+
+const defaultLocation = {
+  country: "",
+  state: "",
+  city: "",
+  pincode: "",
+  address: "",
+  mapLink: "",
+};
 
 const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const router = useRouter();
@@ -22,17 +30,26 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [showGst, setShowGst] = useState(false);
-const [specialization, setSpecialization] = useState("");
-const [qualification, setQualification] = useState("");
-const [experience, setExperience] = useState("");
-const [doctorImage, setDoctorImage] = useState("");
 
-  // fields
+  const [specialization, setSpecialization] = useState("");
+  const [qualification, setQualification] = useState("");
+  const [experience, setExperience] = useState("");
+  const [doctorImage, setDoctorImage] = useState("");
+
+  // 👇 FIX - always use object not null
+  const [doctorLocation, setDoctorLocation] = useState(
+    serviceData?.doctorLocation || defaultLocation
+  );
+
   const [name, setName] = useState(serviceData?.name || "");
   const [slug, setSlug] = useState(serviceData?.slug || "");
   const [amount, setAmount] = useState(serviceData?.amount || "");
-  const [previousAmount, setPreviousAmount] = useState(serviceData?.previousAmount || "");
-  const [description, setDescription] = useState(serviceData?.description || "");
+  const [previousAmount, setPreviousAmount] = useState(
+    serviceData?.previousAmount || ""
+  );
+  const [description, setDescription] = useState(
+    serviceData?.description || ""
+  );
   const [weeklySchedule, setWeeklySchedule] = useState({});
 
   const [categoryId, setCategoryId] = useState<string | undefined>(
@@ -58,11 +75,13 @@ const [doctorImage, setDoctorImage] = useState("");
   const [additionalImages, setAdditionalImages] = useState<string[]>([]);
 
   const [metaTitle, setMetaTitle] = useState(serviceData?.metaTitle || "");
-  const [metaDescription, setMetaDescription] = useState(serviceData?.metaDescription || "");
+  const [metaDescription, setMetaDescription] = useState(
+    serviceData?.metaDescription || ""
+  );
 
   useEffect(() => {
     if (serviceData?.additionalImages) {
-      setAdditionalImages(serviceData.additionalImages.map(i => i.image));
+      setAdditionalImages(serviceData.additionalImages.map((i) => i.image));
     }
   }, [serviceData]);
 
@@ -91,7 +110,8 @@ const [doctorImage, setDoctorImage] = useState("");
         metaDescription,
         status: status ? 1 : 0,
         additionalImages,
-        weeklySchedule, // include weekly schedule 👍
+        weeklySchedule,
+        doctorLocation, // ⭐🔥 now safe
       };
 
       const response = !isEdit
@@ -110,70 +130,66 @@ const [doctorImage, setDoctorImage] = useState("");
     setIsLoading(false);
   };
 
-return (
-  <>
-  <div className="grid grid-cols-12 gap-5 pb-32">
+  return (
+    <>
+      <div className="grid grid-cols-12 gap-5 pb-32">
+        {/* LEFT PANEL */}
+        <div className="lg:col-span-7 col-span-12 grid gap-5">
+          <ServiceInformation
+            name={{ value: name, setValue: setName }}
+            slug={{ value: slug, setValue: setSlug }}
+            amount={{ value: amount, setValue: setAmount }}
+            categoryId={{ value: categoryId, setValue: setCategoryId }}
+            description={{ value: description, setValue: setDescription }}
+            timeSlotInterval={{
+              value: timeSlotInterval,
+              setValue: setTimeSlotInterval,
+            }}
+            intervalType={{ value: intervalType, setValue: setIntervalType }}
+            status={{ value: status, setValue: setStatus }}
+            specialization={{ value: specialization, setValue: setSpecialization }}
+            qualification={{ value: qualification, setValue: setQualification }}
+            experience={{ value: experience, setValue: setExperience }}
+            doctorImage={{ value: doctorImage, setValue: setDoctorImage }}
+          />
 
-      {/* LEFT PANEL */}
-      <div className="lg:col-span-7 col-span-12 grid gap-5">
+          {/* WEEKLY SCHEDULE */}
+          <WeeklyAppointment
+            value={weeklySchedule}
+            onChange={setWeeklySchedule}
+          />
+        </div>
 
-   <ServiceInformation
-    name={{value:name,setValue:setName}}
-    slug={{value:slug,setValue:setSlug}}
-    amount={{value:amount,setValue:setAmount}}
-    categoryId={{value:categoryId,setValue:setCategoryId}}
-    description={{value:description,setValue:setDescription}}
-    timeSlotInterval={{value:timeSlotInterval,setValue:setTimeSlotInterval}}
-    intervalType={{value:intervalType,setValue:setIntervalType}}
-    status={{value:status,setValue:setStatus}}
+        {/* RIGHT PANEL */}
+        <div className="lg:col-span-5 col-span-12 grid gap-5">
+         
 
-    specialization={{value:specialization,setValue:setSpecialization}}
-    qualification={{value:qualification,setValue:setQualification}}
-    experience={{value:experience,setValue:setExperience}}
-    doctorImage={{value:doctorImage,setValue:setDoctorImage}}
-/>
+          {showGst && (
+            <ServiceGst
+              gstPercentage={{ value: gstPercentage, setValue: setGstPercentage }}
+            />
+          )}
 
+          <ServiceSEO
+            metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
+            metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
+          />
 
-        {/* WEEKLY SCHEDULE HERE */}
-        <WeeklyAppointment
-          value={weeklySchedule}
-          onChange={setWeeklySchedule}
-        />
+          {/* ⭐ NEW component */}
+          <DoctorLocation
+            value={doctorLocation}
+            setValue={setDoctorLocation}
+          />
+        </div>
       </div>
 
-      {/* RIGHT PANEL */}
-      <div className="lg:col-span-5 col-span-12 grid gap-5">
-
-        {/* SEO moved to right */}
-     
-
-        <ServiceImage
-          images={{ value: image, setValue: setImage }}
-        />
-
-  
-
-        <ServiceGst
-          gstPercentage={{ value: gstPercentage, setValue: setGstPercentage }}
-        />
-
-           <ServiceSEO
-          metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
-          metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
-        />
-
-      </div>
-
-    </div>
-
-    <Sticky>
-      <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
-        Save
-      </Button>
-    </Sticky>
-  </>
-);
-
+      <Sticky>
+        <Button onClick={handleSave} disabled={isLoading} isLoading={isLoading}>
+          Save
+        </Button>
+      </Sticky>
+    </>
+  );
 };
 
 export default ServiceForm;

@@ -17,13 +17,25 @@ const LeftSidebar = async () => {
   const user = await currentUser();
 
   // 🔐 FILTER SIDEBAR BASED ON SERVICE TYPE
-  const filteredLinks = SIDEBAR_LINKS.filter((item: any) => {
-    // always show normal links
-    if (!item.serviceType) return true;
+// updated filtering logic
+const filteredLinks = SIDEBAR_LINKS.filter((item: any) => {
+  const serviceType = user?.service_type_id;
 
-    // show only matching service type
-    return item.serviceType === user?.service_type_id;
-  });
+  // HIDE DEPARTMENT unless service type = OTHER (3)
+  if (
+    item.label === "Department" &&
+    serviceType !== 3
+  ) {
+    return false;
+  }
+
+  // existing service-type-aware links
+  if (!item.serviceType) return true;
+
+  return item.serviceType === serviceType;
+});
+
+
 
   return (
     <div className="bg-secondary text-white py-5 2xl:px-5 h-full flex justify-between flex-col items-center 2xl:items-stretch">
