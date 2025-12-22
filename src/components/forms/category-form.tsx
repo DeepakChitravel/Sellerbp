@@ -8,10 +8,10 @@ import Sticky from "../sticky";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { addCategory, updateCategory } from "@/lib/api/categories";
-import { addDoctor } from "@/lib/api/doctors";   // ⭐ important import
 import { useRouter } from "next/navigation";
 import DoctorInformation from "./category-forms/doctor-information";
 import { CategoryFormProps } from "@/types";
+import { addDoctor, updateDoctor } from "@/lib/api/doctors";
 
 const CategoryForm = ({
   categoryId,
@@ -120,7 +120,9 @@ doctor_image: doctorImage,  // FIX
 console.log("📌 doctorPayload:", doctorPayload);
 
 
-        const doctorResp = await addDoctor(doctorPayload);
+const doctorResp = isEdit
+  ? await updateDoctor(categoryId, doctorPayload)
+  : await addDoctor(doctorPayload);
 
         if (!doctorResp.success) {
           toast.error("Doctor create failed");

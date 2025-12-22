@@ -36,3 +36,30 @@ export const addDoctor = async (data: any) => {
     return { success: false, message: "Doctor create failed" };
   }
 };
+export const updateDoctor = async (categoryId: string, data: any) => {
+  const token = cookies().get("token")?.value;
+
+  const formatted = camelToSnake(data);
+
+  const url = `${apiUrl}/seller/doctors/update.php`; // REMOVE QUERY PARAM
+
+  try {
+    const response = await axios.post(
+      url,
+      {
+        ...formatted,
+        category_id: categoryId, // REQUIRED FOR PHP INPUT
+        token,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (err:any) {
+    return err.response?.data || { success:false };
+  }
+};

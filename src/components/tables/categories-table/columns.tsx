@@ -147,37 +147,34 @@ export const columns: ColumnDef<Category>[] = [
     cell: ({ row }) => row.index + 1,
   },
 
-  {
-    header: "Image",
-    cell: ({ row }) => {
-      const data = row.original;
-      const img = data.image;
+{
+  header: "Image",
+  cell: ({ row }) => {
+    const img = row.original.doctorDetails?.doctorImage;
 
-      const isValid =
-        img &&
-        typeof img === "string" &&
-        img.includes(".");
+    const isValid = img && typeof img === "string" && img.includes(".");
 
-      if (!isValid) {
-        return (
-          <div className="w-[50px] h-[50px] rounded bg-gray-200 border flex items-center justify-center text-xs text-gray-500">
-            N/A
-          </div>
-        );
-      }
-
+    if (!isValid) {
       return (
-        <Image
-          src={img}
-          alt={data.name}
-          width={50}
-          height={50}
-          className="rounded object-cover border"
-          unoptimized
-        />
+        <div className="w-[50px] h-[50px] rounded bg-gray-200 border flex items-center justify-center text-xs text-gray-500">
+          N/A
+        </div>
       );
-    },
+    }
+
+    return (
+      <Image
+        src={img}
+        alt={row.original.doctorDetails?.doctorName || "doctor"}
+        width={50}
+        height={50}
+        className="rounded object-cover border"
+        unoptimized
+      />
+    );
   },
+},
+
 
   {
     header: "Category Name",
