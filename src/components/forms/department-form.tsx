@@ -26,9 +26,9 @@ const DepartmentForm = ({
   const [slug, setSlug] = useState("");
   const [slugLocked, setSlugLocked] = useState(false);
 
-  // -------------------------
-  // store type fields 0–25
-  // -------------------------
+  // ------------------------------------
+  // STORE TYPE FIELDS (0 - 25)
+  // ------------------------------------
   const [types, setTypes] = useState(
     Array.from({ length: 26 }, () => ({ name: "", amount: "" }))
   );
@@ -45,7 +45,9 @@ const DepartmentForm = ({
   const [metaDescription, setMetaDescription] = useState("");
   const [images, setImages] = useState("");
 
-  // load existing values when editing
+  // ----------------------------------------------------------
+  // LOAD FOR EDIT MODE
+  // ----------------------------------------------------------
   useEffect(() => {
     if (!departmentData) return;
 
@@ -56,22 +58,24 @@ const DepartmentForm = ({
     setMetaDescription(departmentData.metaDescription || "");
     setImages(departmentData.image || "");
 
-    // Load existing type values if editing
     const newTypes = [...types];
 
+    // MAIN TYPE
     newTypes[0].name = departmentData.typeMainName || "";
     newTypes[0].amount = departmentData.typeMainAmount || "";
 
+    // 1–25 extra types
     for (let i = 1; i <= 25; i++) {
       newTypes[i].name = departmentData[`type_${i}_name`] || "";
       newTypes[i].amount = departmentData[`type_${i}_amount`] || "";
     }
 
     setTypes(newTypes);
-    
   }, [departmentData]);
 
-  // auto slug sync
+  // ------------------------------------
+  // AUTO SLUG
+  // ------------------------------------
   useEffect(() => {
     if (slugLocked || !name.trim()) return;
     const generated = name
@@ -97,19 +101,34 @@ const DepartmentForm = ({
     return img;
   };
 
+  // ==================================================
+  // SAVE BUTTON
+  // ==================================================
   const handleSave = async () => {
     setIsLoading(true);
 
     try {
-      const payload = {
+      // -------------------------------
+      // BUILD FINAL PAYLOAD FOR BACKEND
+      // -------------------------------
+      const payload: any = {
         name,
         type,
         slug,
         image: normalizeImagePath(images),
         metaTitle,
         metaDescription,
-        types, // send all types together 
+
+        // ⭐ MAIN TYPE
+        typeMainName: types[0].name,
+        typeMainAmount: types[0].amount,
       };
+
+      // ⭐ ADD TYPE 1 → 25
+      for (let i = 1; i <= 25; i++) {
+        payload[`type${i}Name`] = types[i].name;
+        payload[`type${i}Amount`] = types[i].amount;
+      }
 
       const resp = isEdit
         ? await updateDepartment(departmentId, payload)
@@ -136,20 +155,23 @@ const DepartmentForm = ({
             name={{ value: name, setValue: setName }}
             type={{ value: type, setValue: setType }}
             slug={{ value: slug, setValue: handleSlugChange }}
-
-            // type main
-            typeMainName={{ value: types[0].name, setValue:(v)=>updateType(0,"name",v) }}
-            typeMainAmount={{ value: types[0].amount, setValue:(v)=>updateType(0,"amount",v) }}
-
+            typeMainName={{
+              value: types[0].name,
+              setValue: (v) => updateType(0, "name", v),
+            }}
+            typeMainAmount={{
+              value: types[0].amount,
+              setValue: (v) => updateType(0, "amount", v),
+            }}
             {...Array.from({ length: 25 }).reduce((acc, _, i) => {
               const index = i + 1;
               acc[`type${index}Name`] = {
                 value: types[index]?.name ?? "",
-                setValue: (v: string) => updateType(index, "name", v)
+                setValue: (v: string) => updateType(index, "name", v),
               };
               acc[`type${index}Amount`] = {
                 value: types[index]?.amount ?? "",
-                setValue: (v: string) => updateType(index, "amount", v)
+                setValue: (v: string) => updateType(index, "amount", v),
               };
               return acc;
             }, {})}

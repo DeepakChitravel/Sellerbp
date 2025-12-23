@@ -206,7 +206,7 @@ export const columns: ColumnDef<Department>[] = [
   {
     header: "Action",
     cell: ({ row }) => (
-      <Action departmentId={row.original.departmentId} />
+      <Action departmentId={row.original.department_id} />
     ),
   },
 ];
