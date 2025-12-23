@@ -82,3 +82,28 @@ export const getAllDoctors = async (userId:number) => {
     return [];
   }
 };
+export const getDoctorByCategory = async (categoryId: number, userId: number) => {
+  const token = cookies().get("token")?.value;
+
+  console.log("📨 SENDING TO DOCTOR GET API:", {
+    category_id: categoryId,
+    user_id: userId,
+    token: token ? "present" : "missing"
+  });
+
+  try {
+    const res = await axios.post(
+      `${apiUrl}/seller/doctors/get.php`,
+      { category_id: categoryId, user_id: userId, token },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    console.log("📩 DOCTOR API RAW RESPONSE:", res.data);
+
+    return res.data?.data || null;
+  } catch (err: any) {
+    console.log("❌ DOCTOR API ERROR:", err.response?.data);
+    return null;
+  }
+};
+

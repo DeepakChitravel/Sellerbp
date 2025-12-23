@@ -1,11 +1,10 @@
-import ServiceForm from "@/components/forms/appointment-form";
+import Doctor_Schedule from "@/components/forms/doctor-form";
 import { getService } from "@/lib/api/services";
 import { notFound } from "next/navigation";
 
 const Service = async ({ params: { id } }: { params: { id: string } }) => {
   let service = null;
 
-  // Only fetch when editing
   if (id !== "add") {
     service = await getService(id);
 
@@ -17,12 +16,12 @@ const Service = async ({ params: { id } }: { params: { id: string } }) => {
   return (
     <>
       <h1 className="text-2xl font-bold mb-5">
-        {id === "add" ? "Add" : "Edit"} Appointments
+        {id === "add" ? "Add" : "Edit"} Doctor Schedule
       </h1>
 
-      <ServiceForm
+      <Doctor_Schedule
         serviceId={id}
-        serviceData={id === "add" ? null : service.data}   // 🔥 handle add/edit correctly
+        serviceData={id === "add" ? null : service.data}
         isEdit={id !== "add"}
       />
     </>

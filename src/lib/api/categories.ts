@@ -131,10 +131,6 @@ export const addCategory = async (data) => {
   }
 };
 
-
-
-
-
   /* -------------------------------------------------------
     UPDATE CATEGORY
   -------------------------------------------------------- */
@@ -142,14 +138,14 @@ export const updateCategory = async (categoryId: string, data: categoryData) => 
   const token = cookies().get("token")?.value;
   const user_id = cookies().get("user_id")?.value;
 
-  const url = `${apiUrl}/seller/categories/update.php?category_id=${categoryId}`;
+  // ⭐ FIXED → use id= not category_id=
+  const url = `${apiUrl}/seller/categories/update.php?id=${categoryId}`;
 
   const formatted = {
     ...camelToSnake(data),
-    user_id, // needed for backend
+    user_id,
   };
 
-  // 🔥 ADD THIS (1)
   console.log("UPDATE API → sending data:", formatted);
 
   try {
@@ -168,7 +164,6 @@ export const updateCategory = async (categoryId: string, data: categoryData) => 
       }
     );
 
-    // 🔥 ADD THIS (2)
     console.log("UPDATE API → response:", response.data);
 
     return response.data;
@@ -177,6 +172,7 @@ export const updateCategory = async (categoryId: string, data: categoryData) => 
     return err.response?.data || { success: false, message: "Update failed" };
   }
 };
+
 
 
 

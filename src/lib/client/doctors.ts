@@ -2,11 +2,10 @@
 import axios from "axios";
 
 const apiUrl = "http://localhost/managerbp/public";
-
 export const fetchDoctorsClient = async (userId: number) => {
   try {
     const res = await axios.post(
-      `${apiUrl}/seller/doctors/get.php`,
+      `${apiUrl}/seller/doctors/list.php`,
       { user_id: userId },
       { headers: { "Content-Type": "application/json" } }
     );
@@ -17,3 +16,4 @@ export const fetchDoctorsClient = async (userId: number) => {
     return [];
   }
 };
+

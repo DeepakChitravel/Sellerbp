@@ -34,13 +34,6 @@ export default function DoctorLocation({ value, setValue }: Props) {
 
     const stateList = State.getStatesOfCountry(selectedCountry);
     setStates(stateList);
-
-    setValue({
-      ...value,
-      state: "",
-      city: "",
-    });
-    setCities([]);
   }, [selectedCountry]);
 
   /* Load cities */
@@ -49,29 +42,22 @@ export default function DoctorLocation({ value, setValue }: Props) {
 
     const cityList = City.getCitiesOfState(selectedCountry, selectedState);
     setCities(cityList);
-
-    setValue({
-      ...value,
-      city: "",
-    });
   }, [selectedState]);
 
   /* Auto map link */
   useEffect(() => {
     if (!address && !selectedCity && !pincode) {
-      setValue({ ...value, mapLink: "" });
+      setValue((prev: any) => ({ ...prev, mapLink: "" }));
       return;
     }
 
     const q = encodeURIComponent(
       `${address} ${selectedCity || ""} ${pincode || ""}`
     );
-
     const auto = `https://www.google.com/maps?q=${q}&output=embed`;
 
-    setValue({ ...value, mapLink: auto });
+    setValue((prev: any) => ({ ...prev, mapLink: auto }));
   }, [address, selectedCity, pincode]);
-
 
   return (
     <div className="bg-white p-6 rounded-xl border">
@@ -83,7 +69,9 @@ export default function DoctorLocation({ value, setValue }: Props) {
           <label className="text-sm font-medium">Country</label>
           <Select
             value={selectedCountry}
-            onValueChange={(val) => setValue({ ...value, country: val })}
+            onValueChange={(val) =>
+              setValue((prev: any) => ({ ...prev, country: val, state: "", city: "" }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select Country" />
@@ -104,23 +92,19 @@ export default function DoctorLocation({ value, setValue }: Props) {
           <Select
             value={selectedState}
             disabled={!selectedCountry}
-            onValueChange={(val) => setValue({ ...value, state: val })}
+            onValueChange={(val) =>
+              setValue((prev: any) => ({ ...prev, state: val, city: "" }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select State" />
             </SelectTrigger>
             <SelectContent>
-              {states.length ? (
-                states.map((s) => (
-                  <SelectItem key={s.isoCode} value={s.isoCode}>
-                    {s.name}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem disabled value="none">
-                  No states
+              {states.map((s) => (
+                <SelectItem key={s.isoCode} value={s.isoCode}>
+                  {s.name}
                 </SelectItem>
-              )}
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -131,23 +115,19 @@ export default function DoctorLocation({ value, setValue }: Props) {
           <Select
             value={selectedCity}
             disabled={!selectedState}
-            onValueChange={(val) => setValue({ ...value, city: val })}
+            onValueChange={(val) =>
+              setValue((prev: any) => ({ ...prev, city: val }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select City" />
             </SelectTrigger>
             <SelectContent>
-              {cities.length ? (
-                cities.map((c) => (
-                  <SelectItem key={c.name} value={c.name}>
-                    {c.name}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem disabled value="none">
-                  No cities
+              {cities.map((c) => (
+                <SelectItem key={c.name} value={c.name}>
+                  {c.name}
                 </SelectItem>
-              )}
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -160,7 +140,7 @@ export default function DoctorLocation({ value, setValue }: Props) {
           <Input
             value={pincode}
             onChange={(e) =>
-              setValue({ ...value, pincode: e.target.value })
+              setValue((prev: any) => ({ ...prev, pincode: e.target.value }))
             }
           />
         </div>
@@ -172,7 +152,7 @@ export default function DoctorLocation({ value, setValue }: Props) {
             value={address}
             placeholder="Street, landmark, area"
             onChange={(e) =>
-              setValue({ ...value, address: e.target.value })
+              setValue((prev: any) => ({ ...prev, address: e.target.value }))
             }
           />
         </div>

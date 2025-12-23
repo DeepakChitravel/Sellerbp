@@ -104,8 +104,7 @@ const CategoryForm = ({ categoryId, categoryData, isEdit, userId }: CategoryForm
       }
 
 
-
-      /* ---------- 1️⃣ Save Category first ---------- */
+      /* ---------- 1️⃣ Save Category ---------- */
 
       const categoryPayload = {
         name,
@@ -124,36 +123,38 @@ const CategoryForm = ({ categoryId, categoryData, isEdit, userId }: CategoryForm
         return;
       }
 
-const newCategoryId = isEdit
-  ? categoryId                // already numeric
-  : categoryResp.id;          // numeric from backend
-
-      /* ---------- 2️⃣ Save doctor second ---------- */
-
-const doctorPayload = {
-  user_id: userId,         // ⭐ MUST BE PRESENT
-  doctor_name: doctorName,
-  specialization,
-  qualification,
-  experience,
-  reg_number: regNumber,
-  doctor_image: doctorImage,
-  category_id: newCategoryId,
-};
+      // ⭐ FIXED: Use NUMERIC ID for doctor table
+      const newCategoryId = isEdit
+        ? categoryData.id        // numeric ID (45)
+        : categoryResp.id;       // new numeric ID
 
 
-const doctorResp = isEdit
-  ? await updateDoctor(categoryId, doctorPayload)
-  : await addDoctor(doctorPayload);
+      /* ---------- 2️⃣ Save Doctor ---------- */
 
-console.log("🔥 doctor response:", doctorResp);   // add
+      const doctorPayload = {
+        user_id: userId,
+        doctor_name: doctorName,
+        specialization,
+        qualification,
+        experience,
+        reg_number: regNumber,
+        doctor_image: doctorImage,
+        category_id: newCategoryId,
+      };
 
-if (!doctorResp.success) {
-  console.error("❌ doctor save failed:", doctorResp.error || doctorResp.message);
-  toast.error(doctorResp.error || "Doctor save failed");
-  setIsLoading(false);
-  return;
-}
+      // ⭐ FIXED: Correct numeric ID used for update
+      const doctorResp = isEdit
+        ? await updateDoctor(categoryData.id, doctorPayload)
+        : await addDoctor(doctorPayload);
+
+      console.log("🔥 doctor response:", doctorResp);
+
+      if (!doctorResp.success) {
+        console.error("❌ doctor save failed:", doctorResp.error || doctorResp.message);
+        toast.error(doctorResp.error || "Doctor save failed");
+        setIsLoading(false);
+        return;
+      }
 
 
       toast.success("Category + Doctor saved");

@@ -4,74 +4,71 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { InputField, FormValueProps, Option } from "@/types";
 import FormInputs from "@/components/form-inputs";
-import { fetchDoctorsClient } from "@/lib/client/doctors";  // ✔ correct import
+import { fetchDoctorsClient } from "@/lib/client/doctors";
 import useCurrentUser from "@/hooks/useCurrentUser";
 
-interface Form { [key: string]: InputField }
+interface Form {
+  [key: string]: InputField;
+}
 
-const AppointmentInformation = ({
-  slug,
-  categoryId,
-}: FormValueProps) => {
-
+const ServiceInformation = ({ slug, categoryId }: FormValueProps) => {
   const { userData } = useCurrentUser();
 
   const [doctorOptions, setDoctorOptions] = useState<Option[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
 
-useEffect(() => {
-  async function loadDoctors() {
-    if (!userData?.user_id) {
-      console.log("❌ No user_id found in userData:", userData);
-      return;
-    }
-
-    console.log("▶ loading doctors for:", userData.user_id);
-
-    try {
-      const list = await fetchDoctorsClient(userData.user_id);
-
-      console.log("📥 API raw response list =", list);
-
-      if (!Array.isArray(list)) {
-        console.log("❌ list is not an array:", list);
+  useEffect(() => {
+    async function loadDoctors() {
+      if (!userData?.user_id) {
+        console.log("❌ No user_id found:", userData);
         return;
       }
 
-      const mapped = list.map((doc: any) => ({
-        label: doc.doctor_name,
-        value: doc.category_id,
-        full: doc,
-      }));
+      try {
+        const list = await fetchDoctorsClient(userData.user_id);
 
-      console.log("📌 mapped doctorOptions:", mapped);
+        if (!Array.isArray(list)) {
+          console.log("❌ doctor list is not array");
+          return;
+        }
 
-      setDoctorOptions(mapped);
+        // create dropdown list
+        const mapped = list.map((doc: any) => ({
+          label: doc.doctor_name,
+          value: doc.id,
+          full: doc,
+        }));
 
-      if (categoryId.value) {
-        const match = list.find(
-          (doc: any) => doc.category_id === categoryId.value
-        );
+        setDoctorOptions(mapped);
 
-        console.log("🔍 match doctor:", match);
+        // prefill doctor when editing
+        if (categoryId.value) {
+          const matched = list.find(
+            (doc: any) => doc.id === Number(categoryId.value)
+          );
 
-        if (match) setSelectedDoctor(match);
+          if (matched) {
+            setSelectedDoctor(matched);
+          }
+        }
+      } catch (err) {
+        console.error("🔥 Doctor Load Error:", err);
       }
-    } catch (err) {
-      console.error("🔥 ERROR loading doctors:", err);
     }
-  }
 
-  loadDoctors();
-}, [userData]);
+    loadDoctors();
+  }, [userData, categoryId.value]);
 
+  // when doctor is selected
+  const handleDoctorSelect = (doctorVal: string | number) => {
+    const found = doctorOptions.find((o) => o.value === Number(doctorVal));
 
-  const handleDoctorSelect = (doctorVal: string) => {
-    const found = doctorOptions.find(o => o.value === doctorVal);
     if (!found) return;
 
-    categoryId.setValue(doctorVal);
+    // update selected category (doctor id)
+    categoryId.setValue(found.value);
 
+    // auto slug
     const autoSlug = `${found.full.doctor_name}-${found.full.specialization}`
       .toLowerCase()
       .replace(/\s+/g, "-")
@@ -90,7 +87,6 @@ useEffect(() => {
       placeholder: "Pick doctor",
       options: doctorOptions,
     },
-
     slug: {
       type: "text",
       value: slug.value,
@@ -98,13 +94,11 @@ useEffect(() => {
       label: "Slug (auto)",
       readOnly: true,
     },
-
     doctor_fee: {
       type: "number",
       value: selectedDoctor?.doctor_fee || "",
-      setValue: (val: string) => {
-        setSelectedDoctor((prev:any) => ({ ...prev, doctor_fee: val }));
-      },
+      setValue: (val: string) =>
+        setSelectedDoctor((prev: any) => ({ ...prev, doctor_fee: val })),
       label: "Doctor Fee (₹)",
       placeholder: "Enter consultation fee",
     },
@@ -112,7 +106,7 @@ useEffect(() => {
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border">
-      <h3 className="font-semibold text-lg mb-5">Doctor Appointment Mapping</h3>
+      <h3 className="text-lg font-semibold mb-5">Doctor Information</h3>
 
       <FormInputs inputFields={inputFields} />
 
@@ -157,4 +151,4 @@ useEffect(() => {
   );
 };
 
-export default AppointmentInformation;
+export default ServiceInformation;

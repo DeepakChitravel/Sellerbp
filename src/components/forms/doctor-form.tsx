@@ -1,19 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ServiceInformation from "./appointment-forms/appointment-information";
-import ServiceSEO from "./appointment-forms/service-seo";
+import ServiceInformation from "./doctor-forms/doctor-schedule";
+import ServiceSEO from "./doctor-forms/doctor-seo";
 import Sticky from "../sticky";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { addService, updateService } from "@/lib/api/services";
+import {
+  addDoctorScheduleClient,
+  updateDoctorScheduleClient,
+} from "@/lib/client/doctorScheduleClient";
 import { handleToast } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { ServiceFormProps } from "@/types";
-import ServiceGst from "./appointment-forms/serviceGst";
+import ServiceGst from "./doctor-forms/doctorGst";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import WeeklyAppointment from "./appointment-forms/weekly-appointment";
-import DoctorLocation from "./appointment-forms/doctor-location";
+import WeeklyAppointment from "./doctor-forms/weekly-appointment";
+import DoctorLocation from "./doctor-forms/doctor-location";
 
 const defaultLocation = {
   country: "",
@@ -24,33 +27,41 @@ const defaultLocation = {
   mapLink: "",
 };
 
-const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
+const Doctor_Schedule = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   const router = useRouter();
   const { userData } = useCurrentUser();
 
   const [isLoading, setIsLoading] = useState(false);
   const [showGst, setShowGst] = useState(false);
 
-  const [specialization, setSpecialization] = useState("");
-  const [qualification, setQualification] = useState("");
-  const [experience, setExperience] = useState("");
-  const [doctorImage, setDoctorImage] = useState("");
+  // Doctor Profile Fields
+  const [specialization, setSpecialization] = useState(serviceData?.specialization || "");
+  const [qualification, setQualification] = useState(serviceData?.qualification || "");
+  const [experience, setExperience] = useState(serviceData?.experience || "");
+  const [doctorImage, setDoctorImage] = useState(serviceData?.doctorImage || "");
 
-  // 👇 FIX - always use object not null
+  // Doctor Location
   const [doctorLocation, setDoctorLocation] = useState(
     serviceData?.doctorLocation || defaultLocation
   );
 
+  // ⭐ FIX HERE — wrap setter to support functional updates
+  const updateDoctorLocation = (updater: any) => {
+    setDoctorLocation((prev: any) =>
+      typeof updater === "function" ? updater(prev) : updater
+    );
+  };
+
+  // General Fields
   const [name, setName] = useState(serviceData?.name || "");
   const [slug, setSlug] = useState(serviceData?.slug || "");
   const [amount, setAmount] = useState(serviceData?.amount || "");
-  const [previousAmount, setPreviousAmount] = useState(
-    serviceData?.previousAmount || ""
+  const [previousAmount, setPreviousAmount] = useState(serviceData?.previousAmount || "");
+  const [description, setDescription] = useState(serviceData?.description || "");
+
+  const [weeklySchedule, setWeeklySchedule] = useState(
+    serviceData?.weeklySchedule || {}
   );
-  const [description, setDescription] = useState(
-    serviceData?.description || ""
-  );
-  const [weeklySchedule, setWeeklySchedule] = useState({});
 
   const [categoryId, setCategoryId] = useState<string | undefined>(
     serviceData?.categoryId ? serviceData.categoryId.toString() : undefined
@@ -64,7 +75,7 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
     serviceData?.intervalType || "minutes"
   );
 
-  const [gstPercentage, setGstPercentage] = useState<string | number | null>(
+  const [gstPercentage, setGstPercentage] = useState(
     serviceData?.gstPercentage?.toString() || null
   );
 
@@ -91,48 +102,68 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
     }
   }, [userData]);
 
-  const handleSave = async () => {
-    setIsLoading(true);
+  // ---------------------------------------------------
+  // SAVE BUTTON
+  // ---------------------------------------------------
+const handleSave = async () => {
+  setIsLoading(true);
 
-    try {
-      const data = {
-        name,
-        slug,
-        amount,
-        previousAmount,
-        image,
-        categoryId: categoryId ? parseInt(categoryId) : null,
-        timeSlotInterval,
-        intervalType,
-        description,
-        gstPercentage,
-        metaTitle,
-        metaDescription,
-        status: status ? 1 : 0,
-        additionalImages,
-        weeklySchedule,
-        doctorLocation, // ⭐🔥 now safe
-      };
+  try {
+    const payload = {
+      name,
+      slug,
+      amount,
+      previousAmount,
+      image,
+      categoryId: categoryId ? parseInt(categoryId) : null,
+      timeSlotInterval,
+      intervalType,
+      description,
+      gstPercentage,
+      metaTitle,
+      metaDescription,
+      status: status ? 1 : 0,
+      additionalImages,
+      weeklySchedule,
+      doctorLocation,
+      specialization,
+      qualification,
+      experience,
+      doctorImage,
+      user_id: userData?.user_id,
+    };
 
-      const response = !isEdit
-        ? await addService(data)
-        : await updateService(serviceId, data);
+    // ⭐⭐ ADD THIS HERE ⭐⭐
+    console.log("🔥 FINAL PAYLOAD BEFORE SEND =", payload);
 
-      handleToast(response);
+    let response;
 
-      if (!isEdit && response.success) {
-        router.push("/services");
-      }
-    } catch (error: any) {
-      toast.error(error.message);
+    if (!isEdit) {
+      response = await addDoctorScheduleClient(payload);
+    } else {
+      response = await updateDoctorScheduleClient(serviceId, payload);
     }
 
-    setIsLoading(false);
-  };
+    console.log("📡 API RESPONSE =", response);
+
+    if (!response?.success) {
+      toast.error(response?.message || "Failed to save");
+    } else {
+      toast.success("Saved successfully!");
+      if (!isEdit) router.push("/doctor-schedule");
+    }
+  } catch (err: any) {
+    toast.error(err.message);
+  }
+
+  setIsLoading(false);
+};
+
 
   return (
     <>
       <div className="grid grid-cols-12 gap-5 pb-32">
+
         {/* LEFT PANEL */}
         <div className="lg:col-span-7 col-span-12 grid gap-5">
           <ServiceInformation
@@ -141,10 +172,7 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
             amount={{ value: amount, setValue: setAmount }}
             categoryId={{ value: categoryId, setValue: setCategoryId }}
             description={{ value: description, setValue: setDescription }}
-            timeSlotInterval={{
-              value: timeSlotInterval,
-              setValue: setTimeSlotInterval,
-            }}
+            timeSlotInterval={{ value: timeSlotInterval, setValue: setTimeSlotInterval }}
             intervalType={{ value: intervalType, setValue: setIntervalType }}
             status={{ value: status, setValue: setStatus }}
             specialization={{ value: specialization, setValue: setSpecialization }}
@@ -154,16 +182,11 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
           />
 
           {/* WEEKLY SCHEDULE */}
-          <WeeklyAppointment
-            value={weeklySchedule}
-            onChange={setWeeklySchedule}
-          />
+          <WeeklyAppointment value={weeklySchedule} onChange={setWeeklySchedule} />
         </div>
 
         {/* RIGHT PANEL */}
         <div className="lg:col-span-5 col-span-12 grid gap-5">
-         
-
           {showGst && (
             <ServiceGst
               gstPercentage={{ value: gstPercentage, setValue: setGstPercentage }}
@@ -172,14 +195,14 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
 
           <ServiceSEO
             metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
-            metaDescription={{ value: metaDescription, setValue: setMetaDescription }}
+            metaDescription={{
+              value: metaDescription,
+              setValue: setMetaDescription,
+            }}
           />
 
-          {/* ⭐ NEW component */}
-          <DoctorLocation
-            value={doctorLocation}
-            setValue={setDoctorLocation}
-          />
+          {/* Doctor Location */}
+          <DoctorLocation value={doctorLocation} setValue={updateDoctorLocation} />
         </div>
       </div>
 
@@ -192,4 +215,4 @@ const ServiceForm = ({ serviceId, serviceData, isEdit }: ServiceFormProps) => {
   );
 };
 
-export default ServiceForm;
+export default Doctor_Schedule;
