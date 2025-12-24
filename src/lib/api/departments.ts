@@ -61,7 +61,6 @@ export const getDepartment = async (departmentId: string) => {
 export const addDepartment = async (data: departmentData) => {
   const token = cookies().get("token")?.value;
 
-  // Prepare data object
   const finalData: any = {
     token,
     name: data.name,
@@ -71,13 +70,16 @@ export const addDepartment = async (data: departmentData) => {
     meta_description: data.metaDescription || null,
     type_main_name: data.typeMainName || null,
     type_main_amount: data.typeMainAmount || null,
+
+    // ⭐ REQUIRED: THIS FIXES THE ISSUE
+    additionalImages: data.additionalImages ?? [],
   };
 
-  // Add all type fields
+  // Add dynamic type fields
   for (let i = 1; i <= 25; i++) {
     const nameKey = `type${i}Name` as keyof departmentData;
     const amountKey = `type${i}Amount` as keyof departmentData;
-    
+
     finalData[`type_${i}_name`] = data[nameKey] || null;
     finalData[`type_${i}_amount`] = data[amountKey] || null;
   }
@@ -164,5 +166,54 @@ export const deleteDepartment = async (departmentId: string) => {
   } catch (error: any) {
     console.error("Delete Department Error:", error.response?.data || error.message);
     return error.response?.data || { success: false, message: "Delete failed" };
+  }
+};
+
+
+/* -------------------------------------------------------
+  UPDATE APPOINTMENT SETTINGS FOR DEPARTMENT
+-------------------------------------------------------- */
+export const updateAppointmentSettings = async (
+  departmentId: string,
+  appointmentSettings: any
+) => {
+  const token = cookies().get("token")?.value;
+
+  const data = {
+    token,
+    department_id: departmentId,
+    appointment_settings: appointmentSettings
+  };
+
+  console.log("Sending appointment settings:", data);
+
+  try {
+    const response = await axios.post(
+      `${apiUrl}/seller/departments/create_appointment-settings.php`,
+      data,
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Update Appointment Settings Error:", error.response?.data || error.message);
+    return error.response?.data || { 
+      success: false, 
+      message: "Failed to save appointment settings" 
+    };
+  }
+};
+
+export const getDepartmentById = async (departmentId: string) => {
+  try {
+    const response = await axios.get(
+      `${apiUrl}/seller/departments/single.php?department_id=${departmentId}`
+    );
+
+    if (!response.data?.success) return null;
+
+    return response.data.data; // IMPORTANT: return actual department object
+  } catch {
+    return null;
   }
 };

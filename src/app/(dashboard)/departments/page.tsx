@@ -24,7 +24,7 @@ const Departments = async ({
         <h1 className="text-2xl font-bold">Departments</h1>
 
         {/* ✅ NO SLUG */}
-        <Link href="/department/add">
+        <Link href="/departments/add">
           <Button variant="success">
             <span className="mobile_l:block hidden">Add Department</span>
             <span className="mobile_l:hidden block">

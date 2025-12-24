@@ -12,6 +12,9 @@ import { handleToast } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { DepartmentFormProps } from "@/types";
 
+// 👉 Additional Images Component
+import DepartmentAdditionalImages from "./department-form/department-additional-images";
+
 const DepartmentForm = ({
   departmentId,
   departmentData,
@@ -26,9 +29,10 @@ const DepartmentForm = ({
   const [slug, setSlug] = useState("");
   const [slugLocked, setSlugLocked] = useState(false);
 
-  // ------------------------------------
-  // STORE TYPE FIELDS (0 - 25)
-  // ------------------------------------
+  // Additional Images
+  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
+
+  // 0 → 25 Type fields
   const [types, setTypes] = useState(
     Array.from({ length: 26 }, () => ({ name: "", amount: "" }))
   );
@@ -46,7 +50,7 @@ const DepartmentForm = ({
   const [images, setImages] = useState("");
 
   // ----------------------------------------------------------
-  // LOAD FOR EDIT MODE
+  // LOAD DATA FOR EDIT MODE
   // ----------------------------------------------------------
   useEffect(() => {
     if (!departmentData) return;
@@ -58,16 +62,18 @@ const DepartmentForm = ({
     setMetaDescription(departmentData.metaDescription || "");
     setImages(departmentData.image || "");
 
+    // Additional images
+    setAdditionalImages(departmentData.additionalImages || []);
+
+    // Prepare Type fields (camelCase fix applied)
     const newTypes = [...types];
 
-    // MAIN TYPE
     newTypes[0].name = departmentData.typeMainName || "";
     newTypes[0].amount = departmentData.typeMainAmount || "";
 
-    // 1–25 extra types
     for (let i = 1; i <= 25; i++) {
-      newTypes[i].name = departmentData[`type_${i}_name`] || "";
-      newTypes[i].amount = departmentData[`type_${i}_amount`] || "";
+      newTypes[i].name = departmentData[`type${i}Name`] || "";
+      newTypes[i].amount = departmentData[`type${i}Amount`] || "";
     }
 
     setTypes(newTypes);
@@ -108,9 +114,6 @@ const DepartmentForm = ({
     setIsLoading(true);
 
     try {
-      // -------------------------------
-      // BUILD FINAL PAYLOAD FOR BACKEND
-      // -------------------------------
       const payload: any = {
         name,
         type,
@@ -119,12 +122,13 @@ const DepartmentForm = ({
         metaTitle,
         metaDescription,
 
-        // ⭐ MAIN TYPE
         typeMainName: types[0].name,
         typeMainAmount: types[0].amount,
+
+        additionalImages,
       };
 
-      // ⭐ ADD TYPE 1 → 25
+      // Add all type fields (1 → 25)
       for (let i = 1; i <= 25; i++) {
         payload[`type${i}Name`] = types[i].name;
         payload[`type${i}Amount`] = types[i].amount;
@@ -137,7 +141,7 @@ const DepartmentForm = ({
       handleToast(resp);
 
       if (resp.success) {
-        router.replace("/department");
+        router.replace("/departments");
         router.refresh();
       }
     } catch (err: any) {
@@ -183,6 +187,13 @@ const DepartmentForm = ({
             images={{ value: images, setValue: setImages }}
             userId={userId}
           />
+
+          <DepartmentAdditionalImages
+            images={additionalImages}
+            setImages={setAdditionalImages}
+            userId={userId}
+          />
+
           <DepartmentSEO
             metaTitle={{ value: metaTitle, setValue: setMetaTitle }}
             metaDescription={{

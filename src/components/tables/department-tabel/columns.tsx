@@ -67,8 +67,6 @@ const safeFormatDate = (value?: string) => {
 };
 
 
-
-
 /* ===============================
    ACTION MENU
 ================================ */
@@ -97,7 +95,7 @@ function Action({ departmentId }: { departmentId: string }) {
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
         <DropdownMenuGroup>
-          <Link href={`/department/${departmentId}`}>
+          <Link href={`/departments/${departmentId}`}>
             <DropdownMenuItem className="text-blue-600">
               <Edit variant="Bold" className="mr-2 h-4 w-4" />
               Edit

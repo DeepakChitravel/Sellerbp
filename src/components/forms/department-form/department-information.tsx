@@ -78,54 +78,56 @@ const DepartmentInformation = ({
   ]);
 
   // Initialize additional type fields that have data
-  useEffect(() => {
-    const typeProps = [
-      { name: type1Name, amount: type1Amount, index: 1 },
-      { name: type2Name, amount: type2Amount, index: 2 },
-      { name: type3Name, amount: type3Amount, index: 3 },
-      { name: type4Name, amount: type4Amount, index: 4 },
-      { name: type5Name, amount: type5Amount, index: 5 },
-      { name: type6Name, amount: type6Amount, index: 6 },
-      { name: type7Name, amount: type7Amount, index: 7 },
-      { name: type8Name, amount: type8Amount, index: 8 },
-      { name: type9Name, amount: type9Amount, index: 9 },
-      { name: type10Name, amount: type10Amount, index: 10 },
-      { name: type11Name, amount: type11Amount, index: 11 },
-      { name: type12Name, amount: type12Amount, index: 12 },
-      { name: type13Name, amount: type13Amount, index: 13 },
-      { name: type14Name, amount: type14Amount, index: 14 },
-      { name: type15Name, amount: type15Amount, index: 15 },
-      { name: type16Name, amount: type16Amount, index: 16 },
-      { name: type17Name, amount: type17Amount, index: 17 },
-      { name: type18Name, amount: type18Amount, index: 18 },
-      { name: type19Name, amount: type19Amount, index: 19 },
-      { name: type20Name, amount: type20Amount, index: 20 },
-      { name: type21Name, amount: type21Amount, index: 21 },
-      { name: type22Name, amount: type22Amount, index: 22 },
-      { name: type23Name, amount: type23Amount, index: 23 },
-      { name: type24Name, amount: type24Amount, index: 24 },
-      { name: type25Name, amount: type25Amount, index: 25 }
-    ];
+// Initialize additional type fields that have data
+useEffect(() => {
+  const typeProps = [
+    { valueName: type1Name?.value, valueAmount: type1Amount?.value, index: 1 },
+    { valueName: type2Name?.value, valueAmount: type2Amount?.value, index: 2 },
+    { valueName: type3Name?.value, valueAmount: type3Amount?.value, index: 3 },
+    { valueName: type4Name?.value, valueAmount: type4Amount?.value, index: 4 },
+    { valueName: type5Name?.value, valueAmount: type5Amount?.value, index: 5 },
+    { valueName: type6Name?.value, valueAmount: type6Amount?.value, index: 6 },
+    { valueName: type7Name?.value, valueAmount: type7Amount?.value, index: 7 },
+    { valueName: type8Name?.value, valueAmount: type8Amount?.value, index: 8 },
+    { valueName: type9Name?.value, valueAmount: type9Amount?.value, index: 9 },
+    { valueName: type10Name?.value, valueAmount: type10Amount?.value, index: 10 },
+    { valueName: type11Name?.value, valueAmount: type11Amount?.value, index: 11 },
+    { valueName: type12Name?.value, valueAmount: type12Amount?.value, index: 12 },
+    { valueName: type13Name?.value, valueAmount: type13Amount?.value, index: 13 },
+    { valueName: type14Name?.value, valueAmount: type14Amount?.value, index: 14 },
+    { valueName: type15Name?.value, valueAmount: type15Amount?.value, index: 15 },
+    { valueName: type16Name?.value, valueAmount: type16Amount?.value, index: 16 },
+    { valueName: type17Name?.value, valueAmount: type17Amount?.value, index: 17 },
+    { valueName: type18Name?.value, valueAmount: type18Amount?.value, index: 18 },
+    { valueName: type19Name?.value, valueAmount: type19Amount?.value, index: 19 },
+    { valueName: type20Name?.value, valueAmount: type20Amount?.value, index: 20 },
+    { valueName: type21Name?.value, valueAmount: type21Amount?.value, index: 21 },
+    { valueName: type22Name?.value, valueAmount: type22Amount?.value, index: 22 },
+    { valueName: type23Name?.value, valueAmount: type23Amount?.value, index: 23 },
+    { valueName: type24Name?.value, valueAmount: type24Amount?.value, index: 24 },
+    { valueName: type25Name?.value, valueAmount: type25Amount?.value, index: 25 },
+  ];
 
-    const fieldsWithData: TypeField[] = [];
+  const fieldsWithData: TypeField[] = [];
 
-    typeProps.forEach(prop => {
-      if (prop.name?.value || prop.amount?.value) {
-        fieldsWithData.push({
-          id: prop.index,
-          index: prop.index,
-          nameKey: `type${prop.index}Name`,
-          amountKey: `type${prop.index}Amount`
-        });
-      }
-    });
+  typeProps.forEach((prop) => {
+    if (prop.valueName || prop.valueAmount) {
+      fieldsWithData.push({
+        id: prop.index,
+        index: prop.index,
+        nameKey: `type${prop.index}Name`,
+        amountKey: `type${prop.index}Amount`,
+      });
+    }
+  });
 
-    setActiveTypeFields(prev => {
-      const existingIndices = prev.map(f => f.index);
-      const newFields = fieldsWithData.filter(f => !existingIndices.includes(f.index));
-      return [...prev, ...newFields].sort((a, b) => a.index - b.index);
-    });
-  }, []);
+  setActiveTypeFields((prev) => {
+    const existing = prev.map((f) => f.index);
+    const newOnes = fieldsWithData.filter((f) => !existing.includes(f.index));
+    return [...prev, ...newOnes].sort((a, b) => a.index - b.index);
+  });
+}, [type1Name, type2Name, type3Name, type4Name, type5Name]);
+
 
   const addTypeField = () => {
     const usedIndices = activeTypeFields.map(f => f.index);

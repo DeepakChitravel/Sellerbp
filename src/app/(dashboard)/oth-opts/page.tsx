@@ -94,11 +94,15 @@ const OthOptsPage = async () => {
                 </div>
 
                 {/* Select Button - Smaller and more compact */}
-                <Link href={`/oth-opts/departments/${dept.departmentId}`} className="block mt-auto">
+                <Link
+                  href={`/oth-opts/departments/${dept.department_id}`}
+                  className="block mt-auto"
+                >
                   <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-1.5 px-3 rounded-lg text-sm font-medium transition-all duration-300 hover:shadow-md active:scale-[0.98]">
                     Select
                   </button>
                 </Link>
+
               </div>
             </div>
           ))}

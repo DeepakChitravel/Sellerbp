@@ -140,7 +140,7 @@ export type Department = {
   // Main type fields
   typeMainName?: string;
   typeMainAmount?: number | string;
-  
+  appointmentSettings?: AppointmentSettings;
   // Additional type fields (1-25)
   type1Name?: string;
   type1Amount?: number | string;
@@ -641,6 +641,23 @@ export interface departmentData {
   type25Name?: string;
   type25Amount?: number | string;
 }
+
+export type TimeSlot = {
+  from: string;
+  to: string;
+  breakFrom: string;
+  breakTo: string;
+  token: number;
+};
+
+export type DaySchedule = {
+  enabled: boolean;
+  slots: TimeSlot[];
+};
+
+export type AppointmentSettings = {
+  [key: string]: DaySchedule; // Keys: "Sun", "Mon", "Tue", etc.
+};
 
 export type servicesParams = {
   limit?: number;

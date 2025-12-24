@@ -39,7 +39,7 @@ const SIDEBAR_LINKS = [
   { label: "Customers", href: "/customers", icon: <Profile2User /> },
   { label: "Calendar", href: "/calendar", icon: <Calendar /> },
   { label: "Reports", href: "/reports", icon: <Chart /> },
-  { label: "Department", href: "/department", icon: <Category2 /> },
+  { label: "Department", href: "/departments", icon: <Category2 /> },
   { label: "Categories", href: "/categories", icon: <Grid2 /> },
   { label: "Employees", href: "/employees", icon: <Profile2User /> },
   { label: "Event", href: "/event", icon: <CalendarTick /> },
