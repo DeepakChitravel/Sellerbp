@@ -4,14 +4,19 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { InputField, FormValueProps, Option } from "@/types";
 import FormInputs from "@/components/form-inputs";
-import { fetchDoctorsClient } from "@/lib/client/doctors";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { fetchDoctorsClient } from "@/lib/api/doctor_schedule";
 
 interface Form {
   [key: string]: InputField;
 }
 
-const ServiceInformation = ({ slug, categoryId }: FormValueProps) => {
+const ServiceInformation = ({
+  slug,
+  amount,
+  categoryId,
+  description,
+}: FormValueProps) => {
   const { userData } = useCurrentUser();
 
   const [doctorOptions, setDoctorOptions] = useState<Option[]>([]);
@@ -19,20 +24,12 @@ const ServiceInformation = ({ slug, categoryId }: FormValueProps) => {
 
   useEffect(() => {
     async function loadDoctors() {
-      if (!userData?.user_id) {
-        console.log("❌ No user_id found:", userData);
-        return;
-      }
+      if (!userData?.user_id) return;
 
       try {
         const list = await fetchDoctorsClient(userData.user_id);
+        if (!Array.isArray(list)) return;
 
-        if (!Array.isArray(list)) {
-          console.log("❌ doctor list is not array");
-          return;
-        }
-
-        // create dropdown list
         const mapped = list.map((doc: any) => ({
           label: doc.doctor_name,
           value: doc.id,
@@ -40,35 +37,20 @@ const ServiceInformation = ({ slug, categoryId }: FormValueProps) => {
         }));
 
         setDoctorOptions(mapped);
-
-        // prefill doctor when editing
-        if (categoryId.value) {
-          const matched = list.find(
-            (doc: any) => doc.id === Number(categoryId.value)
-          );
-
-          if (matched) {
-            setSelectedDoctor(matched);
-          }
-        }
       } catch (err) {
-        console.error("🔥 Doctor Load Error:", err);
+        console.error("Doctor Load Error:", err);
       }
     }
 
     loadDoctors();
-  }, [userData, categoryId.value]);
+  }, [userData]);
 
-  // when doctor is selected
   const handleDoctorSelect = (doctorVal: string | number) => {
     const found = doctorOptions.find((o) => o.value === Number(doctorVal));
-
     if (!found) return;
 
-    // update selected category (doctor id)
-    categoryId.setValue(found.value);
+    categoryId.setValue(found.value.toString());
 
-    // auto slug
     const autoSlug = `${found.full.doctor_name}-${found.full.specialization}`
       .toLowerCase()
       .replace(/\s+/g, "-")
@@ -78,35 +60,54 @@ const ServiceInformation = ({ slug, categoryId }: FormValueProps) => {
     setSelectedDoctor(found.full);
   };
 
+  /* ✅ SINGLE SOURCE OF TRUTH */
+  const handleAmountChange = (value: string) => {
+    amount.setValue(value.replace(/[^\d.]/g, ""));
+  };
+
+
   const inputFields: Form = {
     doctor: {
       type: "select",
       value: categoryId.value,
       setValue: handleDoctorSelect,
-      label: "Select Doctor",
-      placeholder: "Pick doctor",
+      label: "Select Doctor *",
+      placeholder: "Choose a doctor",
       options: doctorOptions,
+      required: true,
+    },
+    amount: {
+      type: "number",
+      value: amount.value, // ✅ DIRECT FROM PARENT
+      setValue: handleAmountChange,
+      label: "Consultation Fee (₹) *",
+      placeholder: "e.g., 500",
+      required: true,
+      min: "1",
+      step: "1",
     },
     slug: {
       type: "text",
       value: slug.value,
       setValue: slug.setValue,
-      label: "Slug (auto)",
+      label: "Slug (auto-generated)",
       readOnly: true,
     },
-    doctor_fee: {
-      type: "number",
-      value: selectedDoctor?.doctor_fee || "",
-      setValue: (val: string) =>
-        setSelectedDoctor((prev: any) => ({ ...prev, doctor_fee: val })),
-      label: "Doctor Fee (₹)",
-      placeholder: "Enter consultation fee",
+    description: {
+      type: "textarea",
+      value: description.value,
+      setValue: description.setValue,
+      label: "Description",
+      placeholder: "Describe the consultation service...",
+      rows: 4,
     },
   };
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border">
-      <h3 className="text-lg font-semibold mb-5">Doctor Information</h3>
+      <h3 className="text-lg font-semibold mb-5">
+        Doctor Schedule Information
+      </h3>
 
       <FormInputs inputFields={inputFields} />
 
@@ -114,7 +115,7 @@ const ServiceInformation = ({ slug, categoryId }: FormValueProps) => {
         <div className="mt-6 rounded-xl border bg-white shadow-sm">
           <div className="border-b px-6 py-4">
             <h4 className="text-lg font-semibold text-gray-800">
-              🩺 Doctor Profile Preview
+              🩺 Doctor Profile
             </h4>
           </div>
 
@@ -136,13 +137,33 @@ const ServiceInformation = ({ slug, categoryId }: FormValueProps) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-10 gap-y-3 text-[15px] text-gray-700 leading-relaxed">
-              <div>Name: {selectedDoctor.doctor_name}</div>
-              <div>Specialization: {selectedDoctor.specialization}</div>
-              <div>Qualification: {selectedDoctor.qualification}</div>
-              <div>Experience: {selectedDoctor.experience} years</div>
-              <div>Reg No: {selectedDoctor.reg_number}</div>
-              <div>Doctor Fee: ₹ {selectedDoctor.doctor_fee ?? "Not set"}</div>
+            <div className="grid grid-cols-2 gap-x-10 gap-y-3 text-[15px] text-gray-700">
+              <div>
+                <strong>Name:</strong> {selectedDoctor.doctor_name}
+              </div>
+              <div>
+                <strong>Specialization:</strong>{" "}
+                {selectedDoctor.specialization}
+              </div>
+              <div>
+                <strong>Qualification:</strong>{" "}
+                {selectedDoctor.qualification}
+              </div>
+              <div>
+                <strong>Experience:</strong>{" "}
+                {selectedDoctor.experience} years
+              </div>
+
+              <div className="col-span-2">
+                <strong className="text-blue-600">
+                  Consultation Fee:
+                </strong>
+                <div className="flex items-center mt-1">
+                  <span className="text-2xl font-bold text-gray-800">
+                    ₹ {amount.value || "0"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import Doctor_Schedule from "@/components/forms/doctor-form";
-import { getService } from "@/lib/api/services";
+import { fetchDoctorsClient } from "@/lib/api/doctor_schedule";
 import { notFound } from "next/navigation";
 
 const Service = async ({ params: { id } }: { params: { id: string } }) => {
