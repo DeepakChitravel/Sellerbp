@@ -1,22 +1,21 @@
 import axios from 'axios';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/managerbp/public';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/managerbp/public/';
 
 export const addDoctorScheduleClient = async (data: any) => {
   try {
-    console.log("🚀 Sending to API:");
-    console.log("Data:", data);
-    
-    const response = await fetch(`${apiUrl}/doctor_schedule/create.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
-    
+    const response = await fetch(
+      `${apiUrl}/seller/doctor_schedule/create.php`, // ✅ FIXED
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
     const result = await response.json();
-    console.log("API Response:", result);
     return result;
   } catch (error) {
     console.error("Fetch error:", error);

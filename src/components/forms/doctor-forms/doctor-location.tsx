@@ -28,35 +28,45 @@ export default function DoctorLocation({ value, setValue }: Props) {
   const [states, setStates] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
 
-  /* Load states */
+  /* LOAD STATES */
   useEffect(() => {
-    if (!selectedCountry) return;
+    if (!selectedCountry) {
+      setStates([]);
+      setCities([]);
+      return;
+    }
 
-    const stateList = State.getStatesOfCountry(selectedCountry);
-    setStates(stateList);
+    setStates(State.getStatesOfCountry(selectedCountry));
+    setCities([]);
   }, [selectedCountry]);
 
-  /* Load cities */
+  /* LOAD CITIES */
   useEffect(() => {
-    if (!selectedState) return;
+    if (!selectedCountry || !selectedState) {
+      setCities([]);
+      return;
+    }
 
-    const cityList = City.getCitiesOfState(selectedCountry, selectedState);
-    setCities(cityList);
-  }, [selectedState]);
+    setCities(
+      City.getCitiesOfState(selectedCountry, selectedState) || []
+    );
+  }, [selectedCountry, selectedState]);
 
-  /* Auto map link */
+  /* AUTO MAP */
   useEffect(() => {
     if (!address && !selectedCity && !pincode) {
-      setValue((prev: any) => ({ ...prev, mapLink: "" }));
+      setValue({ ...value, mapLink: "" });
       return;
     }
 
     const q = encodeURIComponent(
-      `${address} ${selectedCity || ""} ${pincode || ""}`
+      `${address} ${selectedCity} ${pincode}`.trim()
     );
-    const auto = `https://www.google.com/maps?q=${q}&output=embed`;
 
-    setValue((prev: any) => ({ ...prev, mapLink: auto }));
+    setValue({
+      ...value,
+      mapLink: `https://maps.google.com/maps?q=${q}&z=15&output=embed`,
+    });
   }, [address, selectedCity, pincode]);
 
   return (
@@ -70,7 +80,15 @@ export default function DoctorLocation({ value, setValue }: Props) {
           <Select
             value={selectedCountry}
             onValueChange={(val) =>
-              setValue((prev: any) => ({ ...prev, country: val, state: "", city: "" }))
+              setValue({
+                ...value,
+                country: val,
+                state: "",
+                city: "",
+                address: "",
+                pincode: "",
+                mapLink: "",
+              })
             }
           >
             <SelectTrigger>
@@ -93,7 +111,11 @@ export default function DoctorLocation({ value, setValue }: Props) {
             value={selectedState}
             disabled={!selectedCountry}
             onValueChange={(val) =>
-              setValue((prev: any) => ({ ...prev, state: val, city: "" }))
+              setValue({
+                ...value,
+                state: val,
+                city: "",
+              })
             }
           >
             <SelectTrigger>
@@ -116,7 +138,10 @@ export default function DoctorLocation({ value, setValue }: Props) {
             value={selectedCity}
             disabled={!selectedState}
             onValueChange={(val) =>
-              setValue((prev: any) => ({ ...prev, city: val }))
+              setValue({
+                ...value,
+                city: val,
+              })
             }
           >
             <SelectTrigger>
@@ -140,7 +165,7 @@ export default function DoctorLocation({ value, setValue }: Props) {
           <Input
             value={pincode}
             onChange={(e) =>
-              setValue((prev: any) => ({ ...prev, pincode: e.target.value }))
+              setValue({ ...value, pincode: e.target.value })
             }
           />
         </div>
@@ -150,23 +175,22 @@ export default function DoctorLocation({ value, setValue }: Props) {
           <Textarea
             rows={3}
             value={address}
-            placeholder="Street, landmark, area"
             onChange={(e) =>
-              setValue((prev: any) => ({ ...prev, address: e.target.value }))
+              setValue({ ...value, address: e.target.value })
             }
           />
         </div>
       </div>
 
-      {/* MAP */}
       {mapLink && (
         <div className="mt-6">
-          <h3 className="text-sm font-medium mb-2">Location Preview</h3>
+          <h3 className="text-sm font-medium mb-2">
+            Location Preview
+          </h3>
           <iframe
             src={mapLink}
             className="w-full h-64 rounded-xl border"
             loading="lazy"
-            allowFullScreen
           />
         </div>
       )}
