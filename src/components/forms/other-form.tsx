@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import Sticky from "../sticky";
@@ -17,10 +17,18 @@ type Props = {
 
 /**
  * Final schedule validation before save
- * This is the LAST gate before API call
+ * LAST gate before API call
  */
-const validateSchedule = (schedule: any): { valid: boolean; message?: string } => {
-  // Check if any day is enabled
+const validateSchedule = (
+  schedule: any
+): { valid: boolean; message?: string } => {
+  if (!schedule || Object.keys(schedule).length === 0) {
+    return {
+      valid: false,
+      message: "Please configure appointment schedule first",
+    };
+  }
+
   const hasEnabledDays = Object.keys(schedule).some(
     (day) => schedule[day]?.enabled
   );
@@ -34,7 +42,6 @@ const validateSchedule = (schedule: any): { valid: boolean; message?: string } =
 
   for (const day of Object.keys(schedule)) {
     const dayData = schedule[day];
-
     if (!dayData.enabled) continue;
 
     if (!dayData.slots || dayData.slots.length === 0) {
@@ -46,59 +53,56 @@ const validateSchedule = (schedule: any): { valid: boolean; message?: string } =
 
     for (let i = 0; i < dayData.slots.length; i++) {
       const slot = dayData.slots[i];
-      const slotLabel = `${day} - Slot ${i + 1}`;
+      const label = `${day} - Slot ${i + 1}`;
 
-      // Working hours validation
       if (!slot.from || !slot.to) {
         return {
           valid: false,
-          message: `${slotLabel}: Working hours are required`,
+          message: `${label}: Working hours are required`,
         };
       }
 
-      // Check if start time is before end time
-      const fromTime = new Date(`2000/01/01 ${slot.from}`);
-      const toTime = new Date(`2000/01/01 ${slot.to}`);
-      if (fromTime >= toTime) {
+      const from = new Date(`2000-01-01 ${slot.from}`);
+      const to = new Date(`2000-01-01 ${slot.to}`);
+      if (from >= to) {
         return {
           valid: false,
-          message: `${slotLabel}: End time must be after start time`,
+          message: `${label}: End time must be after start time`,
         };
       }
 
-      // Token validation
       if (!slot.token || slot.token < 1) {
         return {
           valid: false,
-          message: `${slotLabel}: Token limit must be at least 1`,
+          message: `${label}: Token limit must be at least 1`,
         };
       }
 
-      // Break validation (both or none)
-      if ((slot.breakFrom && !slot.breakTo) || (!slot.breakFrom && slot.breakTo)) {
+      if (
+        (slot.breakFrom && !slot.breakTo) ||
+        (!slot.breakFrom && slot.breakTo)
+      ) {
         return {
           valid: false,
-          message: `${slotLabel}: Both break start and end times are required if you add break time`,
+          message: `${label}: Both break times are required`,
         };
       }
 
-      // If both break times exist, validate them
       if (slot.breakFrom && slot.breakTo) {
-        const breakFromTime = new Date(`2000/01/01 ${slot.breakFrom}`);
-        const breakToTime = new Date(`2000/01/01 ${slot.breakTo}`);
-        
-        if (breakFromTime >= breakToTime) {
+        const bf = new Date(`2000-01-01 ${slot.breakFrom}`);
+        const bt = new Date(`2000-01-01 ${slot.breakTo}`);
+
+        if (bf >= bt) {
           return {
             valid: false,
-            message: `${slotLabel}: Break end time must be after break start time`,
+            message: `${label}: Break end must be after start`,
           };
         }
 
-        // Check if break is within working hours
-        if (breakFromTime < fromTime || breakToTime > toTime) {
+        if (bf < from || bt > to) {
           return {
             valid: false,
-            message: `${slotLabel}: Break time must be within working hours`,
+            message: `${label}: Break must be within working hours`,
           };
         }
       }
@@ -113,35 +117,23 @@ const OtherForm = ({ department }: Props) => {
   const [schedule, setSchedule] = useState<any>(null);
   const [hasScheduleErrors, setHasScheduleErrors] = useState(false);
 
-  // Listen for validation state from child
-  const handleScheduleValidation = (hasErrors: boolean) => {
-    setHasScheduleErrors(hasErrors);
-  };
-
-  // ============================
-  // SAVE
-  // ============================
   const handleSave = async () => {
-    // 1️⃣ No schedule at all
-    if (!schedule || Object.keys(schedule).length === 0) {
+    if (!schedule) {
       toast.error("Please configure appointment schedule first");
       return;
     }
 
-    // 2️⃣ Check if schedule has validation errors from child component
     if (hasScheduleErrors) {
-      toast.error("Please fix all validation errors in the schedule");
+      toast.error("Please fix schedule errors before saving");
       return;
     }
 
-    // 3️⃣ Final validation gate
     const validation = validateSchedule(schedule);
     if (!validation.valid) {
       toast.error(validation.message);
-      return; // ⛔ STOP SAVE HERE
+      return;
     }
 
-    // 4️⃣ Department ID check
     const departmentId =
       department?.departmentId || department?.department_id;
 
@@ -158,13 +150,13 @@ const OtherForm = ({ department }: Props) => {
         schedule
       );
 
-      if (!res || !res.success) {
+      if (!res?.success) {
         throw new Error(res?.message || "Failed to save schedule");
       }
 
       toast.success("Schedule saved successfully!");
-    } catch (error: any) {
-      toast.error(error?.message || "Something went wrong");
+    } catch (err: any) {
+      toast.error(err?.message || "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -179,21 +171,23 @@ const OtherForm = ({ department }: Props) => {
           <OtherDetails department={department} />
         </div>
 
-        {/* Weekly Appointment Schedule */}
+        {/* Schedule */}
         <OtherSchedule
-          department={department}
+          department={department}   // 👈 contains appointmentSettings
           onSave={setSchedule}
-          onValidationChange={handleScheduleValidation}
+          onValidationChange={setHasScheduleErrors}
         />
       </div>
 
-      {/* STICKY SAVE BAR */}
+      {/* SAVE BAR */}
       <Sticky>
-        <Button 
-          onClick={handleSave} 
+        <Button
+          onClick={handleSave}
           disabled={isLoading || hasScheduleErrors}
           isLoading={isLoading}
-          className={hasScheduleErrors ? "bg-gray-400 hover:bg-gray-400" : ""}
+          className={
+            hasScheduleErrors ? "bg-gray-400 hover:bg-gray-400" : ""
+          }
         >
           {hasScheduleErrors ? "Fix Schedule Errors First" : "Save"}
         </Button>
