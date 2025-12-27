@@ -11,6 +11,10 @@ type SlotType = {
     breakFrom: string;
     breakTo: string;
     token: number;
+    fromPeriod: "AM" | "PM";
+    toPeriod: "AM" | "PM";
+    breakFromPeriod: "AM" | "PM";
+    breakToPeriod: "AM" | "PM";
 };
 
 type DayScheduleType = {
@@ -44,6 +48,61 @@ const formatMinutesToHours = (minutes: number) => {
   return `${hours} hour${hours > 1 ? "s" : ""} ${remainingMinutes} min`;
 };
 
+// Convert 12-hour time to 24-hour for calculations
+const convertTo24Hour = (time: string, period: "AM" | "PM"): string => {
+    if (!time) return "";
+    
+    const [hoursStr, minutes] = time.split(":");
+    let hours = parseInt(hoursStr);
+    
+    if (period === "AM") {
+        if (hours === 12) hours = 0; // 12 AM = 00
+    } else { // PM
+        if (hours !== 12) hours += 12; // 1 PM = 13, 12 PM = 12
+    }
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+};
+
+// Convert 24-hour time to 12-hour with period
+const convertTo12Hour = (time24: string): { time: string, period: "AM" | "PM" } => {
+    if (!time24 || time24.trim() === "") {
+        return { time: "", period: "AM" };
+    }
+    
+    // Clean the time string
+    const cleanTime = time24.trim();
+    
+    // Check if it's already in 12-hour format with AM/PM
+    if (cleanTime.toUpperCase().includes("AM") || cleanTime.toUpperCase().includes("PM")) {
+        // Extract time and period
+        const timePart = cleanTime.replace(/ AM| PM|am|pm/i, "").trim();
+        const period = cleanTime.toUpperCase().includes("PM") ? "PM" : "AM" as "AM" | "PM";
+        return { time: timePart, period };
+    }
+    
+    // Check if it's in valid HH:MM format
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(cleanTime)) {
+        console.warn("Invalid time format for conversion:", cleanTime);
+        return { time: "", period: "AM" };
+    }
+    
+    const [hoursStr, minutes] = cleanTime.split(":");
+    let hours = parseInt(hoursStr);
+    let period: "AM" | "PM" = "AM";
+    
+    if (hours >= 12) {
+        period = "PM";
+        if (hours > 12) hours -= 12;
+    }
+    if (hours === 0) hours = 12;
+    
+    return { 
+        time: `${hours.toString().padStart(2, '0')}:${minutes}`, 
+        period 
+    };
+};
 
 const validateSlot = (slot: SlotType): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
@@ -56,34 +115,48 @@ const validateSlot = (slot: SlotType): { isValid: boolean; errors: string[] } =>
         errors.push("End time is required");
     }
 
-    if (slot.from && slot.to) {
-        const fromTime = new Date(`2000/01/01 ${slot.from}`);
-        const toTime = new Date(`2000/01/01 ${slot.to}`);
+    // Add 12-hour format validation for each time field
+    if (slot.from) {
+        const [hoursStr] = slot.from.split(':');
+        const hours = parseInt(hoursStr);
+        if (isNaN(hours) || hours < 1 || hours > 12) {
+            errors.push("Start time must be in 12-hour format (01:00 to 12:59)");
+        }
+    }
+
+    if (slot.to) {
+        const [hoursStr] = slot.to.split(':');
+        const hours = parseInt(hoursStr);
+        if (isNaN(hours) || hours < 1 || hours > 12) {
+            errors.push("End time must be in 12-hour format (01:00 to 12:59)");
+        }
+    }
+
+    if (slot.breakFrom) {
+        const [hoursStr] = slot.breakFrom.split(':');
+        const hours = parseInt(hoursStr);
+        if (isNaN(hours) || hours < 1 || hours > 12) {
+            errors.push("Break start time must be in 12-hour format (01:00 to 12:59)");
+        }
+    }
+
+    if (slot.breakTo) {
+        const [hoursStr] = slot.breakTo.split(':');
+        const hours = parseInt(hoursStr);
+        if (isNaN(hours) || hours < 1 || hours > 12) {
+            errors.push("Break end time must be in 12-hour format (01:00 to 12:59)");
+        }
+    }
+
+    if (slot.from && slot.to && slot.fromPeriod && slot.toPeriod) {
+        const from24 = convertTo24Hour(slot.from, slot.fromPeriod);
+        const to24 = convertTo24Hour(slot.to, slot.toPeriod);
+        
+        const fromTime = new Date(`2000/01/01 ${from24}`);
+        const toTime = new Date(`2000/01/01 ${to24}`);
 
         if (fromTime >= toTime) {
             errors.push("End time must be after start time");
-        }
-    }
-
-    if ((slot.breakFrom && !slot.breakTo) || (!slot.breakFrom && slot.breakTo)) {
-        errors.push("Both break start and end times are required if you add break time");
-    }
-
-    if (slot.breakFrom && slot.breakTo) {
-        const breakFromTime = new Date(`2000/01/01 ${slot.breakFrom}`);
-        const breakToTime = new Date(`2000/01/01 ${slot.breakTo}`);
-
-        if (breakFromTime >= breakToTime) {
-            errors.push("Break end time must be after break start time");
-        }
-
-        if (slot.from && slot.to) {
-            const fromTime = new Date(`2000/01/01 ${slot.from}`);
-            const toTime = new Date(`2000/01/01 ${slot.to}`);
-
-            if (breakFromTime < fromTime || breakToTime > toTime) {
-                errors.push("Break time must be within working hours");
-            }
         }
     }
 
@@ -97,15 +170,17 @@ const validateSlot = (slot: SlotType): { isValid: boolean; errors: string[] } =>
     };
 };
 
-const calculateBreakMinutes = (breakFrom: string, breakTo: string) => {
-  if (!breakFrom || !breakTo) return 0;
+const calculateBreakMinutes = (breakFrom: string, breakFromPeriod: "AM" | "PM", breakTo: string, breakToPeriod: "AM" | "PM") => {
+    if (!breakFrom || !breakTo || !breakFromPeriod || !breakToPeriod) return 0;
 
-  const [fromHour, fromMin] = breakFrom.split(":").map(Number);
-  const [toHour, toMin] = breakTo.split(":").map(Number);
+    const breakFrom24 = convertTo24Hour(breakFrom, breakFromPeriod);
+    const breakTo24 = convertTo24Hour(breakTo, breakToPeriod);
+    
+    const [fromHour, fromMin] = breakFrom24.split(":").map(Number);
+    const [toHour, toMin] = breakTo24.split(":").map(Number);
 
-  return (toHour * 60 + toMin) - (fromHour * 60 + fromMin);
+    return (toHour * 60 + toMin) - (fromHour * 60 + fromMin);
 };
-
 
 const initializeScheduleWithDefaults = (): ScheduleType => {
     const initialSchedule: ScheduleType = {};
@@ -118,86 +193,129 @@ const initializeScheduleWithDefaults = (): ScheduleType => {
     return initialSchedule;
 };
 
-const toTimeInputValue = (time?: string) => {
-    if (!time) return "";
-
-    // Already HH:mm
-    if (/^\d{2}:\d{2}$/.test(time)) return time;
-
-    // Convert "11:42 AM" → "11:42"
-    const date = new Date(`1970-01-01 ${time}`);
-    if (isNaN(date.getTime())) return "";
-
-    return date.toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-    });
-};
-
-
 const parseScheduleFromDatabase = (appointmentSettings: any): ScheduleType => {
     if (!appointmentSettings) {
+        console.log("No appointment settings found");
         return initializeScheduleWithDefaults();
     }
 
-    const settings =
-        typeof appointmentSettings === "string"
-            ? JSON.parse(appointmentSettings)
+    try {
+        const settings = typeof appointmentSettings === "string" 
+            ? JSON.parse(appointmentSettings) 
             : appointmentSettings;
 
-    const parsedSchedule: ScheduleType = initializeScheduleWithDefaults();
+        console.log("Parsing settings:", settings);
 
-    Object.keys(settings).forEach((day) => {
-        if (days.includes(day) && settings[day]) {
-            parsedSchedule[day] = {
-                enabled: !!settings[day].enabled,
-                slots: (settings[day].slots || []).map((slot: any) => ({
-                    from: toTimeInputValue(slot.from),
-                    to: toTimeInputValue(slot.to),
-                    breakFrom: toTimeInputValue(slot.breakFrom),
-                    breakTo: toTimeInputValue(slot.breakTo),
-                    token: Number(slot.token) || 0,
-                })),
-            };
-        }
-    });
+        const parsedSchedule: ScheduleType = initializeScheduleWithDefaults();
 
-    return parsedSchedule;
+        Object.keys(settings).forEach((day) => {
+            if (days.includes(day) && settings[day]) {
+                console.log(`Parsing day ${day}:`, settings[day]);
+                
+                parsedSchedule[day] = {
+                    enabled: !!settings[day].enabled,
+                    slots: (settings[day].slots || []).map((slot: any, index: number) => {
+                        console.log(`Parsing slot ${index} for ${day}:`, slot);
+                        
+                        const from = convertTo12Hour(slot.from || "");
+                        const to = convertTo12Hour(slot.to || "");
+                        const breakFrom = convertTo12Hour(slot.breakFrom || "");
+                        const breakTo = convertTo12Hour(slot.breakTo || "");
+                        
+                        console.log(`Converted slot ${index}:`, {
+                            from24: slot.from,
+                            from12: from,
+                            to24: slot.to,
+                            to12: to
+                        });
+                        
+                        return {
+                            from: from.time,
+                            to: to.time,
+                            breakFrom: breakFrom.time,
+                            breakTo: breakTo.time,
+                            token: Number(slot.token) || 0,
+                            fromPeriod: from.period,
+                            toPeriod: to.period,
+                            breakFromPeriod: breakFrom.period,
+                            breakToPeriod: breakTo.period
+                        };
+                    }),
+                };
+            }
+        });
+
+        console.log("Final parsed schedule:", parsedSchedule);
+        return parsedSchedule;
+    } catch (error) {
+        console.error("Error parsing appointment settings:", error);
+        console.error("Raw appointment settings:", appointmentSettings);
+        return initializeScheduleWithDefaults();
+    }
 };
 
+const calculateHours = (from: string, fromPeriod: "AM" | "PM", to: string, toPeriod: "AM" | "PM") => {
+    if (!from || !to || !fromPeriod || !toPeriod) return "0.0";
+    
+    const from24 = convertTo24Hour(from, fromPeriod);
+    const to24 = convertTo24Hour(to, toPeriod);
+    
+    const [fromHour, fromMin] = from24.split(':').map(Number);
+    const [toHour, toMin] = to24.split(':').map(Number);
+    const totalMinutes = (toHour * 60 + toMin) - (fromHour * 60 + fromMin);
+    return (totalMinutes / 60).toFixed(1);
+};
+
+// Function to format schedule for API (convert to 24-hour format)
+const formatScheduleForApi = (schedule: ScheduleType): any => {
+    const formattedSchedule: any = {};
+    
+    Object.keys(schedule).forEach(day => {
+        const dayData = schedule[day];
+        
+        formattedSchedule[day] = {
+            enabled: dayData.enabled,
+            slots: dayData.slots.map(slot => ({
+                from: slot.from && slot.fromPeriod ? convertTo24Hour(slot.from, slot.fromPeriod) : "",
+                to: slot.to && slot.toPeriod ? convertTo24Hour(slot.to, slot.toPeriod) : "",
+                breakFrom: slot.breakFrom && slot.breakFromPeriod ? convertTo24Hour(slot.breakFrom, slot.breakFromPeriod) : "",
+                breakTo: slot.breakTo && slot.breakToPeriod ? convertTo24Hour(slot.breakTo, slot.breakToPeriod) : "",
+                token: slot.token
+            }))
+        };
+    });
+    
+    return formattedSchedule;
+};
 
 const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = false }: Props) => {
     const [schedule, setSchedule] = useState<ScheduleType>(initializeScheduleWithDefaults());
     const [confirmDelete, setConfirmDelete] = useState<{ day: string; index: number } | null>(null);
     const [touchedSlots, setTouchedSlots] = useState<Set<string>>(new Set());
     const [hasValidationErrors, setHasValidationErrors] = useState(false);
-    const [isInitialized, setIsInitialized] = useState(false);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        console.log("Department prop changed:", department);
-        console.log("Department appointment_settings:", department?.appointment_settings);
-    }, [department]);
 
     useEffect(() => {
         if (!department) return;
 
         setLoading(true);
-
-        const parsedSchedule = parseScheduleFromDatabase(
-            department.appointmentSettings
-        );
-
+        console.log("Raw appointment settings from API:", department.appointmentSettings);
+        
+        const parsedSchedule = parseScheduleFromDatabase(department.appointmentSettings);
+        console.log("Parsed schedule:", parsedSchedule);
+        
         setSchedule(parsedSchedule);
-        setTouchedSlots(new Set()); // reset touched state
+        setTouchedSlots(new Set());
         setHasValidationErrors(false);
-
-        onSave?.(parsedSchedule);
-
+        
+        // Send formatted schedule to parent
+        if (onSave) {
+            const formatted = formatScheduleForApi(parsedSchedule);
+            console.log("Formatted for API:", formatted);
+            onSave(formatted);
+        }
         setLoading(false);
     }, [department]);
-
 
     useEffect(() => {
         let hasErrors = false;
@@ -214,7 +332,6 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
         });
 
         setHasValidationErrors(hasErrors);
-
         if (onValidationChange) {
             onValidationChange(hasErrors);
         }
@@ -231,36 +348,59 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
             [day]: {
                 enabled,
                 slots: enabled
-                    ? [{ from: "", to: "", breakFrom: "", breakTo: "", token: 0 }]
+                    ? [{ 
+                        from: "", 
+                        to: "", 
+                        breakFrom: "", 
+                        breakTo: "", 
+                        token: 0,
+                        fromPeriod: "AM",
+                        toPeriod: "AM",
+                        breakFromPeriod: "AM",
+                        breakToPeriod: "AM"
+                    }]
                     : [],
             },
         };
         setSchedule(updated);
 
         if (onSave) {
-            onSave(updated);
+            onSave(formatScheduleForApi(updated));
         }
     };
 
-    const updateSlot = (day: string, index: number, key: keyof SlotType, val: string) => {
+    const updateSlot = (day: string, index: number, key: keyof SlotType, value: any) => {
         const updated = { ...schedule };
-
+        
         if (!updated[day].enabled) return;
 
+        // Add validation for time fields to only accept 1-12 hours
+        if (key === 'from' || key === 'to' || key === 'breakFrom' || key === 'breakTo') {
+            if (value) {
+                // Check if time is valid (1-12 hours)
+                const [hoursStr] = value.split(':');
+                const hours = parseInt(hoursStr);
+                if (hoursStr && (isNaN(hours) || hours < 1 || hours > 12)) {
+                    // Don't update if invalid
+                    return;
+                }
+            }
+        }
+
         if (key === "token") {
-            const numVal = parseInt(val);
+            const numVal = parseInt(value);
             updated[day].slots[index][key] = isNaN(numVal) ? 0 : Math.max(0, numVal);
         } else {
-            updated[day].slots[index][key] = val;
+            updated[day].slots[index][key] = value;
         }
 
         setSchedule(updated);
 
         if (onSave) {
-            onSave(updated);
+            onSave(formatScheduleForApi(updated));
         }
 
-        if (val !== "") {
+        if (value !== "") {
             markSlotAsTouched(day, index);
         }
     };
@@ -274,13 +414,17 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
             breakFrom: "",
             breakTo: "",
             token: 0,
+            fromPeriod: "AM",
+            toPeriod: "AM",
+            breakFromPeriod: "AM",
+            breakToPeriod: "AM"
         };
 
         updated[day].slots.push(newSlot);
         setSchedule(updated);
 
         if (onSave) {
-            onSave(updated);
+            onSave(formatScheduleForApi(updated));
         }
     };
 
@@ -290,7 +434,7 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
         setSchedule(updated);
 
         if (onSave) {
-            onSave(updated);
+            onSave(formatScheduleForApi(updated));
         }
 
         const slotKey = `${day}-${index}`;
@@ -362,7 +506,9 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
         }
 
         if (onSave) {
-            onSave(schedule);
+            const formattedSchedule = formatScheduleForApi(schedule);
+            console.log("Saving formatted schedule:", formattedSchedule);
+            onSave(formattedSchedule);
             toast.success("Schedule saved successfully!", { duration: 3000 });
         }
     };
@@ -370,22 +516,6 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
     const hasEnabledDays = Object.keys(schedule).some(
         (day) => schedule[day]?.enabled
     );
-
-    const calculateHours = (from: string, to: string) => {
-        if (!from || !to) return "0.0";
-        const [fromHour, fromMin] = from.split(':').map(Number);
-        const [toHour, toMin] = to.split(':').map(Number);
-        const totalMinutes = (toHour * 60 + toMin) - (fromHour * 60 + fromMin);
-        return (totalMinutes / 60).toFixed(1);
-    };
-
-    const calculateBreakHours = (breakFrom: string, breakTo: string) => {
-        if (!breakFrom || !breakTo) return "0.0";
-        const [fromHour, fromMin] = breakFrom.split(':').map(Number);
-        const [toHour, toMin] = breakTo.split(':').map(Number);
-        const totalMinutes = (toHour * 60 + toMin) - (fromHour * 60 + fromMin);
-        return (totalMinutes / 60).toFixed(1);
-    };
 
     const getSlotValidation = (day: string, index: number) => {
         if (!touchedSlots.has(`${day}-${index}`)) {
@@ -509,9 +639,7 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
 
                                         <div className="p-3 md:p-4 lg:p-6 space-y-3 md:space-y-4">
                                             {schedule[day].slots?.map((slot: SlotType, i: number) => {
-                                                const workingHours = calculateHours(slot.from, slot.to);
-                                                const breakHours = calculateBreakHours(slot.breakFrom, slot.breakTo);
-                                                const availableHours = (parseFloat(workingHours) - parseFloat(breakHours)).toFixed(1);
+                                                const workingHours = calculateHours(slot.from, slot.fromPeriod, slot.to, slot.toPeriod);
                                                 const validation = getSlotValidation(day, i);
 
                                                 return (
@@ -539,10 +667,6 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                             <AlertCircle className="w-3.5 h-3.5 text-red-500" />
                                                                         )}
                                                                     </div>
-                                                                    <p className={`text-xs ${validation.isValid ? "text-gray-500" : "text-red-500"
-                                                                        }`}>
-                                                                        {validation.isValid ? "Time slot configuration" : "Fix errors to save"}
-                                                                    </p>
                                                                 </div>
                                                             </div>
 
@@ -578,32 +702,54 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                         Working Hours *
                                                                     </label>
                                                                     <div className="flex items-center gap-2">
-                                                                        <input
-                                                                            type="time"
-                                                                            className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Start time") || e.includes("End time") || e.includes("End time must be"))
-                                                                                    ? "border-red-300 bg-red-50/50"
-                                                                                    : "border-gray-300"
-                                                                                }`}
-                                                                            value={slot.from}
-                                                                            onChange={(e) => updateSlot(day, i, "from", e.target.value)}
-                                                                            onBlur={() => markSlotAsTouched(day, i)}
-                                                                            required
-                                                                        />
+                                                                        <div className="flex-1 flex gap-2">
+                                                                            <input
+                                                                                type="time"
+                                                                                className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Start time") || e.includes("End time") || e.includes("End time must be") || e.includes("12-hour format"))
+                                                                                        ? "border-red-300 bg-red-50/50"
+                                                                                        : "border-gray-300"
+                                                                                    }`}
+                                                                                value={slot.from}
+                                                                                onChange={(e) => updateSlot(day, i, "from", e.target.value)}
+                                                                                onBlur={() => markSlotAsTouched(day, i)}
+                                                                                required
+                                                                            />
+                                                                            <select
+                                                                                className="w-20 border border-gray-300 rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                                                                value={slot.fromPeriod}
+                                                                                onChange={(e) => updateSlot(day, i, "fromPeriod", e.target.value)}
+                                                                                onBlur={() => markSlotAsTouched(day, i)}
+                                                                            >
+                                                                                <option value="AM">AM</option>
+                                                                                <option value="PM">PM</option>
+                                                                            </select>
+                                                                        </div>
                                                                         <span className="text-gray-400 text-sm">to</span>
-                                                                        <input
-                                                                            type="time"
-                                                                            className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Start time") || e.includes("End time") || e.includes("End time must be"))
-                                                                                    ? "border-red-300 bg-red-50/50"
-                                                                                    : "border-gray-300"
-                                                                                }`}
-                                                                            value={slot.to}
-                                                                            onChange={(e) => updateSlot(day, i, "to", e.target.value)}
-                                                                            onBlur={() => markSlotAsTouched(day, i)}
-                                                                            required
-                                                                        />
+                                                                        <div className="flex-1 flex gap-2">
+                                                                            <input
+                                                                                type="time"
+                                                                                className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Start time") || e.includes("End time") || e.includes("End time must be") || e.includes("12-hour format"))
+                                                                                        ? "border-red-300 bg-red-50/50"
+                                                                                        : "border-gray-300"
+                                                                                    }`}
+                                                                                value={slot.to}
+                                                                                onChange={(e) => updateSlot(day, i, "to", e.target.value)}
+                                                                                onBlur={() => markSlotAsTouched(day, i)}
+                                                                                required
+                                                                            />
+                                                                            <select
+                                                                                className="w-20 border border-gray-300 rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                                                                value={slot.toPeriod}
+                                                                                onChange={(e) => updateSlot(day, i, "toPeriod", e.target.value)}
+                                                                                onBlur={() => markSlotAsTouched(day, i)}
+                                                                            >
+                                                                                <option value="AM">AM</option>
+                                                                                <option value="PM">PM</option>
+                                                                            </select>
+                                                                        </div>
                                                                     </div>
                                                                     <p className="text-xs text-gray-500 italic">
-                                                                        Required field
+                                                                        Required field (must be in 12-hour format: 01:00 to 12:59)
                                                                     </p>
                                                                 </div>
 
@@ -613,32 +759,54 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                         Break Time
                                                                     </label>
                                                                     <div className="flex items-center gap-2">
-                                                                        <input
-                                                                            type="time"
-                                                                            className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Break"))
-                                                                                    ? "border-red-300 bg-red-50/50"
-                                                                                    : "border-gray-300"
-                                                                                }`}
-                                                                            value={slot.breakFrom}
-                                                                            onChange={(e) => updateSlot(day, i, "breakFrom", e.target.value)}
-                                                                            onBlur={() => markSlotAsTouched(day, i)}
-                                                                            placeholder="HH:MM"
-                                                                        />
+                                                                        <div className="flex-1 flex gap-2">
+                                                                            <input
+                                                                                type="time"
+                                                                                className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Break") || e.includes("12-hour format"))
+                                                                                        ? "border-red-300 bg-red-50/50"
+                                                                                        : "border-gray-300"
+                                                                                    }`}
+                                                                                value={slot.breakFrom}
+                                                                                onChange={(e) => updateSlot(day, i, "breakFrom", e.target.value)}
+                                                                                onBlur={() => markSlotAsTouched(day, i)}
+                                                                                placeholder="HH:MM"
+                                                                            />
+                                                                            <select
+                                                                                className="w-20 border border-gray-300 rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                                                                value={slot.breakFromPeriod}
+                                                                                onChange={(e) => updateSlot(day, i, "breakFromPeriod", e.target.value)}
+                                                                                onBlur={() => markSlotAsTouched(day, i)}
+                                                                            >
+                                                                                <option value="AM">AM</option>
+                                                                                <option value="PM">PM</option>
+                                                                            </select>
+                                                                        </div>
                                                                         <span className="text-gray-400 text-sm">to</span>
-                                                                        <input
-                                                                            type="time"
-                                                                            className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Break"))
-                                                                                    ? "border-red-300 bg-red-50/50"
-                                                                                    : "border-gray-300"
-                                                                                }`}
-                                                                            value={slot.breakTo}
-                                                                            onChange={(e) => updateSlot(day, i, "breakTo", e.target.value)}
-                                                                            onBlur={() => markSlotAsTouched(day, i)}
-                                                                            placeholder="HH:MM"
-                                                                        />
+                                                                        <div className="flex-1 flex gap-2">
+                                                                            <input
+                                                                                type="time"
+                                                                                className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Break") || e.includes("12-hour format"))
+                                                                                        ? "border-red-300 bg-red-50/50"
+                                                                                        : "border-gray-300"
+                                                                                    }`}
+                                                                                value={slot.breakTo}
+                                                                                onChange={(e) => updateSlot(day, i, "breakTo", e.target.value)}
+                                                                                onBlur={() => markSlotAsTouched(day, i)}
+                                                                                placeholder="HH:MM"
+                                                                            />
+                                                                            <select
+                                                                                className="w-20 border border-gray-300 rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                                                                                value={slot.breakToPeriod}
+                                                                                onChange={(e) => updateSlot(day, i, "breakToPeriod", e.target.value)}
+                                                                                onBlur={() => markSlotAsTouched(day, i)}
+                                                                            >
+                                                                                <option value="AM">AM</option>
+                                                                                <option value="PM">PM</option>
+                                                                            </select>
+                                                                        </div>
                                                                     </div>
                                                                     <p className="text-xs text-gray-500 italic">
-                                                                        Leave both empty if no break needed
+                                                                        Leave both empty if no break needed (must be in 12-hour format: 01:00 to 12:59)
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -679,33 +847,24 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                                 {slot.from && slot.to ? `${workingHours} hours` : "Not set"}
                                                                             </span>
                                                                         </div>
-                                                                     <div className="flex items-center justify-between">
-  <span className="text-gray-600 text-xs md:text-sm">
-    Break Duration:
-  </span>
-  <span
-    className={`font-semibold text-sm md:text-base ${
-      slot.breakFrom && slot.breakTo
-        ? "text-gray-800"
-        : "text-gray-400"
-    }`}
-  >
-    {slot.breakFrom && slot.breakTo
-      ? formatMinutesToHours(
-          calculateBreakMinutes(slot.breakFrom, slot.breakTo)
-        )
-      : "No break"}
-  </span>
-</div>
-
-
-                                                                        {/* <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                                                                            <span className="text-gray-600 text-xs md:text-sm">Available Hours:</span>
-                                                                            <span className={`font-semibold text-sm md:text-base ${slot.from && slot.to ? "text-blue-600" : "text-gray-400"
-                                                                                }`}>
-                                                                                {slot.from && slot.to ? `${availableHours} hours` : "Not set"}
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-gray-600 text-xs md:text-sm">
+                                                                                Break Duration:
                                                                             </span>
-                                                                        </div> */}
+                                                                            <span
+                                                                                className={`font-semibold text-sm md:text-base ${
+                                                                                    slot.breakFrom && slot.breakTo
+                                                                                        ? "text-gray-800"
+                                                                                        : "text-gray-400"
+                                                                                }`}
+                                                                            >
+                                                                                {slot.breakFrom && slot.breakTo
+                                                                                    ? formatMinutesToHours(
+                                                                                        calculateBreakMinutes(slot.breakFrom, slot.breakFromPeriod, slot.breakTo, slot.breakToPeriod)
+                                                                                    )
+                                                                                    : "No break"}
+                                                                            </span>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>

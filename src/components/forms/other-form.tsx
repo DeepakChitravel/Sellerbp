@@ -62,6 +62,21 @@ const validateSchedule = (
         };
       }
 
+      // Validate 24-hour format times
+      const validate24HourTime = (time: string): boolean => {
+        if (!time) return false;
+        const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        return timeRegex.test(time);
+      };
+
+      if (!validate24HourTime(slot.from) || !validate24HourTime(slot.to)) {
+        return {
+          valid: false,
+          message: `${label}: Invalid time format (must be HH:MM in 24-hour format)`,
+        };
+      }
+
+      // Compare times (already in 24-hour format)
       const from = new Date(`2000-01-01 ${slot.from}`);
       const to = new Date(`2000-01-01 ${slot.to}`);
       if (from >= to) {
@@ -78,31 +93,18 @@ const validateSchedule = (
         };
       }
 
-      if (
-        (slot.breakFrom && !slot.breakTo) ||
-        (!slot.breakFrom && slot.breakTo)
-      ) {
-        return {
-          valid: false,
-          message: `${label}: Both break times are required`,
-        };
-      }
-
-      if (slot.breakFrom && slot.breakTo) {
-        const bf = new Date(`2000-01-01 ${slot.breakFrom}`);
-        const bt = new Date(`2000-01-01 ${slot.breakTo}`);
-
-        if (bf >= bt) {
+      // Validate break times if provided (optional)
+      if (slot.breakFrom || slot.breakTo) {
+        if (slot.breakFrom && !validate24HourTime(slot.breakFrom)) {
           return {
             valid: false,
-            message: `${label}: Break end must be after start`,
+            message: `${label}: Invalid break start time format`,
           };
         }
-
-        if (bf < from || bt > to) {
+        if (slot.breakTo && !validate24HourTime(slot.breakTo)) {
           return {
             valid: false,
-            message: `${label}: Break must be within working hours`,
+            message: `${label}: Invalid break end time format`,
           };
         }
       }
@@ -116,6 +118,7 @@ const OtherForm = ({ department }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [schedule, setSchedule] = useState<any>(null);
   const [hasScheduleErrors, setHasScheduleErrors] = useState(false);
+  const [hasEnabledDays, setHasEnabledDays] = useState(false);
 
   const handleSave = async () => {
     if (!schedule) {
@@ -162,6 +165,24 @@ const OtherForm = ({ department }: Props) => {
     }
   };
 
+  // Check if there are any enabled days in the schedule
+  const checkEnabledDays = (scheduleData: any) => {
+    if (!scheduleData) return false;
+    
+    const hasDays = Object.keys(scheduleData).some(
+      (day) => scheduleData[day]?.enabled && scheduleData[day]?.slots?.length > 0
+    );
+    
+    setHasEnabledDays(hasDays);
+    return hasDays;
+  };
+
+  // Handle schedule updates
+  const handleScheduleUpdate = (updatedSchedule: any) => {
+    setSchedule(updatedSchedule);
+    checkEnabledDays(updatedSchedule);
+  };
+
   return (
     <>
       {/* MAIN CONTENT */}
@@ -173,25 +194,29 @@ const OtherForm = ({ department }: Props) => {
 
         {/* Schedule */}
         <OtherSchedule
-          department={department}   // 👈 contains appointmentSettings
-          onSave={setSchedule}
+          department={department}
+          onSave={handleScheduleUpdate}
           onValidationChange={setHasScheduleErrors}
         />
       </div>
 
-      {/* SAVE BAR */}
-      <Sticky>
-        <Button
-          onClick={handleSave}
-          disabled={isLoading || hasScheduleErrors}
-          isLoading={isLoading}
-          className={
-            hasScheduleErrors ? "bg-gray-400 hover:bg-gray-400" : ""
-          }
-        >
-          {hasScheduleErrors ? "Fix Schedule Errors First" : "Save"}
-        </Button>
-      </Sticky>
+      {/* SAVE BAR - Only show if there are enabled days */}
+      {hasEnabledDays && (
+        <Sticky>
+          <Button
+            onClick={handleSave}
+            disabled={isLoading || hasScheduleErrors}
+            isLoading={isLoading}
+            className={
+              hasScheduleErrors 
+                ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed" 
+                : "bg-blue-600 hover:bg-blue-700"
+            }
+          >
+            {hasScheduleErrors ? "Fix Schedule Errors First" : "Save Schedule"}
+          </Button>
+        </Sticky>
+      )}
     </>
   );
 };
