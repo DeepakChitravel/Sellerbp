@@ -46,7 +46,7 @@ const SIDEBAR_LINKS = [
 
   // 🔐 SERVICE TYPE BASED (IMPORTANT)
   {
-    label: "Appointment Settings",
+    label: "Menu Settings",
     href: "/hot-opts",
     icon: <Calendar2 />,
     serviceType: 2, // HOTEL
