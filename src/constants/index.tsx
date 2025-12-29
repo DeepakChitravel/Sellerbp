@@ -45,12 +45,16 @@ const SIDEBAR_LINKS = [
   { label: "Event", href: "/event", icon: <CalendarTick /> },
 
   // 🔐 SERVICE TYPE BASED (IMPORTANT)
-  {
-    label: "Menu Settings",
-    href: "/hot-opts",
-    icon: <Calendar2 />,
-    serviceType: 2, // HOTEL
-  },
+{
+  label: "Menu Settings",
+  icon: <Calendar2 />,
+  serviceType: 2, // HOTEL
+  children: [
+    { label: "Menus", href: "/menu-settings/menus" },
+    { label: "Menu Items", href: "/menu-settings/menu-items" },
+    { label: "Item Categories", href: "/menu-settings/item-categories" },
+  ],
+},
   {
     label: "Appointment Settings",
     href: "/oth-opts",
