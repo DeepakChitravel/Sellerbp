@@ -9,8 +9,10 @@ export default function MenusPage() {
   const [showAddForm, setShowAddForm] = useState(false);
 
   return (
-    <div className="p-6">
-      {/* MENU CARDS */}
+    // ✅ PREVENT PAGE WIDTH FROM EXPANDING
+    <div className="p-6 w-full max-w-full overflow-x-hidden">
+      
+      {/* MENU CARDS (CAROUSEL HANDLES SCROLL) */}
       <MenuList />
 
       {/* MENU ITEMS HEADER */}
@@ -24,7 +26,10 @@ export default function MenusPage() {
         </button>
       </div>
 
-      <MenuItemsTable />
+      {/* TABLE SHOULD NEVER SCROLL HORIZONTALLY */}
+      <div className="w-full overflow-x-hidden">
+        <MenuItemsTable />
+      </div>
 
       {/* FULL SCREEN FORM */}
       {showAddForm && (

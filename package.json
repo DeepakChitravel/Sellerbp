@@ -38,6 +38,7 @@
     "country-state-city": "^3.2.1",
     "currency-symbol-map": "^5.1.0",
     "date-fns": "^3.6.0",
+    "framer-motion": "^12.23.26",
     "html2canvas": "^1.4.1",
     "iconsax-react": "^0.0.8",
     "input-otp": "^1.2.4",

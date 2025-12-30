@@ -953,3 +953,62 @@ export interface NavLink {
   label: string;
   link: string;
 }
+
+
+// types/menu.ts
+export interface MenuItem {
+  id: number;
+  name: string;
+  description?: string;
+  menu_id: number;
+  category_id?: number;
+  category: string;
+  menu: string;
+  food_type: 'veg' | 'non-veg';
+  halal: boolean;
+  stock_type: string;
+  stock_qty?: number;
+  stock_unit?: string;
+  stock: string;
+  customer_limit?: number;
+  customer_limit_period?: string;
+  image?: string;
+  preparationTime: number;
+  price: number;
+  originalPrice?: number;
+  discount?: string;
+  orderCount: number;
+  rating: number;
+  bestSeller: boolean;
+  available: boolean;
+  showOnSite: boolean;
+  lastUpdated: string;
+  veg: boolean;
+}
+
+export interface Variation {
+  id?: number;
+  name: string;
+  mrpPrice: number;
+  sellingPrice: number;
+  discountPercent?: number;
+  dineInPrice?: number;
+  takeawayPrice?: number;
+  deliveryPrice?: number;
+}
+
+export interface MenuItemFormData {
+  name: string;
+  description: string;
+  menu_id: number;
+  category_id?: number;
+  food_type: 'veg' | 'non-veg';
+  halal: boolean;
+  stock_type: 'limited' | 'unlimited' | 'out_of_stock';
+  stock_qty?: number;
+  stock_unit?: string;
+  customer_limit?: number;
+  customer_limit_period?: string;
+  image?: string;
+  variations: Variation[];
+}

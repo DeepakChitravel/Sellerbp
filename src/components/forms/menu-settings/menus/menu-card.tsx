@@ -39,12 +39,12 @@ export default function MenuCard({ menu, onRename, onDelete }: Props) {
 
   const handleRename = () => {
     setOpen(false);
-    onRename(menu.id); // ✅ parent will open update modal
+    onRename(menu.id); 
   };
 
   const handleDelete = () => {
     setOpen(false);
-    onDelete(menu.id); // ✅ parent will confirm + delete
+    onDelete(menu.id); 
   };
 
   // Color helper

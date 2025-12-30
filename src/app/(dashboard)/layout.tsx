@@ -22,12 +22,23 @@ export default async function DashboardLayout({
       </aside>
 
       {/* MAIN CONTENT */}
-      <div className="ml-[70px] 2xl:ml-[270px] w-full min-h-screen bg-[#f8f8f9]">
-        <TopBar />
-        <main className="2xl:px-8 px-5 py-8">
-          {children}
-        </main>
-      </div>
+      <div
+  className="
+    ml-[70px] 2xl:ml-[270px]
+    w-[calc(100vw-70px)]
+    2xl:w-[calc(100vw-270px)]
+    min-h-screen
+    bg-[#f8f8f9]
+    overflow-x-hidden
+  "
+>
+  <TopBar />
+
+  <main className="2xl:px-8 px-5 py-8 max-w-full overflow-x-hidden">
+    {children}
+  </main>
+</div>
+
     </div>
   );
 }
