@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X, Trash2, Plus, Info, AlertCircle,
   ShoppingBag, Users, Tag, IndianRupee,
@@ -9,7 +9,14 @@ import {
 
 interface Props {
   onClose: () => void;
+  onItemAdded?: () => void; // Optional callback to refresh parent component
 }
+import { addMenuItem } from "@/lib/api/menu-items";
+import {
+  getMenus, getCategories,
+} from "@/lib/api/menu-items";
+import type { Menu, ItemCategory } from "@/lib/api/menu-items";
+
 
 type Variation = {
   id: number;
@@ -23,7 +30,9 @@ type Variation = {
   deliveryPrice: string | null;
 };
 
-export default function AddMenuItemForm({ onClose }: Props) {
+export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
+  const [categories, setCategories] = useState<ItemCategory[]>([]);
+
   const [hasVariations, setHasVariations] = useState(true);
   const [foodType, setFoodType] = useState<"veg" | "nonveg">("veg");
   const [isHalal, setIsHalal] = useState(false);
@@ -33,6 +42,9 @@ export default function AddMenuItemForm({ onClose }: Props) {
   const [customerLimitEnabled, setCustomerLimitEnabled] = useState(false);
   const [customerLimitQty, setCustomerLimitQty] = useState("");
   const [customerLimitPeriod, setCustomerLimitPeriod] = useState<"per_order" | "per_day" | "per_week" | "per_month">("per_order");
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [menuCategory, setMenuCategory] = useState("");
+  const [subCategory, setSubCategory] = useState("");
   const [variations, setVariations] = useState<Variation[]>([
     {
       id: 1,
@@ -46,6 +58,29 @@ export default function AddMenuItemForm({ onClose }: Props) {
       deliveryPrice: null,
     },
   ]);
+  useEffect(() => {
+    if (!menuCategory) {
+      setCategories([]);
+      setSubCategory("");
+      return;
+    }
+
+    getCategories(Number(menuCategory))
+      .then(setCategories)
+      .catch(() => setCategories([]));
+  }, [menuCategory]);
+
+  useEffect(() => {
+    getMenus().then(setMenus);
+  }, []);
+  // New form state fields
+  const [itemName, setItemName] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [preparationTime, setPreparationTime] = useState("15");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const addVariation = () => {
     setVariations([
@@ -70,6 +105,9 @@ export default function AddMenuItemForm({ onClose }: Props) {
     }
   };
 
+
+
+
   const updateVariation = (id: number, field: keyof Variation, value: string) => {
     setVariations(variations.map(v => {
       if (v.id === id) {
@@ -92,6 +130,148 @@ export default function AddMenuItemForm({ onClose }: Props) {
       }
       return v;
     }));
+  };
+
+  // Handle image upload
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate required fields
+    if (!itemName.trim()) {
+      alert("Please enter item name");
+      return;
+    }
+
+    if (!menuCategory) {
+      alert("Please select a menu category");
+      return;
+    }
+
+    if (hasVariations) {
+      // Validate variations
+      for (const variation of variations) {
+        if (!variation.name.trim()) {
+          alert(`Please enter name for Variation ${variation.id}`);
+          return;
+        }
+        if (!variation.mrpPrice || parseFloat(variation.mrpPrice) <= 0) {
+          alert(`Please enter valid MRP price for ${variation.name}`);
+          return;
+        }
+        if (!variation.sellingPrice || parseFloat(variation.sellingPrice) <= 0) {
+          alert(`Please enter valid selling price for ${variation.name}`);
+          return;
+        }
+      }
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Prepare form data
+      const formData = {
+        name: itemName,
+        description: description,
+        menu_id: Number(menuCategory),
+        category_id: subCategory ? parseInt(subCategory) : null,
+        food_type: foodType === "nonveg" ? "non-veg" : "veg",
+        halal: isHalal,
+        stock_type:
+          stockType === "out" ? "out_of_stock" : stockType,
+        stock_qty: stockType === "limited" ? parseInt(stockQty) || 0 : null,
+        stock_unit: stockType === "limited" ? stockUnit : null,
+        customer_limit: customerLimitEnabled ? parseInt(customerLimitQty) || 0 : null,
+        customer_limit_period: customerLimitEnabled ? customerLimitPeriod : null,
+        preparation_time: parseInt(preparationTime) || 15,
+        variations: hasVariations ? variations.map(v => ({
+          name: v.name,
+          mrp_price: parseFloat(v.mrpPrice) || 0,
+          selling_price: parseFloat(v.sellingPrice) || 0,
+          discount_percent: parseFloat(v.discountPercent) || 0,
+          dine_in_price: v.dineInPrice ? parseFloat(v.dineInPrice) : null,
+          takeaway_price: v.takeawayPrice ? parseFloat(v.takeawayPrice) : null,
+          delivery_price: v.deliveryPrice ? parseFloat(v.deliveryPrice) : null
+        })) : [],
+        spice_level: "Medium",
+        tags: []
+      };
+
+      // First, upload image if exists
+      let imageUrl = "";
+      if (imageFile) {
+        const imageFormData = new FormData();
+        imageFormData.append('image', imageFile);
+
+        const uploadResponse = await fetch('/api/seller/upload.php', {
+          method: 'POST',
+          body: imageFormData,
+          credentials: 'include'
+        });
+
+        if (uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json();
+          imageUrl = uploadResult.imageUrl || "";
+        }
+      }
+
+      // Add image URL to form data
+      const finalData = {
+        ...formData,
+        image: imageUrl
+      };
+
+      // Send to API
+      const response = await fetch(
+        'http://localhost/managerbp/public/seller/menu-items/add.php',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(finalData),
+          credentials: 'include',
+        }
+      );
+
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Menu item added successfully!");
+        if (onItemAdded) onItemAdded();
+        onClose();
+      } else {
+        alert(result.message || "Failed to add menu item");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle save as draft
+  const handleSaveAsDraft = async () => {
+    // Similar to handleSubmit but with draft status
+    alert("Draft saved! (You can implement draft functionality similarly)");
   };
 
   return (
@@ -132,7 +312,7 @@ export default function AddMenuItemForm({ onClose }: Props) {
           </div>
 
           {/* Body */}
-          <form className="flex-1 overflow-y-auto p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <form className="flex-1 overflow-y-auto p-8 grid grid-cols-1 lg:grid-cols-2 gap-8" onSubmit={handleSubmit}>
             {/* ================= LEFT: PRODUCT INFO ================= */}
             <div className="space-y-6">
               <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
@@ -152,6 +332,8 @@ export default function AddMenuItemForm({ onClose }: Props) {
                       type="text"
                       placeholder="e.g., Butter Chicken, Margherita Pizza"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      value={itemName}
+                      onChange={(e) => setItemName(e.target.value)}
                       required
                     />
                   </div>
@@ -164,6 +346,8 @@ export default function AddMenuItemForm({ onClose }: Props) {
                       placeholder="Describe your dish, ingredients, special notes..."
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       rows={3}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
                     />
                   </div>
 
@@ -172,32 +356,60 @@ export default function AddMenuItemForm({ onClose }: Props) {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Menu Category <span className="text-red-500">*</span>
                       </label>
-                      <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                        <option value="">Select Category</option>
-                        <option value="appetizers">Appetizers</option>
-                        <option value="main_course">Main Course</option>
-                        <option value="desserts">Desserts</option>
-                        <option value="beverages">Beverages</option>
-                        <option value="breads">Breads & Rotis</option>
-                        <option value="rice">Rice & Biryanis</option>
+                      <select
+                        value={menuCategory}
+                        onChange={(e) => setMenuCategory(e.target.value)}
+                        required
+                      >
+                        <option value="">Select Menu</option>
+                        {menus.map((menu) => (
+                          <option key={menu.id} value={menu.id}>
+                            {menu.name}
+                          </option>
+                        ))}
                       </select>
+
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Sub Category
                       </label>
-                      <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">Select Sub-category</option>
-                        <option value="signature">Signature Dishes</option>
-                        <option value="chef_special">Chef Special</option>
-                        <option value="healthy">Healthy Options</option>
-                        <option value="seasonal">Seasonal Special</option>
+                      <select
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                        value={subCategory}
+                        onChange={(e) => setSubCategory(e.target.value)}
+                        disabled={!menuCategory}
+                      >
+                        <option value="">Select Item Category</option>
+
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
                       </select>
+
                     </div>
                   </div>
 
-
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preparation Time (minutes)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      placeholder="15"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      value={preparationTime}
+                      onChange={(e) => setPreparationTime(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Average time needed to prepare this item
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -714,18 +926,35 @@ export default function AddMenuItemForm({ onClose }: Props) {
                     </div>
                   )}
 
-                  {/* Availability Schedule */}
-
-
                   {/* Food Image Upload */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Food Image
                     </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer">
-                      <div className="w-16 h-16 bg-gradient-to-br from-amber-50 to-orange-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <span className="text-2xl">📷</span>
-                      </div>
+                      {imagePreview ? (
+                        <div className="mb-3">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-32 h-32 object-cover rounded-lg mx-auto"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImageFile(null);
+                              setImagePreview(null);
+                            }}
+                            className="mt-2 text-sm text-red-600 hover:text-red-800"
+                          >
+                            Remove Image
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 bg-gradient-to-br from-amber-50 to-orange-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <span className="text-2xl">📷</span>
+                        </div>
+                      )}
                       <p className="text-gray-700 font-medium">Upload Food Image</p>
                       <p className="text-sm text-gray-500 mt-1 mb-3">JPG, PNG or WebP. Max 5MB</p>
                       <input
@@ -733,6 +962,7 @@ export default function AddMenuItemForm({ onClose }: Props) {
                         accept="image/*"
                         className="hidden"
                         id="food-image"
+                        onChange={handleImageChange}
                       />
                       <label htmlFor="food-image" className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all cursor-pointer">
                         <Plus className="w-4 h-4" />
@@ -757,21 +987,26 @@ export default function AddMenuItemForm({ onClose }: Props) {
                   type="button"
                   onClick={onClose}
                   className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
 
                 <button
                   type="button"
+                  onClick={handleSaveAsDraft}
                   className="px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                  disabled={isSubmitting}
                 >
                   Save as Draft
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save & Publish Item
+                  {isSubmitting ? "Saving..." : "Save & Publish Item"}
                 </button>
               </div>
             </div>

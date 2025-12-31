@@ -20,6 +20,7 @@ import {
 } from "@/lib/api/menu-items";
 import type { MenuItem, Menu, ItemCategory } from "@/lib/api/menu-items";
 import toast from "react-hot-toast";
+import AddMenuItemForm from "@/components/forms/menu-settings/menu-items/add-menu-item-form";
 
 export default function MenuItemsTable() {
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -34,6 +35,7 @@ export default function MenuItemsTable() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [processing, setProcessing] = useState<string>("");
+const [showAddItem, setShowAddItem] = useState(false);
 
   // Load all data
   useEffect(() => {
@@ -43,22 +45,52 @@ export default function MenuItemsTable() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [itemsData, menusData, categoriesData] = await Promise.all([
+
+      const [itemsRes, menusRes, categoriesRes] = await Promise.all([
         getMenuItems(),
         getMenus(),
         getCategories()
       ]);
-      
-      setItems(itemsData);
-      setMenus(menusData);
-      setCategories(categoriesData);
+
+      // ✅ NORMALIZE ITEMS
+ const extractArray = (res: any): any[] => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.items)) return res.items;
+  if (Array.isArray(res?.data?.items)) return res.data.items;
+  return [];
+};
+
+const normalizedItems: MenuItem[] = extractArray(itemsRes);
+const normalizedMenus: Menu[] = extractArray(menusRes);
+const normalizedCategories: ItemCategory[] = extractArray(categoriesRes);
+
+      const safeItems: MenuItem[] = normalizedItems.map(item => ({
+        ...item,
+
+        // ✅ DEFAULTS FOR UI
+        order_count: item.order_count ?? 0,
+        rating: item.rating ?? 0,
+        last_updated: item.last_updated ?? item.created_at,
+        original_price: item.original_price ?? item.price,
+        tags: item.tags ?? [],
+        spice_level: item.spice_level ?? "Medium",
+      }));
+
+
+
+      setItems(safeItems);
+      setMenus(normalizedMenus);
+      setCategories(normalizedCategories);
     } catch (error) {
       console.error("Failed to load data:", error);
       toast.error("Failed to load menu data");
+      setItems([]); // 🔒 safety
     } finally {
       setLoading(false);
     }
   };
+
 
   // Transform stock data for display
   const getStockDisplay = (item: MenuItem) => {
@@ -72,14 +104,14 @@ export default function MenuItemsTable() {
   // Filter and sort items
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesMenu = selectedMenu === "all" || 
-                       item.menu_id.toString() === selectedMenu;
-    
-    const matchesCategory = selectedCategory === "all" || 
-                           (item.category_id?.toString() === selectedCategory);
-    
+      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesMenu = selectedMenu === "all" ||
+      item.menu_id.toString() === selectedMenu;
+
+    const matchesCategory = selectedCategory === "all" ||
+      (item.category_id?.toString() === selectedCategory);
+
     return matchesSearch && matchesMenu && matchesCategory;
   });
 
@@ -119,30 +151,40 @@ export default function MenuItemsTable() {
 
   const handleDeleteItem = async (id: number) => {
     if (!confirm("Are you sure you want to delete this menu item?")) return;
-    
+
     try {
       setProcessing(`delete-${id}`);
+
       const res = await deleteMenuItem(id);
-      
-      if (res.success) {
+
+      // ✅ handle all possible backend responses safely
+      const isSuccess =
+        res === true ||
+        res?.success === true ||
+        res?.status === true ||
+        res?.message?.toLowerCase().includes("success");
+
+      if (isSuccess) {
         setItems(prev => prev.filter(item => item.id !== id));
         setSelectedItems(prev => prev.filter(itemId => itemId !== id));
         toast.success("Item deleted successfully");
       } else {
-        toast.error(res.message || "Failed to delete item");
+        toast.error(res?.message || "Failed to delete item");
       }
     } catch (error) {
+      console.error(error);
       toast.error("Failed to delete item");
     } finally {
       setProcessing("");
     }
   };
 
+
   const handleToggleAvailability = async (id: number, currentStatus: boolean) => {
     try {
       setProcessing(`availability-${id}`);
       const res = await toggleMenuItemAvailability(id, !currentStatus);
-      
+
       if (res.success) {
         setItems(prev =>
           prev.map(item =>
@@ -164,7 +206,7 @@ export default function MenuItemsTable() {
     try {
       setProcessing(`visibility-${id}`);
       const res = await toggleMenuItemVisibility(id, !currentStatus);
-      
+
       if (res.success) {
         setItems(prev =>
           prev.map(item =>
@@ -186,7 +228,7 @@ export default function MenuItemsTable() {
     try {
       setProcessing(`bestseller-${id}`);
       const res = await toggleMenuItemBestSeller(id, !currentStatus);
-      
+
       if (res.success) {
         setItems(prev =>
           prev.map(item =>
@@ -254,11 +296,10 @@ export default function MenuItemsTable() {
 
               <button
                 onClick={() => setFiltersVisible(!filtersVisible)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-lg border transition-colors ${
-                  filtersVisible
+                className={`flex items-center gap-2 px-4 py-3 rounded-lg border transition-colors ${filtersVisible
                     ? "bg-blue-50 border-blue-500 text-blue-700"
                     : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 <Filter className="w-4 h-4" />
                 Filters
@@ -269,21 +310,19 @@ export default function MenuItemsTable() {
               <div className="flex bg-gray-100 p-1 rounded-lg">
                 <button
                   onClick={() => setViewMode("table")}
-                  className={`px-3 py-2 rounded-md transition-colors ${
-                    viewMode === "table"
+                  className={`px-3 py-2 rounded-md transition-colors ${viewMode === "table"
                       ? "bg-white shadow-sm text-gray-900"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   Table
                 </button>
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`px-3 py-2 rounded-md transition-colors ${
-                    viewMode === "grid"
+                  className={`px-3 py-2 rounded-md transition-colors ${viewMode === "grid"
                       ? "bg-white shadow-sm text-gray-900"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   <Grid3x3 className="w-4 h-4" />
                 </button>
@@ -294,10 +333,14 @@ export default function MenuItemsTable() {
                 Bulk Upload
               </button>
 
-              <button className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 shadow-sm transition-all">
-                <Plus className="w-5 h-5" />
-                Add Menu Item
-              </button>
+           <button
+  onClick={() => setShowAddItem(true)}
+  className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 shadow-sm transition-all"
+>
+  <Plus className="w-5 h-5" />
+  Add Menu Item
+</button>
+
             </div>
           </div>
 
@@ -309,7 +352,7 @@ export default function MenuItemsTable() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Menu
                   </label>
-                  <select 
+                  <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={selectedMenu}
                     onChange={(e) => setSelectedMenu(e.target.value)}
@@ -322,12 +365,12 @@ export default function MenuItemsTable() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
                   </label>
-                  <select 
+                  <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
@@ -340,7 +383,7 @@ export default function MenuItemsTable() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Availability
@@ -351,12 +394,12 @@ export default function MenuItemsTable() {
                     <option>Out of Stock</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Sort By
                   </label>
-                  <select 
+                  <select
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -436,13 +479,13 @@ export default function MenuItemsTable() {
                     <div className="flex flex-col items-center justify-center">
                       <Package className="w-12 h-12 text-gray-300 mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        {searchQuery || selectedMenu !== "all" || selectedCategory !== "all" 
-                          ? "No menu items found" 
+                        {searchQuery || selectedMenu !== "all" || selectedCategory !== "all"
+                          ? "No menu items found"
                           : "No menu items yet"}
                       </h3>
                       <p className="text-gray-500 mb-4">
-                        {searchQuery || selectedMenu !== "all" || selectedCategory !== "all" 
-                          ? "Try adjusting your filters" 
+                        {searchQuery || selectedMenu !== "all" || selectedCategory !== "all"
+                          ? "Try adjusting your filters"
                           : "Get started by adding your first menu item"}
                       </p>
                       <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 shadow-sm transition-all">
@@ -457,7 +500,7 @@ export default function MenuItemsTable() {
                   const stockDisplay = getStockDisplay(item);
                   const categoryName = categories.find(cat => cat.id === item.category_id)?.name || "Uncategorized";
                   const menuName = menus.find(menu => menu.id === item.menu_id)?.name || "Unknown Menu";
-                  
+
                   return (
                     <tr
                       key={item.id}
@@ -475,8 +518,8 @@ export default function MenuItemsTable() {
                           <div className="relative">
                             <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100">
                               {item.image ? (
-                                <img 
-                                  src={item.image} 
+                                <img
+                                  src={item.image}
                                   alt={item.name}
                                   className="w-full h-full object-cover"
                                 />
@@ -585,20 +628,18 @@ export default function MenuItemsTable() {
                         <div className="space-y-3">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <Package className={`w-4 h-4 ${
-                                stockDisplay.includes("Unlimited")
+                              <Package className={`w-4 h-4 ${stockDisplay.includes("Unlimited")
                                   ? "text-green-600"
                                   : stockDisplay.includes("Out of Stock")
                                     ? "text-red-600"
                                     : "text-amber-600"
-                              }`} />
-                              <span className={`text-sm font-medium ${
-                                stockDisplay.includes("Unlimited")
+                                }`} />
+                              <span className={`text-sm font-medium ${stockDisplay.includes("Unlimited")
                                   ? "text-green-700"
                                   : stockDisplay.includes("Out of Stock")
                                     ? "text-red-700"
                                     : "text-amber-700"
-                              }`}>
+                                }`}>
                                 {stockDisplay}
                               </span>
                             </div>
@@ -611,15 +652,14 @@ export default function MenuItemsTable() {
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-gray-600">Spice Level</span>
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                item.spice_level === "Mild"
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${item.spice_level === "Mild"
                                   ? "bg-green-100 text-green-800"
                                   : item.spice_level === "Medium"
                                     ? "bg-amber-100 text-amber-800"
                                     : item.spice_level === "Hot"
                                       ? "bg-red-100 text-red-800"
                                       : "bg-gray-100 text-gray-800"
-                              }`}>
+                                }`}>
                                 {item.spice_level || "Medium"}
                               </span>
                             </div>
@@ -688,11 +728,10 @@ export default function MenuItemsTable() {
                           <div>
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-xs text-gray-600">Available</span>
-                              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                item.is_available
+                              <div className={`px-2 py-1 rounded-full text-xs font-medium ${item.is_available
                                   ? "bg-green-100 text-green-800"
                                   : "bg-red-100 text-red-800"
-                              }`}>
+                                }`}>
                                 {item.is_available ? "Yes" : "No"}
                               </div>
                             </div>
@@ -707,11 +746,10 @@ export default function MenuItemsTable() {
                           <div>
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-xs text-gray-600">Visible</span>
-                              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                item.show_on_site
+                              <div className={`px-2 py-1 rounded-full text-xs font-medium ${item.show_on_site
                                   ? "bg-blue-100 text-blue-800"
                                   : "bg-gray-100 text-gray-800"
-                              }`}>
+                                }`}>
                                 {item.show_on_site ? "Shown" : "Hidden"}
                               </div>
                             </div>
@@ -769,11 +807,10 @@ export default function MenuItemsTable() {
                           </button>
                           <button
                             onClick={() => handleToggleBestSeller(item.id, item.is_best_seller)}
-                            className={`p-2 rounded-lg transition-colors ${
-                              item.is_best_seller
+                            className={`p-2 rounded-lg transition-colors ${item.is_best_seller
                                 ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                            }`}
+                              }`}
                             title={item.is_best_seller ? "Remove from best sellers" : "Mark as best seller"}
                             disabled={processing.includes(`bestseller-${item.id}`)}
                           >
@@ -863,7 +900,7 @@ export default function MenuItemsTable() {
             <div>
               <p className="text-sm text-gray-600">Avg Rating</p>
               <p className="text-2xl font-bold text-gray-900">
-                {items.length > 0 
+                {items.length > 0
                   ? (items.reduce((sum, item) => sum + item.rating, 0) / items.length).toFixed(1)
                   : "0.0"
                 }
@@ -876,5 +913,6 @@ export default function MenuItemsTable() {
         </div>
       </div>
     </div>
-  );
+  
+);
 }
