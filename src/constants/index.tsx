@@ -51,7 +51,6 @@ const SIDEBAR_LINKS = [
   serviceType: 2, // HOTEL
   children: [
     { label: "Menus", href: "/menu-settings/menus" },
-    { label: "Menu Items", href: "/menu-settings/menu-items" },
     { label: "Item Categories", href: "/menu-settings/item-categories" },
   ],
 },

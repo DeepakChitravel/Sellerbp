@@ -9,7 +9,7 @@ import {
 
 interface Props {
   onClose: () => void;
-  onItemAdded?: () => void; // Optional callback to refresh parent component
+  onItemAdded?: () => void; 
 }
 import { addMenuItem } from "@/lib/api/menu-items";
 import {
