@@ -16,7 +16,7 @@ export default function MenusPage() {
       <MenuList />
 
       {/* MENU ITEMS HEADER */}
-      <div className="flex justify-between items-center mt-8">
+      {/* <div className="flex justify-between items-center mt-8">
         <h2 className="text-xl font-semibold">Menu Items</h2>
         <button
           onClick={() => setShowAddForm(true)}
@@ -24,7 +24,7 @@ export default function MenusPage() {
         >
           Add Menu Item
         </button>
-      </div>
+      </div> */}
 
       {/* TABLE SHOULD NEVER SCROLL HORIZONTALLY */}
       <div className="w-full overflow-x-hidden">

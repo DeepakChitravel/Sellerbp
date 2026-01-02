@@ -5,9 +5,9 @@ import {
   Pencil, Trash2, Eye, EyeOff, Package,
   Tag, TrendingUp, AlertCircle,
   Filter, Search, MoreVertical,
-  Plus, Upload, ChevronDown, X,
-  Download, BarChart3, Star, Clock,
-  Percent, Hash, Layers, CheckCircle
+  Plus, ChevronDown, X,
+  Download, BarChart3, Clock,
+  Percent, Layers, Infinity
 } from "lucide-react";
 import {
   getMenuItems,
@@ -33,9 +33,14 @@ export default function MenuItemsTable() {
   const [selectedMenu, setSelectedMenu] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [filtersVisible, setFiltersVisible] = useState(false);
-  const [processing, setProcessing] = useState<string>("");
   const [showAddItem, setShowAddItem] = useState(false);
   const [actionMenuOpen, setActionMenuOpen] = useState<number | null>(null);
+  const [showOutOfStockOnly, setShowOutOfStockOnly] = useState(false);
+  const [processing, setProcessing] = useState<number | null>(null);
+  const [editItem, setEditItem] = useState<MenuItem | null>(null);
+
+
+
 
   // Load all data
   useEffect(() => {
@@ -68,6 +73,8 @@ export default function MenuItemsTable() {
         order_count: item.order_count ?? 0,
         last_updated: item.last_updated ?? item.created_at ?? new Date().toISOString(),
         original_price: item.original_price ?? item.price,
+        stock_qty: item.stock_qty ?? 0,
+        stock_type: item.stock_type ?? 'limited'
       }));
 
       setItems(safeItems);
@@ -82,47 +89,72 @@ export default function MenuItemsTable() {
     }
   };
 
-  // Transform stock data for display
+  // Transform stock data for display with 25% warning
   const getStockDisplay = (item: MenuItem) => {
     if (item.stock_type === 'unlimited') {
-      return { 
-        text: 'Unlimited', 
-        color: 'text-emerald-700', 
-        bg: 'bg-emerald-50', 
+      return {
+        text: 'Unlimited',
+        color: 'text-emerald-700',
+        bg: 'bg-emerald-50',
         border: 'border-emerald-200',
-        icon: <CheckCircle className="w-3.5 h-3.5" />
+        icon: <Infinity className="w-3.5 h-3.5" />,
+        isLowStock: false
       };
     }
+
     if (item.stock_type === 'limited' && item.stock_qty && item.stock_qty > 0) {
       let color = 'text-blue-700';
       let bg = 'bg-blue-50';
       let border = 'border-blue-200';
-      
-      if (item.stock_qty < 10) {
+      let isLowStock = false;
+      let percentRemaining = 100;
+
+      // For demo, assume initial stock is 4 times current stock to calculate percentage
+      const initialStock = 100; // Assume initial stock was 100 for percentage calculation
+      percentRemaining = Math.round((item.stock_qty / initialStock) * 100);
+
+      if (percentRemaining <= 25) {
+        color = 'text-amber-600';
+        bg = 'bg-gradient-to-r from-amber-50 to-orange-50';
+        border = 'border-amber-300';
+        isLowStock = true;
+      } else if (item.stock_qty < 10) {
         color = 'text-amber-700';
         bg = 'bg-amber-50';
         border = 'border-amber-200';
+        isLowStock = true;
       } else if (item.stock_qty < 5) {
         color = 'text-orange-700';
         bg = 'bg-orange-50';
         border = 'border-orange-200';
+        isLowStock = true;
       }
-      
-      return { 
-        text: `${item.stock_qty} ${item.stock_unit || 'units'}`, 
-        color, 
-        bg, 
+
+      return {
+        text: `${item.stock_qty} ${item.stock_unit || 'units'}`,
+        color,
+        bg,
         border,
-        icon: <Package className="w-3.5 h-3.5" />
+        icon: <Package className="w-3.5 h-3.5" />,
+        isLowStock,
+        percentRemaining
       };
     }
-    return { 
-      text: 'Out of Stock', 
-      color: 'text-rose-700', 
-      bg: 'bg-rose-50', 
+
+    return {
+      text: 'Out of Stock',
+      color: 'text-rose-700',
+      bg: 'bg-rose-50',
       border: 'border-rose-200',
-      icon: <AlertCircle className="w-3.5 h-3.5" />
+      icon: <AlertCircle className="w-3.5 h-3.5" />,
+      isLowStock: false
     };
+  };
+
+  // Check if item is out of stock
+  const isOutOfStock = (item: MenuItem): boolean => {
+    if (item.stock_type === 'unlimited') return false;
+    return !item.stock_qty || item.stock_qty <= 0;
   };
 
   // Filter and sort items
@@ -136,7 +168,9 @@ export default function MenuItemsTable() {
     const matchesCategory = selectedCategory === "all" ||
       (item.category_id?.toString() === selectedCategory);
 
-    return matchesSearch && matchesMenu && matchesCategory;
+    const matchesOutOfStockFilter = !showOutOfStockOnly || isOutOfStock(item);
+
+    return matchesSearch && matchesMenu && matchesCategory && matchesOutOfStockFilter;
   });
 
   // Sort items
@@ -177,7 +211,7 @@ export default function MenuItemsTable() {
     if (!window.confirm("Are you sure you want to delete this menu item?")) return;
 
     try {
-      setProcessing(`delete-${id}`);
+      setProcessing(id);
       const res = await deleteMenuItem(id);
 
       const isSuccess =
@@ -197,75 +231,281 @@ export default function MenuItemsTable() {
       console.error(error);
       toast.error("Failed to delete item");
     } finally {
-      setProcessing("");
+      setProcessing(null);
     }
   };
 
-  const handleToggleAvailability = async (id: number, currentStatus: boolean) => {
-    try {
-      setProcessing(`availability-${id}`);
-      const res = await toggleMenuItemAvailability(id, !currentStatus);
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedItems.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedItems.length} selected item(s)?`)) return;
 
-      if (res.success) {
-        setItems(prev =>
-          prev.map(item =>
-            item.id === id ? { ...item, is_available: !currentStatus } : item
-          )
-        );
-        toast.success("Availability updated");
-      } else {
-        toast.error(res.message || "Failed to update availability");
+    try {
+      setProcessing(-1); // Use -1 for bulk operations
+      const deletePromises = selectedItems.map(id => deleteMenuItem(id));
+      const results = await Promise.allSettled(deletePromises);
+
+      const successfulDeletes: number[] = [];
+      const failedDeletes: number[] = [];
+
+      results.forEach((result, index) => {
+        const id = selectedItems[index];
+        if (result.status === 'fulfilled' && (
+          result.value === true ||
+          result.value?.success === true ||
+          result.value?.status === true ||
+          result.value?.message?.toLowerCase().includes("success")
+        )) {
+          successfulDeletes.push(id);
+        } else {
+          failedDeletes.push(id);
+        }
+      });
+
+      if (successfulDeletes.length > 0) {
+        setItems(prev => prev.filter(item => !successfulDeletes.includes(item.id)));
+        setSelectedItems([]);
+        toast.success(`${successfulDeletes.length} item(s) deleted successfully`);
+      }
+
+      if (failedDeletes.length > 0) {
+        toast.error(`Failed to delete ${failedDeletes.length} item(s)`);
       }
     } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete items");
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  // Fixed availability toggle function - optimized to prevent layout shift
+  const handleToggleAvailability = async (id: number, currentStatus: boolean) => {
+    try {
+      setProcessing(id);
+
+      // Update UI optimistically with minimal visual change
+      setItems(prev =>
+        prev.map(item => {
+          if (item.id === id) {
+            return {
+              ...item,
+              is_available: !currentStatus
+            };
+          }
+          return item;
+        })
+      );
+
+      // Call API with correct parameter name
+      const res = await toggleMenuItemAvailability(id, !currentStatus);
+
+      // Check different possible success responses
+      const isSuccess =
+        res === true ||
+        res?.success === true ||
+        res?.status === true ||
+        res?.message?.toLowerCase().includes("success");
+
+      if (isSuccess) {
+        toast.success(`Item ${!currentStatus ? 'enabled' : 'disabled'} successfully`);
+      } else {
+        // Rollback on failure
+        setItems(prev =>
+          prev.map(item => {
+            if (item.id === id) {
+              return {
+                ...item,
+                is_available: currentStatus
+              };
+            }
+            return item;
+          })
+        );
+        toast.error(res?.message || "Failed to update availability");
+      }
+    } catch (error) {
+      console.error("Toggle availability error:", error);
+      // Rollback on error
+      setItems(prev =>
+        prev.map(item => {
+          if (item.id === id) {
+            return {
+              ...item,
+              is_available: currentStatus
+            };
+          }
+          return item;
+        })
+      );
       toast.error("Failed to update availability");
     } finally {
-      setProcessing("");
+      setProcessing(null);
     }
   };
 
   const handleToggleVisibility = async (id: number, currentStatus: boolean) => {
     try {
-      setProcessing(`visibility-${id}`);
+      setProcessing(id);
+
+      // Update UI optimistically
+      setItems(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, show_on_site: !currentStatus } : item
+        )
+      );
+
       const res = await toggleMenuItemVisibility(id, !currentStatus);
 
-      if (res.success) {
+      if (res?.success || res === true) {
+        toast.success(`${item.name} visibility ${!currentStatus ? 'enabled' : 'disabled'} in seller website`);
+      } else {
+        // Rollback on failure
         setItems(prev =>
           prev.map(item =>
-            item.id === id ? { ...item, show_on_site: !currentStatus } : item
+            item.id === id ? { ...item, show_on_site: currentStatus } : item
           )
         );
-        toast.success("Visibility updated");
-      } else {
-        toast.error(res.message || "Failed to update visibility");
+        toast.error("Failed to update visibility");
       }
     } catch (error) {
+      console.error("Toggle visibility error:", error);
+      // Rollback on error
+      setItems(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, show_on_site: currentStatus } : item
+        )
+      );
       toast.error("Failed to update visibility");
     } finally {
-      setProcessing("");
+      setProcessing(null);
     }
   };
 
   const handleToggleBestSeller = async (id: number, currentStatus: boolean) => {
     try {
-      setProcessing(`bestseller-${id}`);
+      setProcessing(id);
+
+      // Update UI optimistically
+      setItems(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, is_best_seller: !currentStatus } : item
+        )
+      );
+
       const res = await toggleMenuItemBestSeller(id, !currentStatus);
 
-      if (res.success) {
+      if (res?.success || res === true) {
+        toast.success(`Best seller status ${!currentStatus ? 'added' : 'removed'}`);
+      } else {
+        // Rollback on failure
         setItems(prev =>
           prev.map(item =>
-            item.id === id ? { ...item, is_best_seller: !currentStatus } : item
+            item.id === id ? { ...item, is_best_seller: currentStatus } : item
           )
         );
-        toast.success("Best seller status updated");
-      } else {
-        toast.error(res.message || "Failed to update best seller status");
+        toast.error(res?.message || "Failed to update best seller status");
       }
     } catch (error) {
+      console.error("Toggle best seller error:", error);
+      // Rollback on error
+      setItems(prev =>
+        prev.map(item =>
+          item.id === id ? { ...item, is_best_seller: currentStatus } : item
+        )
+      );
       toast.error("Failed to update best seller status");
     } finally {
-      setProcessing("");
+      setProcessing(null);
     }
   };
+
+
+  const getImageUrl = (image?: string) => {
+    if (!image) return null;
+
+    // already full URL
+    if (image.startsWith("http")) return image;
+
+    // ensure leading slash
+    if (!image.startsWith("/")) image = "/" + image;
+
+    return `http://localhost/managerbp/public${image}`;
+  };
+
+  // Export to CSV function
+  const handleExportCSV = () => {
+    try {
+      const headers = [
+        'ID',
+        'Name',
+        'Description',
+        'Price (₹)',
+        'Original Price (₹)',
+        'Category',
+        'Menu',
+        'Food Type',
+        'Stock Type',
+        'Stock Quantity',
+        'Stock Unit',
+        'Available',
+        'Visible',
+        'Best Seller',
+        'Order Count',
+        'Created At'
+      ];
+
+      const csvData = filteredItems.map(item => [
+        item.id,
+        `"${item.name.replace(/"/g, '""')}"`,
+        `"${(item.description || '').replace(/"/g, '""')}"`,
+        item.price,
+        item.original_price || item.price,
+        categories.find(cat => cat.id === item.category_id)?.name || 'Uncategorized',
+        menus.find(menu => menu.id === item.menu_id)?.name || 'Unknown',
+        item.food_type || 'unknown',
+        item.stock_type || 'limited',
+        item.stock_qty || 0,
+        item.stock_unit || 'units',
+        item.is_available ? 'Yes' : 'No',
+        item.show_on_site ? 'Yes' : 'No',
+        item.is_best_seller ? 'Yes' : 'No',
+        item.order_count || 0,
+        item.created_at || new Date().toISOString()
+      ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => row.join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `menu-items-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Menu items exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export menu items');
+    }
+  };
+
+  // Count available items
+  const availableItemsCount = items.filter(item => item.is_available).length;
+
+  // Count low stock items (25% or less)
+  const lowStockItemsCount = items.filter(item => {
+    if (item.stock_type !== 'limited' || !item.stock_qty || item.stock_qty <= 0) return false;
+    // For demo, assume initial stock was 100
+    const percentRemaining = (item.stock_qty / 100) * 100;
+    return percentRemaining <= 25;
+  }).length;
 
   if (loading) {
     return (
@@ -307,7 +547,7 @@ export default function MenuItemsTable() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-lg border border-gray-200 shadow-xs">
                 <div className="text-right">
@@ -318,7 +558,7 @@ export default function MenuItemsTable() {
                 <div className="text-right">
                   <div className="text-xs font-medium text-gray-500">AVAILABLE</div>
                   <div className="text-xl font-bold text-emerald-600">
-                    {items.filter(item => item.is_available).length}
+                    {availableItemsCount}
                   </div>
                 </div>
               </div>
@@ -351,11 +591,25 @@ export default function MenuItemsTable() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-3">
+                  {/* Out of Stock Filter */}
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      id="outOfStockOnly"
+                      checked={showOutOfStockOnly}
+                      onChange={(e) => setShowOutOfStockOnly(e.target.checked)}
+                      className="w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500"
+                    />
+                    <label htmlFor="outOfStockOnly" className="text-sm font-medium text-gray-700 cursor-pointer whitespace-nowrap">
+                      Out of Stock Only
+                    </label>
+                  </div>
+
                   <button
                     onClick={() => setFiltersVisible(!filtersVisible)}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${filtersVisible
-                        ? "bg-blue-50 border-blue-500 text-blue-600 shadow-xs"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
+                      ? "bg-blue-50 border-blue-500 text-blue-600 shadow-xs"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
                       }`}
                   >
                     <Filter className="w-4 h-4" />
@@ -365,13 +619,19 @@ export default function MenuItemsTable() {
 
                   <div className="h-6 w-px bg-gray-300"></div>
 
-                  <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium">
+                  <button
+                    onClick={handleExportCSV}
+                    className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors"
+                  >
                     <Download className="w-4 h-4" />
-                    Export
+                    Export CSV
                   </button>
 
                   <button
-                    onClick={() => setShowAddItem(true)}
+                    onClick={() => {
+                      setEditItem(null);
+                      setShowAddItem(true);
+                    }}
                     className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm hover:shadow transition-all text-sm font-medium"
                   >
                     <Plus className="w-4 h-4" />
@@ -444,8 +704,9 @@ export default function MenuItemsTable() {
                           setSelectedCategory("all");
                           setSearchQuery("");
                           setSortBy("recent");
+                          setShowOutOfStockOnly(false);
                         }}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors"
                       >
                         Clear Filters
                       </button>
@@ -457,7 +718,7 @@ export default function MenuItemsTable() {
           </div>
         </div>
 
-        {/* Bulk Actions Bar */}
+        {/* Bulk Actions Bar - Simplified */}
         {selectedItems.length > 0 && (
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-6 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -470,17 +731,13 @@ export default function MenuItemsTable() {
                 </span>
                 <div className="hidden sm:block h-4 w-px bg-blue-300"></div>
                 <div className="flex flex-wrap gap-2">
-                  <button className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-300 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
-                    <Pencil className="w-3.5 h-3.5" />
-                    Bulk Edit
-                  </button>
-                  <button className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={processing === -1}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-red-300 text-red-700 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Trash2 className="w-3.5 h-3.5" />
                     Bulk Delete
-                  </button>
-                  <button className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                    <Eye className="w-3.5 h-3.5" />
-                    Change Visibility
                   </button>
                 </div>
               </div>
@@ -496,70 +753,80 @@ export default function MenuItemsTable() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-sm transition-shadow">
+          {/* Available Items Card */}
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-sm transition-shadow group">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Best Sellers</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {items.filter(item => item.is_best_seller).length}
+                <p className="text-sm font-medium text-gray-500 mb-1">Available Items</p>
+                <p className="text-2xl font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">
+                  {availableItemsCount}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {Math.round((items.filter(item => item.is_best_seller).length / items.length) * 100)}% of total
+                  {Math.round((availableItemsCount / items.length) * 100)}% of total
                 </p>
               </div>
-              <div className="p-2 bg-gradient-to-br from-amber-100 to-amber-50 rounded-lg">
-                <Star className="w-5 h-5 text-amber-600" />
+              <div className="p-2 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-lg group-hover:shadow-sm transition-shadow">
+                <Package className="w-5 h-5 text-emerald-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-sm transition-shadow">
-            <div className="flex items-start justify-between">
+          {/* Low Stock Warning Card */}
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-sm transition-shadow group relative overflow-hidden">
+            {lowStockItemsCount > 0 && (
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-50/30 to-orange-50/20 animate-pulse"></div>
+            )}
+            <div className="flex items-start justify-between relative z-10">
               <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Out of Stock</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {items.filter(item => item.stock_type === 'limited' && (!item.stock_qty || item.stock_qty <= 0)).length}
-                </p>
-                <p className="text-xs text-emerald-600 font-medium mt-1">
-                  {items.filter(item => item.stock_type === 'unlimited').length} unlimited stock
-                </p>
-              </div>
-              <div className="p-2 bg-gradient-to-br from-rose-100 to-rose-50 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-rose-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-sm transition-shadow">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 mb-1">Avg. Price</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  ₹{items.length > 0 ? Math.round(items.reduce((sum, item) => sum + item.price, 0) / items.length) : 0}
+                <p className="text-sm font-medium text-gray-500 mb-1">Low Stock Alert</p>
+                <p className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
+                  {lowStockItemsCount}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Total revenue potential
+                  {lowStockItemsCount > 0 ? "Needs attention" : "All good"}
                 </p>
               </div>
-              <div className="p-2 bg-gradient-to-br from-emerald-100 to-emerald-50 rounded-lg">
-                <Percent className="w-5 h-5 text-emerald-600" />
+              <div className="p-2 bg-gradient-to-br from-amber-100 to-orange-50 rounded-lg group-hover:shadow-sm transition-shadow">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+              </div>
+            </div>
+            {lowStockItemsCount > 0 && (
+              <div className="absolute -top-1 -right-1 w-12 h-12 bg-gradient-to-br from-amber-200/20 to-orange-200/10 rounded-full"></div>
+            )}
+          </div>
+
+          {/* Unlimited Stock Card */}
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-sm transition-shadow group">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Unlimited Stock</p>
+                <p className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {items.filter(item => item.stock_type === 'unlimited').length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {Math.round((items.filter(item => item.stock_type === 'unlimited').length / items.length) * 100)}% of total
+                </p>
+              </div>
+              <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg group-hover:shadow-sm transition-shadow">
+                <Infinity className="w-5 h-5 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-sm transition-shadow">
+          {/* Total Orders Card */}
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-sm transition-shadow group">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500 mb-1">Total Orders</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
                   {items.reduce((sum, item) => sum + (item.order_count || 0), 0)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   All-time order count
                 </p>
               </div>
-              <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg">
-                <BarChart3 className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-gradient-to-br from-indigo-100 to-indigo-50 rounded-lg group-hover:shadow-sm transition-shadow">
+                <BarChart3 className="w-5 h-5 text-indigo-600" />
               </div>
             </div>
           </div>
@@ -577,7 +844,7 @@ export default function MenuItemsTable() {
                         type="checkbox"
                         checked={selectedItems.length === sortedItems.length && sortedItems.length > 0}
                         onChange={toggleSelectAll}
-                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 focus:ring-offset-0"
                       />
                       <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Menu Item
@@ -614,18 +881,21 @@ export default function MenuItemsTable() {
                           <Package className="w-8 h-8 text-gray-400" />
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                          {searchQuery || selectedMenu !== "all" || selectedCategory !== "all"
+                          {searchQuery || selectedMenu !== "all" || selectedCategory !== "all" || showOutOfStockOnly
                             ? "No items match your search"
                             : "No menu items yet"}
                         </h3>
                         <p className="text-gray-500 mb-6">
-                          {searchQuery || selectedMenu !== "all" || selectedCategory !== "all"
+                          {searchQuery || selectedMenu !== "all" || selectedCategory !== "all" || showOutOfStockOnly
                             ? "Try adjusting your filters or search terms"
                             : "Start by adding your first menu item to build your restaurant's menu"}
                         </p>
                         <button
-                          onClick={() => setShowAddItem(true)}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm font-medium"
+                          onClick={() => {
+                            setEditItem(null);
+                            setShowAddItem(true);
+                          }}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 shadow-sm font-medium transition-all"
                         >
                           <Plus className="w-4 h-4" />
                           Add Your First Item
@@ -651,16 +921,20 @@ export default function MenuItemsTable() {
                               type="checkbox"
                               checked={selectedItems.includes(item.id)}
                               onChange={() => toggleSelectItem(item.id)}
-                              className="mt-1.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                              className="mt-1.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 focus:ring-offset-0"
                             />
                             <div className="relative flex-shrink-0">
                               <div className="w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-xs">
                                 {item.image ? (
                                   <img
-                                    src={item.image}
+                                    src={getImageUrl(item.image) ?? ""}
                                     alt={item.name}
                                     className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src = "/placeholder.png";
+                                    }}
                                   />
+
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
                                     <Package className="w-6 h-6 text-gray-400" />
@@ -735,17 +1009,32 @@ export default function MenuItemsTable() {
                           </div>
                         </td>
 
-                        {/* Stock Status */}
+                        {/* Stock Status with 25% warning */}
                         <td className="p-6">
-                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${stockDisplay.bg} ${stockDisplay.color} ${stockDisplay.border}`}>
-                            {stockDisplay.icon}
-                            {stockDisplay.text}
+                          <div className="space-y-2">
+                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${stockDisplay.bg} ${stockDisplay.color} ${stockDisplay.border} border relative`}>
+                              {stockDisplay.icon}
+                              {stockDisplay.text}
+                              {stockDisplay.isLowStock && (
+                                <span className="absolute -top-1 -right-1 animate-pulse">
+                                  <span className="flex items-center justify-center w-4 h-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs rounded-full shadow-xs">
+                                    !
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+
+                            {stockDisplay.isLowStock && stockDisplay.percentRemaining && stockDisplay.percentRemaining <= 25 && (
+                              <div className="flex items-center gap-2 px-2 py-1.5 bg-gradient-to-r from-amber-50/80 to-orange-50/60 rounded-lg border border-amber-200">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                                  <span className="text-xs font-medium text-amber-700">
+                                    Only {stockDisplay.percentRemaining}% stock left
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {item.stock_type === 'limited' && item.stock_qty && item.stock_qty > 0 && item.stock_qty < 10 && (
-                            <p className="text-xs text-amber-600 mt-1.5 font-medium">
-                              Low stock warning
-                            </p>
-                          )}
                         </td>
 
                         {/* Category */}
@@ -778,33 +1067,28 @@ export default function MenuItemsTable() {
                           </div>
                         </td>
 
-                        {/* Status */}
+                        {/* Status - Only Available toggle */}
                         <td className="p-6">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600">Available</span>
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <div className="flex flex-col items-center gap-2">
                               <label className="relative inline-flex items-center cursor-pointer">
                                 <input
                                   type="checkbox"
                                   checked={item.is_available}
                                   onChange={() => handleToggleAvailability(item.id, item.is_available)}
+                                  disabled={processing === item.id}
                                   className="sr-only peer"
-                                  disabled={processing.includes(`availability-${item.id}`)}
                                 />
-                                <div className={`w-11 h-6 rounded-full peer transition-colors ${item.is_available ? 'bg-emerald-500' : 'bg-gray-300'} peer-focus:ring-2 peer-focus:ring-emerald-300`}>
-                                  <div className={`absolute top-0.5 left-0.5 bg-white rounded-full h-5 w-5 transition-transform ${item.is_available ? 'translate-x-5' : ''}`} />
+                                <div className={`relative w-14 h-7 rounded-full peer transition-all duration-300 ${item.is_available ? 'bg-emerald-500' : 'bg-gray-300'} peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300`}>
+                                  <div className={`absolute top-0.5 left-0.5 bg-white rounded-full h-6 w-6 transition-all duration-300 transform ${item.is_available ? 'translate-x-7' : ''}`} />
                                 </div>
+                                <span className="text-sm font-medium ml-3 text-gray-700">
+                                  {item.is_available ? 'ON' : 'OFF'}
+                                </span>
                               </label>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600">Visible</span>
-                              <button
-                                onClick={() => handleToggleVisibility(item.id, item.show_on_site)}
-                                className={`p-1 rounded ${item.show_on_site ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 hover:bg-gray-100'}`}
-                                title={item.show_on_site ? "Visible on site" : "Hidden from site"}
-                              >
-                                {item.show_on_site ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                              </button>
+                              <span className="text-xs text-gray-500">
+                                {item.is_available ? 'Available for order' : 'Not available'}
+                              </span>
                             </div>
                           </div>
                         </td>
@@ -814,6 +1098,10 @@ export default function MenuItemsTable() {
                           <div className="relative">
                             <div className="flex items-center gap-1">
                               <button
+                                onClick={() => {
+                                  setEditItem(item);
+                                  setShowAddItem(true);
+                                }}
                                 className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                 title="Edit Item"
                               >
@@ -821,10 +1109,11 @@ export default function MenuItemsTable() {
                               </button>
                               <button
                                 onClick={() => handleToggleBestSeller(item.id, item.is_best_seller)}
+                                disabled={processing === item.id}
                                 className={`p-2 rounded-lg transition-colors ${item.is_best_seller
-                                    ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                                  }`}
+                                  ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                                  } ${processing === item.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 title={item.is_best_seller ? "Remove from best sellers" : "Mark as best seller"}
                               >
                                 <TrendingUp className="w-4 h-4" />
@@ -844,23 +1133,39 @@ export default function MenuItemsTable() {
                                 <div className="fixed inset-0 z-40" onClick={() => setActionMenuOpen(null)} />
                                 <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg border border-gray-200 shadow-lg z-50">
                                   <div className="py-1">
-                                    <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <button
+                                      onClick={() => {
+                                        setEditItem(item);
+                                        setShowAddItem(true);
+                                        setActionMenuOpen(null);
+                                      }}
+                                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
                                       <Pencil className="w-4 h-4" />
                                       Edit Item
                                     </button>
                                     <button
-                                      onClick={() => handleDeleteItem(item.id)}
-                                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50"
+                                      onClick={() => {
+                                        handleDeleteItem(item.id);
+                                        setActionMenuOpen(null);
+                                      }}
+                                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                       Delete Item
                                     </button>
                                     <div className="border-t border-gray-100 my-1"></div>
-                                    <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                                      <Eye className="w-4 h-4" />
-                                      View Details
+                                    <button
+                                      onClick={() => {
+                                        handleToggleVisibility(item.id, item.show_on_site);
+                                        setActionMenuOpen(null);
+                                      }}
+                                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                      {item.show_on_site ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                      {item.show_on_site ? 'Hide from Website' : 'Show on Website'}
                                     </button>
-                                    <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <button className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                       <Clock className="w-4 h-4" />
                                       View History
                                     </button>
@@ -885,13 +1190,19 @@ export default function MenuItemsTable() {
                 <div className="text-sm text-gray-600">
                   Showing <span className="font-semibold text-gray-900">{sortedItems.length}</span> of{" "}
                   <span className="font-semibold text-gray-900">{items.length}</span> items
+                  {showOutOfStockOnly && (
+                    <span className="ml-2 inline-flex items-center gap-1 px-2 py-1 bg-rose-100 text-rose-700 rounded text-xs font-medium">
+                      <AlertCircle className="w-3 h-3" />
+                      Out of Stock Only
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <button className="inline-flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                     <ChevronDown className="w-4 h-4 rotate-90" />
                     Previous
                   </button>
-                  <button className="px-3.5 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-blue-800">
+                  <button className="px-3.5 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-blue-800 transition-all">
                     1
                   </button>
                   <button className="inline-flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
@@ -905,14 +1216,17 @@ export default function MenuItemsTable() {
         </div>
       </div>
 
-      {/* Add Menu Item Modal */}
+      {/* Add/Edit Menu Item Modal */}
       {showAddItem && (
         <AddMenuItemForm
+          item={editItem}
+          title={editItem ? "Edit Menu Item" : "Add Menu Item"}
           onClose={() => {
             setShowAddItem(false);
+            setEditItem(null);
             loadData();
           }}
-          onItemAdded={loadData}
+          onItemSaved={loadData}
         />
       )}
     </>

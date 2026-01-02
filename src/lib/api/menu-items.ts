@@ -55,9 +55,9 @@ export type MenuItemFormData = {
   customer_limit?: number;
   customer_limit_period?: string;
   image?: string | null;
-  preparation_time: number;
   variations: Variation[];
 };
+
 
 export type MenuItem = {
   id: number;
@@ -161,10 +161,19 @@ export const getMenuItems = async (): Promise<MenuItem[]> => {
 };
 
 // 📄 Get Menu Item by ID
-export const getMenuItem = async (id: number): Promise<MenuItem> => {
-  const res = await api.get(`/seller/menu-items/get.php?id=${id}`);
-  return res.data;
+// ✅ FIXED: get menu item with variations
+export const getMenuItem = async (id: number) => {
+  const res = await api.get("/seller/menu-items/get-single.php", {
+    params: { id },
+  });
+
+  if (res.data?.success) {
+    return res.data.item;
+  }
+
+  throw new Error("Failed to fetch menu item");
 };
+
 
 // ➕ Add Menu Item
 export const addMenuItem = async (data: MenuItemFormData) => {
@@ -197,10 +206,15 @@ export const toggleMenuItemAvailability = async (
 ) => {
   const res = await api.post(
     "/seller/menu-items/toggle-availability.php",
-    { id, is_available }
+    {
+      id,
+      available: is_available ? 1 : 0 // ✅ correct
+    }
   );
   return res.data;
 };
+
+
 
 // 👁️ Toggle Visibility
 export const toggleMenuItemVisibility = async (
@@ -224,4 +238,17 @@ export const toggleMenuItemBestSeller = async (
     { id, is_best_seller }
   );
   return res.data;
+};
+
+
+export const getMenuItemVariations = async (itemId: number) => {
+  const res = await api.get("/seller/menu-items/get-variations.php", {
+    params: { item_id: itemId },
+  });
+
+  if (res.data?.success) {
+    return res.data.variations;
+  }
+
+  return [];
 };

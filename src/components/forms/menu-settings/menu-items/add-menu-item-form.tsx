@@ -9,14 +9,63 @@ import {
 
 interface Props {
   onClose: () => void;
-  onItemAdded?: () => void; 
+  onItemAdded?: () => void;
+  item?: any | null;
+  title?: string;
 }
+import { getMenuItemVariations } from "@/lib/api/menu-items";
+
 import { addMenuItem } from "@/lib/api/menu-items";
 import {
   getMenus, getCategories,
 } from "@/lib/api/menu-items";
 import type { Menu, ItemCategory } from "@/lib/api/menu-items";
 
+// Delete Confirmation Modal Component
+const DeleteConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  message
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  message: string;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-60" onClick={onClose} />
+      <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
+        <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="p-6 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-red-50 to-rose-100 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">{message}</p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={onClose}
+                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 shadow-sm font-medium transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
 type Variation = {
   id: number;
@@ -30,9 +79,13 @@ type Variation = {
   deliveryPrice: string | null;
 };
 
-export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
+export default function AddMenuItemForm({
+  onClose,
+  onItemAdded,
+  item,
+  title,
+}: Props) {
   const [categories, setCategories] = useState<ItemCategory[]>([]);
-
   const [hasVariations, setHasVariations] = useState(true);
   const [foodType, setFoodType] = useState<"veg" | "nonveg">("veg");
   const [isHalal, setIsHalal] = useState(false);
@@ -45,10 +98,11 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
   const [menus, setMenus] = useState<Menu[]>([]);
   const [menuCategory, setMenuCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
+  
   const [variations, setVariations] = useState<Variation[]>([
     {
       id: 1,
-      name: "Small",
+      name: "",
       mrpPrice: "",
       sellingPrice: "",
       discountPercent: "",
@@ -58,6 +112,12 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
       deliveryPrice: null,
     },
   ]);
+
+  // Form validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+
   useEffect(() => {
     if (!menuCategory) {
       setCategories([]);
@@ -70,14 +130,15 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
       .catch(() => setCategories([]));
   }, [menuCategory]);
 
+
+  
   useEffect(() => {
     getMenus().then(setMenus);
   }, []);
+
   // New form state fields
   const [itemName, setItemName] = useState("");
   const [description, setDescription] = useState("");
-
-  const [preparationTime, setPreparationTime] = useState("15");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -101,11 +162,124 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
 
   const removeVariation = (id: number) => {
     if (variations.length > 1) {
-      setVariations(variations.filter(v => v.id !== id));
+      setDeleteMessage(`Are you sure you want to remove Variation ${id}? This action cannot be undone.`);
+      setShowDeleteConfirm(true);
+
+      const confirmDelete = () => {
+        setVariations(variations.filter(v => v.id !== id));
+        setShowDeleteConfirm(false);
+      };
+
+      // We'll handle this in the modal
+      window.confirmDeleteAction = confirmDelete;
     }
   };
 
+  // Handle the actual deletion after confirmation
+  const handleConfirmDelete = () => {
+    if (window.confirmDeleteAction) {
+      window.confirmDeleteAction();
+      window.confirmDeleteAction = null;
+    }
+    setShowDeleteConfirm(false);
+  };
 
+const getFullImageUrl = (image?: string | null) => {
+  if (!image) return null;
+
+  // already absolute
+  if (image.startsWith("http")) return image;
+
+  // ensure leading slash
+  if (!image.startsWith("/")) image = "/" + image;
+
+  return `http://localhost/managerbp/public${image}`;
+};
+
+
+useEffect(() => {
+  if (!item) return;
+
+  /* ================= BASIC FIELDS ================= */
+  setItemName(item.name ?? "");
+  setDescription(item.description ?? "");
+  setMenuCategory(item.menu_id ? String(item.menu_id) : "");
+  setSubCategory(item.category_id ? String(item.category_id) : "");
+
+  /* ================= FOOD TYPE ================= */
+  const ft = item.food_type;
+  setFoodType(ft === "non-veg" || ft === "nonveg" ? "nonveg" : "veg");
+
+  setIsHalal(Boolean(item.halal));
+
+  /* ================= STOCK ================= */
+  setStockType(
+    item.stock_type === "out_of_stock"
+      ? "out"
+      : item.stock_type ?? "unlimited"
+  );
+
+  setStockQty(item.stock_qty ? String(item.stock_qty) : "");
+  setStockUnit(item.stock_unit ?? "pcs");
+
+  /* ================= CUSTOMER LIMIT ================= */
+  setCustomerLimitEnabled(Boolean(item.customer_limit));
+  setCustomerLimitQty(item.customer_limit ? String(item.customer_limit) : "");
+  setCustomerLimitPeriod(item.customer_limit_period ?? "per_order");
+
+  /* ================= IMAGE ================= */
+  if (item.image) {
+    setImagePreview(getFullImageUrl(item.image));
+  } else {
+    setImagePreview(null);
+  }
+
+  /* ================= VARIATIONS (🔥 MAIN FIX) ================= */
+ 
+}, [item]);
+
+
+useEffect(() => {
+  if (!item?.id) return;
+
+  const loadVariations = async () => {
+    const data = await getMenuItemVariations(item.id);
+
+    if (data.length > 0) {
+      setHasVariations(true);
+      setVariations(
+        data.map((v: any, i: number) => ({
+          id: i + 1,
+          name: v.name ?? "",
+          mrpPrice: String(v.mrp_price ?? ""),
+          sellingPrice: String(v.selling_price ?? ""),
+          discountPercent: String(v.discount_percent ?? ""),
+          isActive: true,
+          dineInPrice: v.dine_in_price?.toString() ?? "",
+          takeawayPrice: v.takeaway_price?.toString() ?? "",
+          deliveryPrice: v.delivery_price?.toString() ?? "",
+        }))
+      );
+    } else {
+      setHasVariations(false);
+      setVariations([]);
+    }
+  };
+
+  loadVariations();
+}, [item?.id]);
+
+
+useEffect(() => {
+  console.group("📝 EDIT FORM RECEIVED ITEM");
+  console.log("Raw item object:", item);
+  console.log("Item keys:", item ? Object.keys(item) : null);
+  console.log("Variations:", item?.variations);
+  console.log("Food Type:", item?.food_type);
+  console.log("Halal:", item?.halal);
+  console.log("Price (base):", item?.price);
+  console.groupEnd();
+}, [item]);
 
 
   const updateVariation = (id: number, field: keyof Variation, value: string) => {
@@ -113,12 +287,27 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
       if (v.id === id) {
         const updated = { ...v, [field]: value };
 
+        // Validate numeric fields
+        if (field === 'mrpPrice' || field === 'sellingPrice' ||
+          field === 'dineInPrice' || field === 'takeawayPrice' || field === 'deliveryPrice') {
+          // Remove non-numeric characters except decimal point
+          const numericValue = value.replace(/[^0-9.]/g, '');
+
+          // Ensure only one decimal point
+          const parts = numericValue.split('.');
+          if (parts.length > 2) {
+            updated[field] = parts[0] + '.' + parts.slice(1).join('');
+          } else {
+            updated[field] = numericValue;
+          }
+        }
+
         // Calculate discount percentage automatically if both MRP and Selling price are provided
         if (field === 'mrpPrice' || field === 'sellingPrice') {
           const mrp = parseFloat(updated.mrpPrice) || 0;
           const selling = parseFloat(updated.sellingPrice) || 0;
 
-          if (mrp > 0 && selling > 0) {
+          if (mrp > 0 && selling > 0 && selling <= mrp) {
             const discount = ((mrp - selling) / mrp) * 100;
             updated.discountPercent = discount.toFixed(0);
           } else {
@@ -136,7 +325,21 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, image: "File size must be less than 5MB" }));
+        return;
+      }
+
+      // Check file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({ ...prev, image: "Please upload JPG, PNG or WebP image" }));
+        return;
+      }
+
       setImageFile(file);
+      setErrors(prev => ({ ...prev, image: "" }));
 
       // Create preview URL
       const reader = new FileReader();
@@ -147,39 +350,62 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
     }
   };
 
+  // Validate form
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
 
+    // Required fields validation
+    if (!itemName.trim()) newErrors.itemName = "Item name is required";
+    if (!menuCategory) newErrors.menuCategory = "Menu category is required";
+
+    // Stock validation
+    if (stockType === "limited") {
+      if (!stockQty.trim()) newErrors.stockQty = "Stock quantity is required";
+      else if (parseInt(stockQty) <= 0) newErrors.stockQty = "Stock quantity must be greater than 0";
+    }
+
+    // Customer limit validation
+    if (customerLimitEnabled) {
+      if (!customerLimitQty.trim()) newErrors.customerLimitQty = "Customer limit quantity is required";
+      else if (parseInt(customerLimitQty) <= 0) newErrors.customerLimitQty = "Quantity must be greater than 0";
+    }
+
+    // Variations validation
+    if (hasVariations) {
+      variations.forEach((variation, index) => {
+        if (!variation.name.trim()) {
+          newErrors[`variation_${variation.id}_name`] = `Variation ${index + 1} name is required`;
+        }
+        if (!variation.mrpPrice.trim()) {
+          newErrors[`variation_${variation.id}_mrp`] = `MRP price is required`;
+        } else if (parseFloat(variation.mrpPrice) <= 0) {
+          newErrors[`variation_${variation.id}_mrp`] = `MRP price must be greater than 0`;
+        }
+        if (!variation.sellingPrice.trim()) {
+          newErrors[`variation_${variation.id}_selling`] = `Selling price is required`;
+        } else if (parseFloat(variation.sellingPrice) <= 0) {
+          newErrors[`variation_${variation.id}_selling`] = `Selling price must be greater than 0`;
+        }
+        if (parseFloat(variation.sellingPrice) > parseFloat(variation.mrpPrice)) {
+          newErrors[`variation_${variation.id}_selling`] = `Selling price cannot be greater than MRP`;
+        }
+      });
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!itemName.trim()) {
-      alert("Please enter item name");
+    if (!validateForm()) {
+      // Scroll to first error
+      const firstError = Object.keys(errors)[0];
+      const element = document.querySelector(`[data-error="${firstError}"]`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
-    }
-
-    if (!menuCategory) {
-      alert("Please select a menu category");
-      return;
-    }
-
-    if (hasVariations) {
-      // Validate variations
-      for (const variation of variations) {
-        if (!variation.name.trim()) {
-          alert(`Please enter name for Variation ${variation.id}`);
-          return;
-        }
-        if (!variation.mrpPrice || parseFloat(variation.mrpPrice) <= 0) {
-          alert(`Please enter valid MRP price for ${variation.name}`);
-          return;
-        }
-        if (!variation.sellingPrice || parseFloat(variation.sellingPrice) <= 0) {
-          alert(`Please enter valid selling price for ${variation.name}`);
-          return;
-        }
-      }
     }
 
     setIsSubmitting(true);
@@ -199,7 +425,6 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
         stock_unit: stockType === "limited" ? stockUnit : null,
         customer_limit: customerLimitEnabled ? parseInt(customerLimitQty) || 0 : null,
         customer_limit_period: customerLimitEnabled ? customerLimitPeriod : null,
-        preparation_time: parseInt(preparationTime) || 15,
         variations: hasVariations ? variations.map(v => ({
           name: v.name,
           mrp_price: parseFloat(v.mrpPrice) || 0,
@@ -209,21 +434,24 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
           takeaway_price: v.takeawayPrice ? parseFloat(v.takeawayPrice) : null,
           delivery_price: v.deliveryPrice ? parseFloat(v.deliveryPrice) : null
         })) : [],
-        spice_level: "Medium",
-        tags: []
+
       };
 
       // First, upload image if exists
-      let imageUrl = "";
+      let imageUrl = item?.image || "";
       if (imageFile) {
         const imageFormData = new FormData();
-        imageFormData.append('image', imageFile);
+        imageFormData.append('file', imageFile);
 
-        const uploadResponse = await fetch('/api/seller/upload.php', {
-          method: 'POST',
-          body: imageFormData,
-          credentials: 'include'
-        });
+        const uploadResponse = await fetch(
+          'http://localhost/managerbp/public/seller/menu-items/upload.php',
+          {
+            method: 'POST',
+            body: imageFormData,
+            credentials: 'include',
+          }
+        );
+
 
         if (uploadResponse.ok) {
           const uploadResult = await uploadResponse.json();
@@ -238,31 +466,44 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
       };
 
       // Send to API
-      const response = await fetch(
-        'http://localhost/managerbp/public/seller/menu-items/add.php',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(finalData),
-          credentials: 'include',
-        }
-      );
+      const url = item?.id
+        ? 'http://localhost/managerbp/public/seller/menu-items/update.php'
+        : 'http://localhost/managerbp/public/seller/menu-items/add.php';
 
+      const payload = item?.id
+        ? { id: item.id, ...finalData }
+        : finalData;
 
-      const result = await response.json();
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+      });
+
+      const text = await response.text();
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch {
+        console.error("SERVER RESPONSE:", text);
+        setErrors({ submit: "Server error. Check PHP logs." });
+        return;
+      }
 
       if (result.success) {
-        alert("Menu item added successfully!");
+        alert(item ? "Menu item updated successfully!" : "Menu item added successfully!");
         if (onItemAdded) onItemAdded();
         onClose();
       } else {
-        alert(result.message || "Failed to add menu item");
+        setErrors({ submit: result.message || "Failed to save menu item" });
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("An error occurred. Please try again.");
+      setErrors({ submit: "An error occurred. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -270,7 +511,6 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
 
   // Handle save as draft
   const handleSaveAsDraft = async () => {
-    // Similar to handleSubmit but with draft status
     alert("Draft saved! (You can implement draft functionality similarly)");
   };
 
@@ -294,9 +534,13 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                   <ShoppingBag className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Add Menu Item</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {title || (item ? "Edit Menu Item" : "Add Menu Item")}
+                  </h2>
                   <p className="text-sm text-gray-500 mt-1">
-                    Add a new item to your menu with all details including pricing, stock, and restrictions
+                    {item
+                      ? "Update item details, pricing, stock, and restrictions"
+                      : "Add a new item to your menu with all details including pricing, stock, and restrictions"}
                   </p>
                 </div>
               </div>
@@ -324,18 +568,27 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                 </div>
 
                 <div className="space-y-5">
-                  <div>
+                  <div data-error="itemName">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Item Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="e.g., Butter Chicken, Margherita Pizza"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${errors.itemName ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       value={itemName}
-                      onChange={(e) => setItemName(e.target.value)}
+                      onChange={(e) => {
+                        setItemName(e.target.value);
+                        if (errors.itemName) setErrors(prev => ({ ...prev, itemName: "" }));
+                      }}
                       required
                     />
+                    {errors.itemName && (
+                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.itemName}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -352,13 +605,18 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                    <div data-error="menuCategory">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Menu Category <span className="text-red-500">*</span>
                       </label>
                       <select
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.menuCategory ? 'border-red-500' : 'border-gray-300'
+                          }`}
                         value={menuCategory}
-                        onChange={(e) => setMenuCategory(e.target.value)}
+                        onChange={(e) => {
+                          setMenuCategory(e.target.value);
+                          if (errors.menuCategory) setErrors(prev => ({ ...prev, menuCategory: "" }));
+                        }}
                         required
                       >
                         <option value="">Select Menu</option>
@@ -368,7 +626,11 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                           </option>
                         ))}
                       </select>
-
+                      {errors.menuCategory && (
+                        <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> {errors.menuCategory}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -376,39 +638,19 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                         Sub Category
                       </label>
                       <select
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         value={subCategory}
                         onChange={(e) => setSubCategory(e.target.value)}
                         disabled={!menuCategory}
                       >
                         <option value="">Select Item Category</option>
-
                         {categories.map((cat) => (
                           <option key={cat.id} value={cat.id}>
                             {cat.name}
                           </option>
                         ))}
                       </select>
-
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Preparation Time (minutes)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="120"
-                      placeholder="15"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      value={preparationTime}
-                      onChange={(e) => setPreparationTime(e.target.value)}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Average time needed to prepare this item
-                    </p>
                   </div>
                 </div>
               </div>
@@ -490,22 +732,31 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div>
+                        <div data-error="stockQty">
                           <label className="block text-xs font-medium text-gray-600 mb-1">
                             Available Quantity <span className="text-red-500">*</span>
                           </label>
                           <div className="relative">
                             <input
                               type="number"
-                              min="0"
+                              min="1"
                               step="1"
                               placeholder="100"
                               value={stockQty}
-                              onChange={(e) => setStockQty(e.target.value)}
-                              className="w-full px-4 py-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                              onChange={(e) => {
+                                setStockQty(e.target.value);
+                                if (errors.stockQty) setErrors(prev => ({ ...prev, stockQty: "" }));
+                              }}
+                              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${errors.stockQty ? 'border-red-500' : 'border-blue-300'
+                                }`}
                               required
                             />
                           </div>
+                          {errors.stockQty && (
+                            <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" /> {errors.stockQty}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -591,7 +842,7 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                 {customerLimitEnabled && (
                   <div className="space-y-4 p-4 bg-orange-50 rounded-lg border border-orange-100">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      <div data-error="customerLimitQty">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Maximum Quantity Per Customer <span className="text-red-500">*</span>
                         </label>
@@ -599,11 +850,20 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                           type="number"
                           min="1"
                           value={customerLimitQty}
-                          onChange={(e) => setCustomerLimitQty(e.target.value)}
+                          onChange={(e) => {
+                            setCustomerLimitQty(e.target.value);
+                            if (errors.customerLimitQty) setErrors(prev => ({ ...prev, customerLimitQty: "" }));
+                          }}
                           placeholder="e.g., 2"
-                          className="w-full px-4 py-3 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${errors.customerLimitQty ? 'border-red-500' : 'border-orange-300'
+                            }`}
                           required
                         />
+                        {errors.customerLimitQty && (
+                          <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> {errors.customerLimitQty}
+                          </p>
+                        )}
                         <p className="text-xs text-gray-500 mt-1">
                           Maximum items a single customer can order
                         </p>
@@ -707,7 +967,7 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                           </div>
 
                           <div className="space-y-3">
-                            <div>
+                            <div data-error={`variation_${variation.id}_name`}>
                               <label className="block text-xs font-medium text-gray-600 mb-1">
                                 Variation Name <span className="text-red-500">*</span>
                               </label>
@@ -715,13 +975,19 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                                 value={variation.name}
                                 onChange={(e) => updateVariation(variation.id, 'name', e.target.value)}
                                 placeholder="e.g., Small, Medium, Large, Family Pack"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors[`variation_${variation.id}_name`] ? 'border-red-500' : 'border-gray-300'
+                                  }`}
                               />
+                              {errors[`variation_${variation.id}_name`] && (
+                                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" /> {errors[`variation_${variation.id}_name`]}
+                                </p>
+                              )}
                             </div>
 
                             {/* MRP and Selling Price */}
                             <div className="grid grid-cols-2 gap-3">
-                              <div>
+                              <div data-error={`variation_${variation.id}_mrp`}>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">
                                   MRP Price (₹) <span className="text-red-500">*</span>
                                 </label>
@@ -731,11 +997,17 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                                     value={variation.mrpPrice}
                                     onChange={(e) => updateVariation(variation.id, 'mrpPrice', e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors[`variation_${variation.id}_mrp`] ? 'border-red-500' : 'border-gray-300'
+                                      }`}
                                   />
                                 </div>
+                                {errors[`variation_${variation.id}_mrp`] && (
+                                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" /> {errors[`variation_${variation.id}_mrp`]}
+                                  </p>
+                                )}
                               </div>
-                              <div>
+                              <div data-error={`variation_${variation.id}_selling`}>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">
                                   Selling Price (₹) <span className="text-red-500">*</span>
                                 </label>
@@ -745,9 +1017,15 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                                     value={variation.sellingPrice}
                                     onChange={(e) => updateVariation(variation.id, 'sellingPrice', e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors[`variation_${variation.id}_selling`] ? 'border-red-500' : 'border-gray-300'
+                                      }`}
                                   />
                                 </div>
+                                {errors[`variation_${variation.id}_selling`] && (
+                                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" /> {errors[`variation_${variation.id}_selling`]}
+                                  </p>
+                                )}
                               </div>
                             </div>
 
@@ -776,9 +1054,9 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                                 <span className="text-gray-700 font-medium">Price (₹)</span>
                               </div>
                               {[
-                                { type: "Dine In", value: variation.dineInPrice ?? variation.sellingPrice ?? "" },
-                                { type: "Takeaway", value: variation.takeawayPrice ?? variation.sellingPrice ?? "" },
-                                { type: "Delivery", value: variation.deliveryPrice ?? variation.sellingPrice ?? "" },
+                                { type: "Dine In", value: variation.dineInPrice ?? variation.sellingPrice ?? "", key: 'dineInPrice' },
+                                { type: "Takeaway", value: variation.takeawayPrice ?? variation.sellingPrice ?? "", key: 'takeawayPrice' },
+                                { type: "Delivery", value: variation.deliveryPrice ?? variation.sellingPrice ?? "", key: 'deliveryPrice' },
                               ]
                                 .map((service) => (
                                   <div key={service.type} className="flex justify-between items-center border border-gray-200 rounded-lg px-4 py-3 hover:bg-gray-50">
@@ -787,9 +1065,11 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                                       <IndianRupee className="w-3 h-3 text-gray-500" />
                                       <input
                                         value={service.value}
-                                        onChange={(e) => updateVariation(variation.id, `${service.type.toLowerCase().replace(' ', '')}Price` as any, e.target.value)}
+                                        onChange={(e) => updateVariation(variation.id, service.key as any, e.target.value)}
                                         placeholder="0.00"
                                         className="w-24 px-3 py-1 border border-gray-300 rounded text-right"
+                                        type="text"
+                                        pattern="[0-9]*\.?[0-9]*"
                                       />
                                     </div>
                                   </div>
@@ -884,34 +1164,36 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                     </div>
                   </div>
 
-                  {/* Halal Certification */}
-                  <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <Shield className="w-5 h-5 text-amber-600" />
+                  {/* Halal Certification - Only show for non-veg */}
+                  {foodType === "nonveg" && (
+                    <div className="flex items-center justify-between p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                          <Shield className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900">Halal Certified</h4>
+                          <p className="text-xs text-gray-600">Mark if this item is Halal certified</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">Halal Certified</h4>
-                        <p className="text-xs text-gray-600">Mark if this item is Halal certified</p>
-                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isHalal}
+                          onChange={(e) => setIsHalal(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer 
+                          peer-checked:after:translate-x-full peer-checked:after:border-white 
+                          after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                          after:bg-white after:border-gray-300 after:border after:rounded-full 
+                          after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600">
+                        </div>
+                      </label>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isHalal}
-                        onChange={(e) => setIsHalal(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer 
-                        peer-checked:after:translate-x-full peer-checked:after:border-white 
-                        after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                        after:bg-white after:border-gray-300 after:border after:rounded-full 
-                        after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600">
-                      </div>
-                    </label>
-                  </div>
+                  )}
 
-                  {isHalal && (
+                  {isHalal && foodType === "nonveg" && (
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                       <div className="flex items-start gap-2">
                         <Info className="w-4 h-4 text-amber-600 mt-0.5" />
@@ -957,6 +1239,11 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                       )}
                       <p className="text-gray-700 font-medium">Upload Food Image</p>
                       <p className="text-sm text-gray-500 mt-1 mb-3">JPG, PNG or WebP. Max 5MB</p>
+                      {errors.image && (
+                        <p className="text-red-500 text-sm mb-2 flex items-center justify-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> {errors.image}
+                        </p>
+                      )}
                       <input
                         type="file"
                         accept="image/*"
@@ -980,6 +1267,13 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="text-sm text-gray-500">
                 <span className="text-red-500">*</span> Required fields must be filled
+                {errors.submit && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> {errors.submit}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-3">
@@ -1006,13 +1300,33 @@ export default function AddMenuItemForm({ onClose, onItemAdded }: Props) {
                   disabled={isSubmitting}
                   className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Saving..." : "Save & Publish Item"}
+                  {isSubmitting ? "Saving..." : (item ? "Update Item" : "Save & Publish Item")}
                 </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        message={deleteMessage}
+      />
     </>
   );
+}
+
+// Add global type for confirm delete action
+declare global {
+  interface Window {
+    confirmDeleteAction: (() => void) | null;
+  }
+}
+
+// Initialize
+if (typeof window !== 'undefined') {
+  window.confirmDeleteAction = null;
 }
