@@ -34,33 +34,33 @@ type Props = {
 };
 
 const formatMinutesToHours = (minutes: number) => {
-  if (minutes < 60) {
-    return `${minutes} min`;
-  }
+    if (minutes < 60) {
+        return `${minutes} min`;
+    }
 
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
 
-  if (remainingMinutes === 0) {
-    return `${hours} hour${hours > 1 ? "s" : ""}`;
-  }
+    if (remainingMinutes === 0) {
+        return `${hours} hour${hours > 1 ? "s" : ""}`;
+    }
 
-  return `${hours} hour${hours > 1 ? "s" : ""} ${remainingMinutes} min`;
+    return `${hours} hour${hours > 1 ? "s" : ""} ${remainingMinutes} min`;
 };
 
 // Convert 12-hour time to 24-hour for calculations
 const convertTo24Hour = (time: string, period: "AM" | "PM"): string => {
     if (!time) return "";
-    
+
     const [hoursStr, minutes] = time.split(":");
     let hours = parseInt(hoursStr);
-    
+
     if (period === "AM") {
         if (hours === 12) hours = 0; // 12 AM = 00
     } else { // PM
         if (hours !== 12) hours += 12; // 1 PM = 13, 12 PM = 12
     }
-    
+
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
 };
 
@@ -69,10 +69,10 @@ const convertTo12Hour = (time24: string): { time: string, period: "AM" | "PM" } 
     if (!time24 || time24.trim() === "") {
         return { time: "", period: "AM" };
     }
-    
+
     // Clean the time string
     const cleanTime = time24.trim();
-    
+
     // Check if it's already in 12-hour format with AM/PM
     if (cleanTime.toUpperCase().includes("AM") || cleanTime.toUpperCase().includes("PM")) {
         // Extract time and period
@@ -80,27 +80,27 @@ const convertTo12Hour = (time24: string): { time: string, period: "AM" | "PM" } 
         const period = cleanTime.toUpperCase().includes("PM") ? "PM" : "AM" as "AM" | "PM";
         return { time: timePart, period };
     }
-    
+
     // Check if it's in valid HH:MM format
     const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (!timeRegex.test(cleanTime)) {
         console.warn("Invalid time format for conversion:", cleanTime);
         return { time: "", period: "AM" };
     }
-    
+
     const [hoursStr, minutes] = cleanTime.split(":");
     let hours = parseInt(hoursStr);
     let period: "AM" | "PM" = "AM";
-    
+
     if (hours >= 12) {
         period = "PM";
         if (hours > 12) hours -= 12;
     }
     if (hours === 0) hours = 12;
-    
-    return { 
-        time: `${hours.toString().padStart(2, '0')}:${minutes}`, 
-        period 
+
+    return {
+        time: `${hours.toString().padStart(2, '0')}:${minutes}`,
+        period
     };
 };
 
@@ -151,7 +151,7 @@ const validateSlot = (slot: SlotType): { isValid: boolean; errors: string[] } =>
     if (slot.from && slot.to && slot.fromPeriod && slot.toPeriod) {
         const from24 = convertTo24Hour(slot.from, slot.fromPeriod);
         const to24 = convertTo24Hour(slot.to, slot.toPeriod);
-        
+
         const fromTime = new Date(`2000/01/01 ${from24}`);
         const toTime = new Date(`2000/01/01 ${to24}`);
 
@@ -175,7 +175,7 @@ const calculateBreakMinutes = (breakFrom: string, breakFromPeriod: "AM" | "PM", 
 
     const breakFrom24 = convertTo24Hour(breakFrom, breakFromPeriod);
     const breakTo24 = convertTo24Hour(breakTo, breakToPeriod);
-    
+
     const [fromHour, fromMin] = breakFrom24.split(":").map(Number);
     const [toHour, toMin] = breakTo24.split(":").map(Number);
 
@@ -200,8 +200,8 @@ const parseScheduleFromDatabase = (appointmentSettings: any): ScheduleType => {
     }
 
     try {
-        const settings = typeof appointmentSettings === "string" 
-            ? JSON.parse(appointmentSettings) 
+        const settings = typeof appointmentSettings === "string"
+            ? JSON.parse(appointmentSettings)
             : appointmentSettings;
 
         console.log("Parsing settings:", settings);
@@ -211,24 +211,24 @@ const parseScheduleFromDatabase = (appointmentSettings: any): ScheduleType => {
         Object.keys(settings).forEach((day) => {
             if (days.includes(day) && settings[day]) {
                 console.log(`Parsing day ${day}:`, settings[day]);
-                
+
                 parsedSchedule[day] = {
                     enabled: !!settings[day].enabled,
                     slots: (settings[day].slots || []).map((slot: any, index: number) => {
                         console.log(`Parsing slot ${index} for ${day}:`, slot);
-                        
+
                         const from = convertTo12Hour(slot.from || "");
                         const to = convertTo12Hour(slot.to || "");
                         const breakFrom = convertTo12Hour(slot.breakFrom || "");
                         const breakTo = convertTo12Hour(slot.breakTo || "");
-                        
+
                         console.log(`Converted slot ${index}:`, {
                             from24: slot.from,
                             from12: from,
                             to24: slot.to,
                             to12: to
                         });
-                        
+
                         return {
                             from: from.time,
                             to: to.time,
@@ -256,10 +256,10 @@ const parseScheduleFromDatabase = (appointmentSettings: any): ScheduleType => {
 
 const calculateHours = (from: string, fromPeriod: "AM" | "PM", to: string, toPeriod: "AM" | "PM") => {
     if (!from || !to || !fromPeriod || !toPeriod) return "0.0";
-    
+
     const from24 = convertTo24Hour(from, fromPeriod);
     const to24 = convertTo24Hour(to, toPeriod);
-    
+
     const [fromHour, fromMin] = from24.split(':').map(Number);
     const [toHour, toMin] = to24.split(':').map(Number);
     const totalMinutes = (toHour * 60 + toMin) - (fromHour * 60 + fromMin);
@@ -269,10 +269,10 @@ const calculateHours = (from: string, fromPeriod: "AM" | "PM", to: string, toPer
 // Function to format schedule for API (convert to 24-hour format)
 const formatScheduleForApi = (schedule: ScheduleType): any => {
     const formattedSchedule: any = {};
-    
+
     Object.keys(schedule).forEach(day => {
         const dayData = schedule[day];
-        
+
         formattedSchedule[day] = {
             enabled: dayData.enabled,
             slots: dayData.slots.map(slot => ({
@@ -284,7 +284,7 @@ const formatScheduleForApi = (schedule: ScheduleType): any => {
             }))
         };
     });
-    
+
     return formattedSchedule;
 };
 
@@ -300,14 +300,14 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
 
         setLoading(true);
         console.log("Raw appointment settings from API:", department.appointmentSettings);
-        
+
         const parsedSchedule = parseScheduleFromDatabase(department.appointmentSettings);
         console.log("Parsed schedule:", parsedSchedule);
-        
+
         setSchedule(parsedSchedule);
         setTouchedSlots(new Set());
         setHasValidationErrors(false);
-        
+
         // Send formatted schedule to parent
         if (onSave) {
             const formatted = formatScheduleForApi(parsedSchedule);
@@ -348,11 +348,11 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
             [day]: {
                 enabled,
                 slots: enabled
-                    ? [{ 
-                        from: "", 
-                        to: "", 
-                        breakFrom: "", 
-                        breakTo: "", 
+                    ? [{
+                        from: "",
+                        to: "",
+                        breakFrom: "",
+                        breakTo: "",
                         token: 0,
                         fromPeriod: "AM",
                         toPeriod: "AM",
@@ -371,7 +371,7 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
 
     const updateSlot = (day: string, index: number, key: keyof SlotType, value: any) => {
         const updated = { ...schedule };
-        
+
         if (!updated[day].enabled) return;
 
         // Add validation for time fields to only accept 1-12 hours
@@ -583,8 +583,8 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                 key={day}
                                 onClick={() => toggleDay(day)}
                                 className={`px-2 md:px-3 py-2.5 md:py-3 rounded-lg border text-xs md:text-sm font-medium transition-all duration-200 ${schedule[day]?.enabled
-                                        ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-500/20"
-                                        : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300"
+                                    ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-500/20"
+                                    : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300"
                                     }`}
                             >
                                 {day}
@@ -646,8 +646,8 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                     <div
                                                         key={i}
                                                         className={`border rounded-xl p-3 md:p-4 bg-white transition-all duration-200 ${validation.isValid
-                                                                ? "border-gray-200 hover:border-gray-300"
-                                                                : "border-red-200 bg-red-50/30"
+                                                            ? "border-gray-200 hover:border-gray-300"
+                                                            : "border-red-200 bg-red-50/30"
                                                             }`}
                                                     >
                                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 md:gap-3 mb-3 md:mb-4">
@@ -706,8 +706,8 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                             <input
                                                                                 type="time"
                                                                                 className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Start time") || e.includes("End time") || e.includes("End time must be") || e.includes("12-hour format"))
-                                                                                        ? "border-red-300 bg-red-50/50"
-                                                                                        : "border-gray-300"
+                                                                                    ? "border-red-300 bg-red-50/50"
+                                                                                    : "border-gray-300"
                                                                                     }`}
                                                                                 value={slot.from}
                                                                                 onChange={(e) => updateSlot(day, i, "from", e.target.value)}
@@ -729,8 +729,8 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                             <input
                                                                                 type="time"
                                                                                 className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Start time") || e.includes("End time") || e.includes("End time must be") || e.includes("12-hour format"))
-                                                                                        ? "border-red-300 bg-red-50/50"
-                                                                                        : "border-gray-300"
+                                                                                    ? "border-red-300 bg-red-50/50"
+                                                                                    : "border-gray-300"
                                                                                     }`}
                                                                                 value={slot.to}
                                                                                 onChange={(e) => updateSlot(day, i, "to", e.target.value)}
@@ -763,8 +763,8 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                             <input
                                                                                 type="time"
                                                                                 className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Break") || e.includes("12-hour format"))
-                                                                                        ? "border-red-300 bg-red-50/50"
-                                                                                        : "border-gray-300"
+                                                                                    ? "border-red-300 bg-red-50/50"
+                                                                                    : "border-gray-300"
                                                                                     }`}
                                                                                 value={slot.breakFrom}
                                                                                 onChange={(e) => updateSlot(day, i, "breakFrom", e.target.value)}
@@ -786,8 +786,8 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                             <input
                                                                                 type="time"
                                                                                 className={`flex-1 border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Break") || e.includes("12-hour format"))
-                                                                                        ? "border-red-300 bg-red-50/50"
-                                                                                        : "border-gray-300"
+                                                                                    ? "border-red-300 bg-red-50/50"
+                                                                                    : "border-gray-300"
                                                                                     }`}
                                                                                 value={slot.breakTo}
                                                                                 onChange={(e) => updateSlot(day, i, "breakTo", e.target.value)}
@@ -821,8 +821,8 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                         type="number"
                                                                         min="1"
                                                                         className={`w-full border rounded-lg p-2 md:p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition ${validation.errors.some(e => e.includes("Token"))
-                                                                                ? "border-red-300 bg-red-50/50"
-                                                                                : "border-gray-300"
+                                                                            ? "border-red-300 bg-red-50/50"
+                                                                            : "border-gray-300"
                                                                             }`}
                                                                         value={slot.token || ""}
                                                                         onChange={(e) => updateSlot(day, i, "token", e.target.value)}
@@ -842,9 +842,17 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 md:p-4 space-y-1.5 md:space-y-2">
                                                                         <div className="flex items-center justify-between">
                                                                             <span className="text-gray-600 text-xs md:text-sm">Working Duration:</span>
-                                                                            <span className={`font-semibold text-sm md:text-base ${slot.from && slot.to ? "text-gray-800" : "text-gray-400"
-                                                                                }`}>
-                                                                                {slot.from && slot.to ? `${workingHours} hours` : "Not set"}
+                                                                            <span className={`font-semibold text-sm md:text-base ${slot.from && slot.to ? "text-gray-800" : "text-gray-400"}`}>
+                                                                                {slot.from && slot.to ?
+                                                                                    (() => {
+                                                                                        const from24 = convertTo24Hour(slot.from, slot.fromPeriod);
+                                                                                        const to24 = convertTo24Hour(slot.to, slot.toPeriod);
+                                                                                        const [fromHour, fromMin] = from24.split(":").map(Number);
+                                                                                        const [toHour, toMin] = to24.split(":").map(Number);
+                                                                                        const totalMinutes = Math.max(0, (toHour * 60 + toMin) - (fromHour * 60 + fromMin));
+                                                                                        return formatMinutesToHours(totalMinutes);
+                                                                                    })()
+                                                                                    : "Not set"}
                                                                             </span>
                                                                         </div>
                                                                         <div className="flex items-center justify-between">
@@ -852,11 +860,10 @@ const OtherSchedule = ({ department, onSave, onValidationChange, isSaving = fals
                                                                                 Break Duration:
                                                                             </span>
                                                                             <span
-                                                                                className={`font-semibold text-sm md:text-base ${
-                                                                                    slot.breakFrom && slot.breakTo
+                                                                                className={`font-semibold text-sm md:text-base ${slot.breakFrom && slot.breakTo
                                                                                         ? "text-gray-800"
                                                                                         : "text-gray-400"
-                                                                                }`}
+                                                                                    }`}
                                                                             >
                                                                                 {slot.breakFrom && slot.breakTo
                                                                                     ? formatMinutesToHours(
