@@ -1,44 +1,47 @@
-import ServicesFilter from "@/components/filters/services-filter";
-import { DataTable } from "@/components/tables/services-table/data-table";
-import { columns } from "@/components/tables/services-table/columns";
-import { servicesParams } from "@/types";
-import { Add } from "iconsax-react";
+import { DataTable } from "@/components/tables/doctor-table/data-table";
+import { columns } from "@/components/tables/doctor-table/columns";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { getAllServices } from "@/lib/api/services";
+import { Add } from "iconsax-react";
+import { cookies } from "next/headers";
 
-const Services = async ({
-  searchParams: { limit, page, q },
-}: {
-  searchParams: servicesParams;
-}) => {
-  const data = await getAllServices({
-    limit,
-    page,
-    q,
-  });
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function DoctorAppointmentPage() {
+  const cookieStore = cookies();
+
+  const response = await fetch(
+    "http://localhost/managerbp/public/seller/doctor_schedule/list.php",
+    {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+      cache: "no-store",
+    }
+  ).then((res) => res.json());
+
+  console.log("DOCTOR API RESPONSE =>", response);
+
+  const tableData = {
+    records: response?.records ?? [],
+    totalRecords: response?.totalRecords ?? 0,
+    totalPages: response?.totalPages ?? 1,
+  };
 
   return (
     <>
-      <div className="flex items-center justify-between gap-5 mb-5">
+      <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-bold">Doctor Appointment</h1>
 
         <Link href="/hos-opts/add">
           <Button variant="success">
-            <span className="mobile_l:block hidden">Add Appointments</span>
-            <span className="mobile_l:hidden block">
-              <Add />
-            </span>
+            Add Appointment <Add className="ml-2" />
           </Button>
         </Link>
       </div>
 
-      <div className="space-y-5">
-        <ServicesFilter />
-        <DataTable columns={columns} data={data} />
-      </div>
+      <DataTable columns={columns} data={tableData} />
     </>
   );
-};
-
-export default Services;
+}

@@ -1,16 +1,33 @@
 import Doctor_Schedule from "@/components/forms/doctor-form";
-import { fetchDoctorsClient } from "@/lib/api/doctor_schedule";
 import { notFound } from "next/navigation";
 
-const Service = async ({ params: { id } }: { params: { id: string } }) => {
-  let service = null;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
+interface PageProps {
+  params: { id: string };
+}
+
+const DoctorSchedulePage = async ({ params: { id } }: PageProps) => {
+  let serviceData = null;
+
+  // 🟢 EDIT MODE
   if (id !== "add") {
-    service = await getService(id);
+    const res = await fetch(
+      `http://localhost/managerbp/public/seller/doctor_schedule/get.php?id=${id}`,
+      {
+        credentials: "include", // ✅ cookie token
+        cache: "no-store",
+      }
+    );
 
-    if (!service || service.success === false) {
+    const json = await res.json();
+
+    if (!json?.success) {
       return notFound();
     }
+
+    serviceData = json.data;
   }
 
   return (
@@ -21,11 +38,11 @@ const Service = async ({ params: { id } }: { params: { id: string } }) => {
 
       <Doctor_Schedule
         serviceId={id}
-        serviceData={id === "add" ? null : service.data}
+        serviceData={serviceData}
         isEdit={id !== "add"}
       />
     </>
   );
 };
 
-export default Service;
+export default DoctorSchedulePage;
