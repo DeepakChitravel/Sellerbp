@@ -146,7 +146,6 @@ const OtherDetails = ({ department }: Props) => {
                   {otherTypes.length + (mainType ? 1 : 0)} types
                 </span>
               </div>
-
             </div>
           </div>
         )}
