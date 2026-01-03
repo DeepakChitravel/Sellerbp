@@ -18,7 +18,7 @@ const OtherDetails = ({ department }: Props) => {
   for (let i = 1; i <= 25; i++) {
     const name = department[`type${i}Name`];
     const amount = department[`type${i}Amount`];
-    
+
     if (name) {
       otherTypes.push({
         id: `type${i}`,
@@ -54,7 +54,7 @@ const OtherDetails = ({ department }: Props) => {
                 <p className="text-gray-500 text-xs">Main Service</p>
               </div>
             </div>
-            
+
             <div className="text-right">
               <div className="flex items-center gap-1">
                 <span className="text-gray-500 text-sm">₹</span>
@@ -107,7 +107,7 @@ const OtherDetails = ({ department }: Props) => {
                         </p>
                       </div>
                     </div>
-                    
+
                     {/* Right side - Amount with RS symbol */}
                     <div className="flex items-center gap-1">
                       <span className="text-gray-500">₹</span>
@@ -146,12 +146,7 @@ const OtherDetails = ({ department }: Props) => {
                   {otherTypes.length + (mainType ? 1 : 0)} types
                 </span>
               </div>
-              <div className="text-gray-600">
-                <span className="font-medium">Total Amount:</span>
-                <span className="ml-1 text-gray-800 font-semibold">
-                  ₹{(mainType?.amount || 0) + otherTypes.reduce((sum, type) => sum + (parseInt(type.amount) || 0), 0)}
-                </span>
-              </div>
+
             </div>
           </div>
         )}
