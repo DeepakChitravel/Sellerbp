@@ -81,49 +81,41 @@ const Doctor_Schedule = ({
     setIsLoading(true);
 
     try {
-      /* AMOUNT */
-      const rawAmount = String(formData.amount ?? "").trim();
-      const amountNumber = Number(rawAmount);
-
-      if (!rawAmount || Number.isNaN(amountNumber) || amountNumber <= 0) {
+      const amountNumber = Number(formData.amount);
+      if (!amountNumber || amountNumber <= 0) {
         toast.error("Please enter a valid consultation fee");
         return;
       }
 
-      /* LOCATION */
       const locationError = validateDoctorLocation(formData.doctorLocation);
       if (locationError) {
         toast.error(locationError);
         return;
       }
 
-      /* WEEKLY SCHEDULE */
       if (hasWeeklyErrors) {
         toast.error("Please fix weekly schedule errors");
         return;
       }
 
-      /* PAYLOAD */
       const payload = {
         user_id: Number(userData?.user_id || 0),
         categoryId: formData.categoryId
           ? Number(formData.categoryId)
           : null,
-        slug: String(formData.slug || ""),
+        slug: formData.slug,
         amount: amountNumber.toString(),
-        description: String(formData.description || ""),
-        metaTitle: String(formData.metaTitle || ""),
-        metaDescription: String(formData.metaDescription || ""),
+        description: formData.description,
+        metaTitle: formData.metaTitle,
+        metaDescription: formData.metaDescription,
         doctorLocation: formData.doctorLocation,
         weeklySchedule: formData.weeklySchedule,
       };
 
-      console.log("🚀 FINAL PAYLOAD:", payload);
-
       const response = await addDoctorScheduleClient(payload);
 
       if (response?.success) {
-        toast.success("Doctor schedule created successfully!");
+        toast.success("Doctor schedule saved successfully!");
         router.push("/hos-opts");
       } else {
         toast.error(response?.message || "Failed to save");
@@ -161,12 +153,6 @@ const Doctor_Schedule = ({
               setValue: (val) => updateField("description", val),
             }}
           />
-
-          <WeeklyAppointment
-            value={formData.weeklySchedule}
-            onChange={(val) => updateField("weeklySchedule", val)}
-            onValidationChange={setHasWeeklyErrors}
-          />
         </div>
 
         {/* RIGHT */}
@@ -174,6 +160,11 @@ const Doctor_Schedule = ({
           {showGst && (
             <ServiceGst gstPercentage={{ value: null, setValue: () => {} }} />
           )}
+
+          <DoctorLocation
+            value={formData.doctorLocation}
+            setValue={(val) => updateField("doctorLocation", val)}
+          />
 
           <ServiceSEO
             metaTitle={{
@@ -185,10 +176,14 @@ const Doctor_Schedule = ({
               setValue: (val) => updateField("metaDescription", val),
             }}
           />
+        </div>
 
-          <DoctorLocation
-            value={formData.doctorLocation}
-            setValue={(val) => updateField("doctorLocation", val)}
+        {/* 🔥 FULL WIDTH WEEKLY SCHEDULE */}
+        <div className="col-span-12">
+          <WeeklyAppointment
+            value={formData.weeklySchedule}
+            onChange={(val) => updateField("weeklySchedule", val)}
+            onValidationChange={setHasWeeklyErrors}
           />
         </div>
       </div>

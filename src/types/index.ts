@@ -986,6 +986,27 @@ export interface MenuItem {
   veg: boolean;
 }
 
+
+// =============================
+// Doctor Schedule (LIST VIEW)
+// =============================
+export type DoctorSchedule = {
+  id: number;
+  serviceId: string;
+  userId: number;
+
+  name: string;
+  slug: string;
+  amount: string;
+
+  image: string | null;
+  specialization?: string | null;
+  qualification?: string | null;
+
+  createdAt: string;
+};
+
+
 export interface Variation {
   id?: number;
   name: string;
